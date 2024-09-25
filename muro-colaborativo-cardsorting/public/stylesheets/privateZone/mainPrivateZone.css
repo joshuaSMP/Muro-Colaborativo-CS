@@ -1,0 +1,587 @@
+body, html {
+	height: 100%;
+  	margin: 0; 
+   	overflow: hidden
+}
+
+#addNewObject {
+	background-color: #316699;
+	border-radius: 25px;
+	height:110px;
+	float:left;
+	margin-left: -2.5vw;
+	margin-top: -1.5vw;
+	/*margin-bottom: 900%;*/
+	width:110px;
+}
+
+#addLink {
+	background-color: #316699;
+	border-radius: 25px;
+	height:110px;
+	display: flex;
+	margin-left:20vw;
+	/*margin-right:5%;*/
+	margin-top: -8.25vw;
+	/*margin-bottom: 900%;*/
+	width:110px;
+}
+
+.btn-circle.btn-sm {
+	background-color: #C0F6FF;
+	border-radius: 37px;
+	font-size: 12px;
+	height: 74px;
+	padding: 0px 16px;
+	text-align: center;
+	width: 80px;
+	position: absolute;
+	right: 10%;
+}
+
+.box-8 {
+	border-bottom: 37px solid transparent;
+	border-right: 20px solid #E62C56;
+	border-top: 37px solid transparent;
+	float: left;
+	position: relative;
+	margin-top: 25%;
+}
+.box-10 {
+	border-bottom: 37px solid transparent;
+	border-left: 20px solid #E62C56;
+	border-top: 37px solid transparent;
+	float: left;
+	position: relative;
+	margin-top: 25%;
+}
+.box-9 {
+	background-color: #E62C56;
+	float: left;
+	height: 74px;
+	width: 40px;
+	position: relative;
+	margin-top: 25%;
+}
+
+#cancelButton{
+	background-color: #E62C56;
+	color: #F2F2F2;
+	height:55px;
+	float:left;
+	width:100px;
+}
+
+#cancelWrapper {
+	position: relative;
+}
+
+#cancelIcon{
+	position: absolute; 
+	margin-top: -0.9em; 
+	margin-left: -0.3em;
+}
+
+#chooseFile {
+	background-color: #316699;
+	border-radius: 25px;
+	height:110px;
+	float:left;
+	margin-left:3vw;
+	margin-top: -1.5vw;
+	width:110px;
+}
+
+.content-wrapper{
+  	background: #F2F2F2;
+	height: 100%;
+	width: 100%;
+}
+
+#createObjectBtn {
+	height:74px;
+	margin-left: 133.5px;
+	width:80px;
+}
+
+#contentOptionsWrapper {
+	margin-top: 5em;
+}
+
+.divImageSelect{
+	border: 1px solid gray;
+	border-radius: 10px;
+	height:190px;
+	float:left;
+	margin-left:10px;
+	margin-right:10px;
+	margin-top:50px;
+	position:relative;
+	width:190px;
+}
+
+.divTextSelect{
+	border: 3px;
+	border-radius: 10px;
+	float:left;
+	font-size:30px;
+	height:190px;
+	margin-left:10px;
+	margin-right:10px;
+	margin-top:50px;
+	padding: 5px;
+	position:relative;
+	width:190px;
+}
+
+.divTextSelectWrapper{
+	float:left;
+	height:200px;
+	padding: 5px;
+	position:relative;
+	margin-left:10px;
+	margin-right:10px;
+	margin-top:30px;
+	width:190px;
+}
+
+.divTextSelectV2{
+	border: 1px solid gray;
+	border-radius: 10px;
+	font-size:30px;
+	height:190px;
+	margin-left:10px;
+	margin-right:10px;
+	width:190px;
+}
+
+#logo{
+	height: 55px;
+	margin-top: 0.15vw;
+	margin-right: 2vw;
+	margin-left: -0.5vw;
+	width: 134px;
+}
+
+#logoMuroColaborativo{
+	height: 100%;
+}
+
+#logOutBtn{
+	background-color: #E62C56;
+	color: #FFFFFF;
+	font-family: AvantGarde;
+	font-size: 14pt;
+	height: 34px;
+	margin-top: 13px;
+	right: -7.5vw;
+	padding: 0px 0px 0px 0px;
+	width: 145px;
+	border-radius: 0px;
+	position: absolute;
+}
+
+.mosaicMatrixOnSideBar{
+	background:black;
+	float:left;
+	height:190px;
+	margin-left:10px;
+	margin-right:10px;
+	margin-top:50px;
+	position:relative;
+	width:190px;
+}
+
+#maxIcon{
+	font-size: xx-large;
+	top: 2px;
+}
+
+#maximizeBtn{
+	background-color: #C0F6FF;
+	color: #333366;
+	font-size: large;
+	height: 41px;
+	margin-top: 10px;
+	padding: 0px 0px 0px 0px;
+	position: absolute;
+	right: -1.5vw;
+	width: 41px;
+}
+
+#mosaicsCreatedWrapper {
+	background:white;
+	border-width:2px;
+	height:250px;
+	margin: auto;
+	margin-top: 30%;
+	width: 258px;
+}
+
+.mosaicSquare {
+	fill:white;
+	stroke:black;
+	stroke-width:1
+}
+
+#mosaicToSend {
+	height:250px;
+	margin-left:5px;
+	margin-top:5px;
+	position:relative;
+	vertical-align: middle;
+	width: 258px;
+}
+
+#ForoName {
+	color:white;
+	font-family: AvantGarde;
+	font-size: 20pt;
+	margin-top: 0.25vw;
+	margin-left: 5vw;
+}
+
+.non-floating-back-to-button-arrow {
+	height:100px;
+	margin-left:7%;
+	margin-top: 10px;
+	width:100px;
+}
+
+#okButton {
+	background-color: #E62C56;
+	color: #F2F2F2;
+	height:55px;
+	margin-left: 10px;
+    margin-top: 10px;
+	width:100px;
+}
+
+#OkCancelButtons{
+	height: 70px;
+	margin-left: 450px;
+	width: 400px;
+}
+
+.opacityClass{
+	fill-opacity:.3;
+}
+
+#pin {
+	color: white;
+	font-family: AvantGarde;
+	font-size: 14pt;
+	margin-top: 2.5vw;
+	/* margin-left: -8.5vw; */
+	margin-left: -8.5vw;
+	width: 250px;
+}
+
+#plusIcon {
+	color:white;
+	font-size: xx-large;
+	margin-top: 50%;
+	margin-left: 15%;
+}
+
+.remoteButton {
+	background-color: #316699;
+	color: #6DC8DD;
+	height: 164px;
+	margin-left: 299px;
+	margin-top: 80px;
+	width: 48px;
+}
+
+#returnButton{
+	color:#333366;
+	font-size: 64px;
+}
+
+.right-click-remote-menu {
+    display: none;
+    z-index: 1000;
+    position: absolute;
+    overflow: hidden;
+    border: 1px solid #CCC;
+    white-space: nowrap;
+    font-family: sans-serif;
+    background: #E62C56;
+    color: #CCC;
+    border-radius: 5px;
+    padding: 0;
+}
+
+/* Each of the items in the list */
+.right-click-remote-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+    list-style-type: none;
+    transition: all .3s ease;
+    user-select: none;
+}
+
+.right-click-remote-menu li:hover {
+	border: 2px solid black;
+}
+
+.upperBar{
+	background-color: #316699;
+	border-radius: 0% 20px 20px 0%;	
+	height: 60px;
+	width: 80%;
+}
+
+.upperBarContainer {
+	background-color:#6DC8DD;
+	height: 60px;
+	padding-right: 0%;
+	padding-left: 0%;
+	position: relative;
+	width: 100%;
+	z-index:1;
+}
+
+.mosaicToSend {
+	height: 190px;
+  width: 190px;
+  background: white;
+  font-size: 25px;
+  overflow: hidden;
+}
+
+.ownersbox {
+	float: right;
+}
+
+.newObject {
+	background: white;
+	font-size: 25px;
+  overflow: hidden;
+  border: 3px solid;
+}
+
+.newObjectPosition {
+	float: right;
+	width: 10px;
+}
+
+.mosaicToSendSize {
+	height: 190px;
+  width: 190px;
+}
+
+.userCursor{
+	position: absolute;
+	top: 5px;
+	left: 0px;
+	height:60px;
+	width:60px;
+}
+
+#userName {
+  color:white;
+	display: flex;
+	font-family: AvantGarde;
+	font-size: 20pt;
+	margin-left: 12vw;
+	margin-top: 5px;
+	width:235px;
+}
+
+#selectMosaicSpace {
+	background-color: #C0F6FF;
+	height: 215px;
+	margin-left: 20%;
+	margin-top: 2vw;
+	border-radius: 25px;
+	position:relative;
+	width: 550px;
+}
+
+#selectMosaicWorkspace {
+	background-color: #F2F2F2;
+	margin-left:220px;
+	padding-right:200px;
+	position:absolute;
+}
+
+#sidebar-wrapper {
+	height:100%;
+	background:#6DC8DD;
+	left:0px;
+	position:absolute;
+	top:60px;
+	width:347px;
+	z-index:1;
+}
+
+#textArea {
+	font-size:35px;
+	height:200px;
+	margin-left:5%;
+	margin-top:2%;
+	width:700px;
+}
+
+#workspaceMode {
+	background-color: #316699;
+	height: 300px;
+	margin-left: 20%;
+	position:relative;
+	width: 800px;
+}
+
+
+.st0{fill:#FFFFFF;}
+.st1{fill:#B4D1E6;}
+.st2{fill:#77ADD9;}
+.st3{fill:#5D86C0;}
+.st4{fill:#43628A;}
+.st5{fill:#33496C;}
+.st6{fill:#283A53;}
+.st7{fill:none;stroke:#1D1D1B;stroke-width:0.25;stroke-miterlimit:10;}
+.st8{fill:none;}
+.st9{enable-background:new    ;}
+.st10{fill:#FCFCFC;}
+.st11{fill:#16679C;}
+
+.fifty-px-height {
+  height:50px;
+}
+.static-pos {
+  position:static;
+}
+.invisible-dom {
+  visibility: hidden;
+}
+.four-x-font {
+  font-size: 400%;
+}
+.pause-banner {
+  height:270px;
+  width:270px;
+  margin: 0 auto;
+  border-radius: 25px;
+  border: 2px solid white;
+  background-image: url('/images/black_pause_btn.png');
+  background-size: 100%;
+}
+.back-to-button-arrow {
+  width:100px;
+  height:100px;
+  margin-left:60px;
+  margin-bottom:55px;
+  float:left;
+}
+#userDisplay {
+  color:white;
+  font-size:200%;
+  margin-left:30px;
+  display:none;
+}
+
+#deleteObject {
+  width:100px;
+  height:100px;
+  margin-left:63px;
+  margin-top:28px;
+}
+#submitUpload {
+  visibility:hidden
+}
+#page-content-wrapper {
+  height:100%;
+  width:100%;
+  background: #F2F2F2;;
+  position:relative;
+  top:0px;
+  left:0px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index:0;
+}
+#trackpadMode {
+  position:absolute;
+}
+#dummyTrackpadMode {
+  height:100%;
+  width:100%;
+}
+#moveButton {
+  text-align: center;
+  border-radius: 25px;
+  border: 4px solid #9b59b6;
+  height:120px;
+}
+#editButton {
+  text-align: center;
+  border-radius: 25px;
+  border: 4px solid #FFFFFF;
+  height:120px;
+}
+#selectObjectBtn {
+  text-align: center;
+  border-radius: 25px;
+  border: 4px solid #2980b9;
+  height:120px;
+}
+#editObjectBtn {
+  text-align: center;
+  border-radius: 25px;
+  border: 4px solid #2ecc71;
+  height:120px;
+}
+#deleteObjectBtn {
+  text-align: center;
+  border-radius: 25px;
+  border: 4px solid #c0392b;
+  height:120px;
+}
+
+#linkMode {
+	background-color: #316699;
+	height: 300px;
+	margin-left: 20%;
+	position:relative;
+	width: 800px;
+}
+
+#linkArea {
+	font-size:35px;
+	height:60px;
+	margin-left:5%;
+	margin-top:2%;
+	width:700px;
+}
+
+#nombreLinkArea {
+	font-size:35px;
+	height:60px;
+	margin-left:5%;
+	margin-top:2%;
+	width:700px;
+}
+
+#cancelarLink{
+	background-color: #E62C56;
+	color: #F2F2F2;
+	height:40px;
+	float:left;
+	width:100px;
+}
+
+#okLink {
+	background-color: #E62C56;
+	color: #F2F2F2;
+	height:55px;
+	margin-left: 10px;
+    margin-top: 10px;
+	width:100px;
+}
+
+#botonesLink{
+	height: 70px;
+	margin-left: 450px;
+	width: 400px;
+}

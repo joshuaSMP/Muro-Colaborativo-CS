@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Muro Colaborativo</title>
+    <link rel="stylesheet" href="stylesheets/logIn/login.css" media="screen" type="text/css" />
+    <link rel="stylesheet" href="stylesheets/logIn/forms.css" media="screen" type="text/css" />
+  </head>
+  <body>
+    <div class="login-wrap login-form" >
+      <h2>Introduce PIN</h2>
+      <div class="form login-options">
+        <input type="text" id="pinInput"> </input>
+        <button id="goPin"> Entrar </button>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <button id="createSesion"> O crea una nueva sesi&oacute;n</button>
+      </div>
+    </div>
+    <script src="javascripts/common/jquery211min.js"></script>
+    <script src="javascripts/logIn/login.js"></script>
+    <script src="javascripts/common/sweetalert2.all.min.js"></script>
+    <script>
+      // FIXME handle errors from AJAXs (issue #12)
+      $("#createSesion").click(function() {
+        $.ajax({
+          method:"POST",
+          url: "/api/activities/",
+        }).done(function(res) {
+          localStorage.setItem("pin", res.data.pin);
+          window.location = "/activity/public/";
+        }).fail(function(err) {
+          swal.fire(err.responseJSON.msg_dev)
+        })
+      })
+      $("#goPin").click(function() {
+        var pin = $.trim($("#pinInput").val())
+        $.ajax({
+          url: "/api/activities/" +pin,
+          method: 'GET',
+          contentType: 'application/json',
+          dataType: "json",
+          success: function (res) {
+            if(res.data) {
+              localStorage.setItem("pin", pin);
+              window.location = "/activity/public/";
+            } else {
+              swal.fire("No existe una sesión con el identificador dado.\n"
+                +"¿Quizá quiera crear una?")
+            }
+          },
+          error: function (err) {
+            swal.fire(err.responseJSON.msg_dev)
+          }
+        });
+      })
+    </script>
+  </body>
+</html>

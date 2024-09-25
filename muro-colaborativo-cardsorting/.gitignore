@@ -1,0 +1,9 @@
+/node_modules
+*DS_Store
+/sessions.backup
+*.*.json
+/public/uploads
+**/*.log
+db-backup.tar
+.env
+**/*.pyc

@@ -1,0 +1,245 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:300);
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: #95a5a6;
+  background-image: url('/images/mc_fondo.gif');
+  font-family: 'Helvetica Neue', Arial, Sans-Serif;
+}
+
+
+@font-face {
+  font-family: AvGardD;
+  src: url(../fonts/avantgarde-bk-bt-2-cufonfonts/AVGARDD_2.TTF);
+}
+
+@font-face {
+  font-family: AvGardDO;
+  src: url(../fonts/avantgarde-bk-bt-2-cufonfonts/AVGARDDO_2.TTF);
+}
+
+@font-face {
+  font-family: AvGardDN;
+  src: url(../fonts/avantgarde-bk-bt-2-cufonfonts/AVGARDN_2.TTF);
+}
+
+.btn {
+  color: #ffffff; 
+  font-size: 190%; 
+  width: 36%; 
+  height: 15.5%; 
+  font-family: AvGardD;
+  border-radius: 15px;
+  position: absolute;
+  left: 50%;
+  border-color: #FF3366;
+  border-width: 7px;
+}
+
+.formulario {
+  color: #ffffff; 
+  font-size: 190%; 
+  height: 64%;
+  width: 54%;   
+  font-family: AvGardD;
+  border-radius: 15px;
+  position: absolute;  
+  background-color: #ffffff;
+  border-width: 0px;
+  top: 14%;
+  left: 28%;
+
+}
+
+.botonazul{
+  background-color: none;
+}
+
+.form {
+  width: 55%;
+  position: absolute;
+  left: 34%;
+  top: 11%;
+  font-family: AvGardDN;    
+}
+
+a {
+  color: #000000;
+}
+
+a:hover {
+  color: #FF3366;
+}
+
+.cierrre_x{  
+  position:relative;
+  top: 30px; 
+  left: 89%;  
+  height: 25%;
+  width: 25%;
+}
+
+.form .message {
+  margin: 15px 0 0;
+  color: #b3b3b3;
+  font-size: 12px;
+}
+.form .message a {
+  color: #4CAF50;
+  text-decoration: none;  
+}
+.form .register-form {
+  display: none;
+}
+
+.form input {  
+  outline: 0;
+  background: #7ef6ff;
+  width: 100%;
+  border: 0;
+  border-radius: 15px;
+  margin: 0 0 15px;
+  padding: 15px;
+  box-sizing: border-box;
+  font-size: 14px;  
+}
+
+.form button {
+  font-family: "Roboto", sans-serif;
+  text-transform: uppercase;
+  outline: 0;
+  background: #FFFFFF;   /*4CAF50*/
+  width: 100%;
+  border: 0;
+  padding: 10px; /*15*/
+  color: #000000;
+  font-size: 14px;
+  -webkit-transition: all 0.3 ease;
+  transition: all 0.3 ease;
+  cursor: pointer;
+}
+
+
+/* Funcionalidad  de los botones de acceso */
+.btn_choose_sent input {
+  -webkit-appearance: none;
+  display: block;
+  margin: auto;
+  width: 19px;
+  height: 19px;
+  border-radius: 12px;
+  cursor: pointer;
+  vertical-align: middle;
+  box-shadow: hsla(0,0%,100%,.15) 0 1px 1px, inset hsla(0,0%,0%,.5) 0 0 0 1px;
+  background-color: hsla(0,0%,0%,.2);
+      background-image: -webkit-radial-gradient( #E85612 0%, #E85612 15%, #E85612 28%, #E85612 70% );
+  background-repeat: no-repeat;
+  -webkit-transition: background-position .15s cubic-bezier(.8, 0, 1, 1),
+  -webkit-transform .25s cubic-bezier(.8, 0, 1, 1);
+  outline: none;
+}
+.btn_choose_sent input:checked {
+  -webkit-transition: background-position .2s .15s cubic-bezier(0, 0, .2, 1),
+  -webkit-transform .25s cubic-bezier(0, 0, .2, 1);
+}
+.btn_choose_sent input:active {
+  -webkit-transform: scale(1.5);
+  -webkit-transition: -webkit-transform .1s cubic-bezier(0, 0, .2, 1);
+}
+
+/* Logica de la dirección del input */
+/*  Poder seleccionar solo uno */
+
+.btn_choose_sent input,
+.btn_choose_sent input:active {
+  background-position: 0 24px;
+}
+.btn_choose_sent input:checked {
+  background-position: 0 0;
+}
+.btn_choose_sent input:checked ~ input,
+.btn_choose_sent input:checked ~ input:active {
+  background-position: 0 -24px;
+}
+
+.btn_choose_sent{
+  background: #6A1765;
+  color: #6A1765;
+  box-shadow: 0 10px 20px rgba(240, 240, 240, .3); /*125, 147, 178, .3);*/  
+  border-radius: 9px;
+  font-size: 25px;
+  line-height: 10px;  
+  text-align: center;  
+  margin-right: 40px;
+  transition: all .3s;
+  height: 35px;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+}
+
+.btn_choose_sent input{
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    top: 2px;
+}
+
+.btn_choose_sent input:after{
+  position: absolute;
+  content: '';
+  width: 15rem;
+  left: 0;
+  right: 0;
+    /* background: red; */
+    /* z-index: -1; */
+  height: 40px;
+  top: -10px;
+}
+
+.bg_btn_chose_1{
+  background-color: #ffffff !important;
+}
+
+.bg_btn_chose_2{
+  background-color: #ffffff !important;
+}
+
+.btn_choose_sent_check_b{    
+  box-shadow: 0 10px 20px rgba(240, 240, 240, .3);
+  border: none; 
+  border-radius: 3px;
+  font-size: 16px;
+  line-height: 10px;
+  padding:  16px 200px 16px 46px;
+  text-align: center;
+  display: inline-block;
+  text-decoration: none;
+  margin-right: 30px;    
+  transition: all .3s;
+  height: auto;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+}
+
+.buttons{
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+}
+
+.button1{
+  display: flex;
+  flex-flow: column;
+}
+
+.button2{
+  margin-left: 20px;
+}

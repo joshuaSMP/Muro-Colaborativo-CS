@@ -1,0 +1,197 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: #95a5a6;
+  background-image: url("/imagesv5/mc_fondo.gif");
+  font-family: 'Helvetica Neue', Arial, Sans-Serif;
+}
+html .login-wrap {
+  position: relative;
+  margin: 0 auto;
+  background: #ecf0f1;
+  width: 350px;
+  border-radius: 5px;
+  box-shadow: 3px 3px 10px #333;
+  padding: 15px;
+}
+html .login-wrap h2 {
+  text-align: center;
+  font-weight: 200;
+  font-size: 2em;
+  margin-top: 10px;
+  color: #34495e;
+}
+html .login-wrap .form {
+  padding-top: 20px;
+}
+html .login-wrap .form input[type="text"],
+html .login-wrap .form input[type="password"],
+html .login-wrap .form button {
+  width: 80%;
+  margin-left: 10%;
+  margin-bottom: 25px;
+  height: 40px;
+  border-radius: 5px;
+  outline: 0;
+  -moz-outline-style: none;
+}
+html .login-wrap .form input[type="text"],
+html .login-wrap .form input[type="password"] {
+  border: 1px solid #bbb;
+  padding: 0 0 0 10px;
+  font-size: 14px;
+}
+html .login-wrap .form input[type="text"]:focus,
+html .login-wrap .form input[type="password"]:focus {
+  border: 1px solid #3498db;
+}
+html .login-wrap .form a {
+  text-align: center;
+  font-size: 10px;
+  color: #3498db;
+}
+html .login-wrap .form a p {
+  padding-bottom: 10px;
+}
+html .login-wrap .form button {
+  background: #e74c3c;
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: 200;
+  cursor: pointer;
+  transition: box-shadow .4s ease;
+}
+html .login-wrap .form button:hover {
+  box-shadow: 1px 1px 5px #555;
+}
+html .login-wrap .form button:active {
+  box-shadow: 1px 1px 7px #222;
+}
+html .login-wrap:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: -webkit-linear-gradient(left, #27ae60 0%, #27ae60 20%, #8e44ad 20%, #8e44ad 40%, #3498db 40%, #3498db 60%, #e74c3c 60%, #e74c3c 80%, #f1c40f 80%, #f1c40f 100%);
+  background: -moz-linear-gradient(left, #27ae60 0%, #27ae60 20%, #8e44ad 20%, #8e44ad 40%, #3498db 40%, #3498db 60%, #e74c3c 60%, #e74c3c 80%, #f1c40f 80%, #f1c40f 100%);
+  height: 5px;
+  border-radius: 5px 5px 0 0;
+}
+
+@font-face {
+  font-family: AvGardD;
+  src: url(../fonts/avantgarde-bk-bt-2-cufonfonts/AVGARDD_2.TTF);
+}
+
+@font-face {
+  font-family: AvGardDO;
+  src: url(../fonts/avantgarde-bk-bt-2-cufonfonts/AVGARDDO_2.TTF);
+}
+
+@font-face {
+  font-family: AvGardDN;
+  src: url(../fonts/avantgarde-bk-bt-2-cufonfonts/AVGARDN_2.TTF);
+}
+
+.btn {
+  color: #ffffff;
+  font-size: 2vw;
+  width: 36%;
+  height: 15.5%;
+  font-family: AvGardD;
+  border-radius: 15px;
+  position: absolute;
+  left: 50%;
+  border-color: #FF3366;
+  border-width: 7px;
+}
+
+.btn:hover {
+  color: #003366;
+}
+
+.formulario {
+  color: #ffffff;
+  font-size: 190%;
+  width: 52%;
+  height: 46%;
+  font-family: AvGardD;
+  border-radius: 15px;
+  position: absolute;
+  left: 38%;
+  background-color: #ffffff;
+  border-width: 0px;
+  top: 28%;
+}
+
+.form {
+  width: 45%;
+  position: absolute;
+  left: 42%;
+  top: 33%;
+  font-family: AvGardDN;
+  font-size: 90%;
+}
+
+.btn:hover {
+    border-color: #FF3366;
+    border-width: 7px;
+    color: #ffffff;
+}
+
+@media screen and (max-width: 1024px) {
+  html,body {
+    min-width:1024px
+  }
+}
+
+@media screen and (max-heigth: 768px) {
+  html,body {
+    max-height:768px
+  }
+}
+
+a {
+  color: #000000;
+}
+
+a:hover {
+  color: #FF3366;
+}
+
+h2 {
+  font-family: AvGardD;
+  text-align: center;
+  font-size: 250%;
+  margin-bottom: 9%;
+}
+
+.fade.in {
+  opacity: 1;
+}
+
+.modal.in .modal-dialog {
+  -webkit-transform: translate(0, 0);
+  -o-transform: translate(0, 0);
+  transform: translate(0, 0);
+}
+
+.modal-backdrop.in {
+  opacity: 0.2;
+}
+
+.modal-content {
+  background-color: #ffd4ae;
+  font-family: AvGardDN;
+}
+
+.modal-header {
+  background-color: #e68115;
+  font-family: AvGardD;
+}

@@ -1,0 +1,310 @@
+body, html {
+	height: 100%;
+  	margin: 0; 
+   	overflow: hidden
+}
+
+#addNewObject {
+	background-color: #316699;
+	border-radius: 25px;
+	height:100px;
+	float:left;
+	margin-left:6%;
+	margin-top:2%;
+	width:100px;
+}
+
+#addLink{
+	background-color: #316699;
+	border-radius: 25px;
+	height:100px;
+	display: flex;
+	margin-left:75%;
+	margin-top:-23%;
+	width:100px;
+}
+
+.btn-circle.btn-sm {
+	background-color: #C0F6FF;
+	border-radius: 37px;
+	font-size: 12px;
+	height: 74px;
+	padding: 0px 16px;
+	text-align: center;
+	width: 80px;
+}
+
+.box-8 {
+	border-bottom: 27px solid transparent;
+	border-right: 12px solid #E62C56;
+	border-top: 27px solid transparent;
+	float: left;
+}
+.box-10 {
+	border-bottom: 27px solid transparent;
+	border-left: 12px solid #E62C56;
+	border-top: 27px solid transparent;
+	float: left;
+}
+
+.box-9 {
+	background-color: #E62C56;
+	float: left;
+	height: 54px;
+	width: 38px;
+	cursor: pointer;
+}
+
+.contenedor1{
+margin: 10;
+padding: 1000;
+border-style: solid;
+border-color:#316699;
+}
+
+#cancelButton{
+	background-color: #E62C56;
+	color: #F2F2F2;
+	height:40px;
+	float:left;
+	margin-top: 5px;
+	width:100px;
+}
+
+#cancelWrapper {
+	position: relative;
+}
+
+#cancelIcon{
+	position: absolute; 
+	margin-top: -0.9em; 
+	margin-left: -0.3em;
+}
+
+#chooseFile {
+	background-color: #316699;
+	border-radius: 25px;
+	height:100px;
+	float:left;
+	position: absolute;
+	margin-left:10%;
+	margin-top:2%;
+	width:100px;
+}
+
+.content-wrapper{
+  	background: #F2F2F2;
+	height: 100%;
+	width: 100%;
+}
+
+#createObjectBtn {
+	height:74px;
+	margin-left: 50px;
+	margin-top: 50px;
+	width:80px;
+}
+
+#contentOptionsWrapper {
+	margin-top: 3em;
+}
+
+#cursorsWrapper {
+	height:1px;
+	width:1px;
+	z-index:1;
+	position:absolute;
+}
+
+#dummyWraper {
+	height:100%;
+	width:100%;
+	position:relative;
+	left:0px;
+	top:0px;
+}
+
+#logo{
+	height: 55px;
+	margin-top: 0.15vw;
+	margin-right: 2vw;
+	margin-left: -0.5vw;
+	width: 134px;
+}
+
+#logoMuroColaborativo{
+	height: 100%;
+}
+
+#logOutBtn{
+	background-color: #E62C56;
+	color: #FFFFFF;
+	font-family: AvantGarde;
+	font-size: 14pt;
+	height: 34px;
+	margin-top: 13px;
+	right: -7.5vw;
+	padding: 0px 0px 0px 0px;
+	width: 145px;
+	border-radius: 0px;
+	position: absolute;
+}
+
+#maxIcon{
+	font-size: xx-large;
+	top: 2px;
+}
+
+#maximizeBtn{
+	background-color: #C0F6FF;
+	color: #333366;
+	font-size: large;
+	height: 41px;
+	position: absolute;
+	right: -13vw;
+	margin-top: 10px;
+	padding: 0px 0px 0px 0px;
+	width: 41px;
+}
+  
+#mural {
+	height:100%;
+	width:100%;
+	background:white;
+	position:relative;
+	margin: 0 auto;
+}
+
+#ForoName {
+	color:white;
+	font-family: AvantGarde;
+	font-size: 20pt;
+	margin-top: 0.25vw;
+	margin-left: 5vw;
+}
+
+.non-floating-back-to-button-arrow {
+	height:100px;
+	margin-left:7%;
+	margin-top: 10px;
+	width:100px;
+}
+
+#okButton {
+	background-color: #E62C56;
+	color: #F2F2F2;
+	height:40px;
+	margin-left: 10px;
+    margin-top: 5px;
+	width:100px;
+}
+
+#OkCancelButtons{
+	height: 70px;
+	margin-left: 450px;
+	width: 400px;
+}
+
+#pin {
+	color: white;
+	font-family: AvantGarde;
+	font-size: 14pt;
+	margin-top: 30px;
+	margin-left: -8.5vw;
+	width: 250px;
+}
+
+#plusIcon {
+    color: white;
+    font-size: x-large;
+    margin-top: 40%;
+    margin-left: 20%;
+}
+
+#returnButton{
+	color:black;
+	font-size: xxx-large;
+}
+
+.right-click-remote-menu {
+    display: none;
+    z-index: 1000;
+    position: absolute;
+    overflow: hidden;
+    border: 1px solid #CCC;
+    white-space: nowrap;
+    font-family: sans-serif;
+    background: #E62C56;
+    color: #CCC;
+    border-radius: 5px;
+    padding: 0;
+}
+
+/* Each of the items in the list */
+.right-click-remote-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+    list-style-type: none;
+    transition: all .3s ease;
+    user-select: none;
+}
+
+.right-click-remote-menu li:hover {
+	border: 2px solid black;
+}
+
+#selectMosaicSpace {
+	background-color: #C0F6FF;
+	border-radius: 25px;
+	height: 215px;
+	margin-left: 100px;
+	margin-top: 50px;
+	position:relative;
+	width: 550px;
+}
+
+#textArea {
+	border-color: white;
+	border-radius: 25px;
+	font-size:35px;
+	height:200px;
+	margin-left:5%;
+	margin-top:5%;
+	width:700px;
+}
+
+.upperBar{
+	background-color: #316699;
+	border-radius: 0% 20px 20px 0%;	
+	height: 60px;
+	width: 80%;
+}
+
+.upperBarContainer {
+	background-color:#6DC8DD;
+	height: 60px;
+	padding-right: 0%;
+	padding-left: 0%;
+	position: relative;
+	width: 100%;
+	z-index:1;
+}
+
+#userName {
+	color:white;
+	display: flex;
+	font-family: AvantGarde;
+	font-size: 20pt;
+	margin-left: 12vw;
+	margin-top: 5px;
+	width:235px;
+}
+#workspaceMode {
+	background-color: #C0F6FF;
+	border-radius: 25px;
+	height: 300px;
+	margin-left: 100px;
+	margin-top: 50px;
+	position:relative;
+	width: 800px;
+}

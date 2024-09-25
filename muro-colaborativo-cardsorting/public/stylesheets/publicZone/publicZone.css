@@ -1,0 +1,147 @@
+.imageWrapper{
+    border:solid;
+    border-width: 1px;
+    border-color: #a8c9ff;
+}
+
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
+body, html {
+height: 100%;
+margin: 0;
+overflow: hidden
+}
+body {
+background:#2E2E2E
+}
+#headerPublicZone {
+background-color:#f67a00
+}
+
+.white-color {
+color:white
+}
+.pin {
+color:#c1ffdb;
+float:left;
+font-size: 33px;
+}
+.options-button {
+margin-top:10px;
+margin-bottom:3px;
+background-color:#fc0051;
+border: 3px;
+border-radius: 22px;
+
+}
+#dropdownMenu{
+border: 3px;
+border-radius: 22px;
+}
+
+#backToControlSessionBtnWrapper {
+display:none
+}
+#fullScreenPublicZone {
+width:30px;
+height:30px;
+margin-right:20px;
+margin-top:18px;
+float: right;
+}
+
+#cursorsWrapper {
+height:1px;
+width:1px;
+z-index:1;
+position:absolute;
+}
+#dummyWraper {
+height:100%;
+width:100%;
+position:relative;
+left:0px;
+top:0px;
+}
+#backgroundImage {
+width:100%;
+height:100%;
+background:white
+}
+.loader {
+height:270px;
+width:270px;
+margin: 0 auto;
+border-radius: 25px;
+border: 2px solid #73AD21;
+background-image: url('/images/loading_colors.gif');
+background-size: 100%
+}
+.session-chooser {
+height:100%;
+overflow-y: scroll
+}
+.invisible-dom {
+display:none
+}
+.image-upload-preview {
+height:270px;
+width:330px;
+border-radius: 25px;
+border: 2px solid #1abc9c;
+}
+.hidden-dom {
+visibility: hidden
+}
+#dropdownMenu > li > a {
+text-align: center;
+background : #fc0051;
+
+}
+#dropdownMenu > li {
+cursor: pointer;
+width: 100%;
+
+display: inline-block;
+background-color: #fc0051;
+}
+
+.dropdown-menu{
+height: 90%;
+
+}
+
+#nameSession{
+  margin-left: 70px;
+}
+#statusAppMessage {
+margin-top: 20px;
+margin-left: 70px;
+}
+#statusAppMessageMenu{
+position: center;
+}
+
+.parent {
+position: relative;
+top: 0;
+left: 0 px;
+}
+.image1 {
+position: relative;
+top: 0 px;
+right: 140px;
+}
+.image2 {
+position: absolute;
+top: 0px;
+left: -15px;
+}

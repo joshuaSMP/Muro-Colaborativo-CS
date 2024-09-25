@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en-EN">
+  <head>
+    <title>Acceso del Profesor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="/stylesheets/logIn/login.css" media="screen" type="text/css"/>
+    <link rel="stylesheet" href="/stylesheets/logIn/forms.css" media="screen" type="text/css"/>
+    <!-- Latest compiled and minified CSS -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=0.7, minimum-scale=0.5, maximum-scale=0.7, user-scalable=yes" />
+    <script>
+      if (localStorage.getItem("logged") == "true") {
+        window.location = "/admin/";
+      }
+    </script>
+  </head>
+
+  <style>
+    .btn-hover:hover{
+        opacity: 0.5;
+    }
+
+    .inicio-hover:hover{
+      opacity: 0.8;
+    }
+ </style>
+  <body class="bg-transparent">
+    <div class="container float-right pr-0" style="position: relative; width: 30%; z-index: 9999;">
+      <img src="/imagesv5/hexagono_anaranjado.svg" class="min-vh-100" style="width: auto; float: right; height: 100%;"/>
+      <button id="inicio">
+        <img src="/imagesv5/boton_tache_rosa.svg" style="position: absolute; width: 11%; left: 81.5%; top: 30%; z-index: 9999;"/>
+      </button>
+      <button class="formulario"></button>
+      <div class="login-page">
+        <div class="form" style="width: 13vw;">
+          <h2 style="font-size: 2.3vw; border: 0; margin: 0;">Profesor</h2>
+          <span id="errorformulario" style="font-size: 0.8vw; color: #ff3366;"></span><br>
+          <label style="font-size: 0.8vw">Correo electrónico</label>
+          <input style="height: 2vw; font-size: 0.8vw" id="emailLogin" class="form-control" type="text" placeholder="muro@correo.com" />
+          <label style="font-size: 0.8vw">Contraseña</label>
+
+          <input style="height: 2vw; font-size: 0.8vw" id="passwordLogin" class="form-control" type="password" placeholder="**********"/>
+
+          <button id="login-btn" class="btn-hover">
+            <img src="/imagesv5/boton_entrar_anaranjado.svg" style="position: absolute; width: 3.5vw; left: 36%; top: 13vw"/>
+          </button>
+
+          <p id="createAccount" style=" position: absolute; top: 16.5vw; left: 5%; text-align: center; font-size: 0.66vw;"> ¿No tienes una cuenta?
+            <a data-toggle="modal" data-target="#createAccountModal" href="#" style="text-decoration: underline" >Crea una aquí.</a>
+          </p>
+          <p id="resetPassword" style=" position: absolute; top: 17.5vw; left: 0%; text-align: center; font-size: 0.66vw;"> ¿Olvidaste tu contraseña?
+            <a data-toggle="modal" data-target="#resetPasswordModal" href="#" style="text-decoration: underline" >Recupérala aquí.</a>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="float-start ml-5 pl-5n pt-5">
+      <img
+        src="/imagesv5/logotipo_mc.png"
+        class="mw-25"
+        alt="MC_Logotipo"
+        style="width: 45vw"
+      />
+      <p
+        class="lead ml-5 pl-5"
+        style="font-size: 1vw; font-family: AvGardD; width: fit-content"
+      >
+        El Muro Colaborativo es una aplicación que permite a los estudiantes y
+        a<br />
+        los profesores compartir información en un área colaborativa de
+        trabajo,<br />
+        la cual es controlada desde los dispositivos personales de los
+        estudiantes<br />
+        conectados a la sesión. Desde su móvil o computadora, los estudiantes<br />
+        pueden generar y compartir textos, fotografías o videos, arreglar los<br />
+        objetos que han sido depositados previamente por ellos mismos o por<br />
+        sus compañeros, y modificar los elementos colocados por otros<br />
+        compañeros, todo a la vista del resto del grupo.
+      </p>
+    </div>
+
+    <!--<footer class="text-center text-lg-start bg-transparent text-muted w-60 p-0 m-0" style="height: 115px;">-->
+      <section class="d-flex justify-content-center justify-content-lg-between w-100 p-0 m-0">
+        <div class="media text-center p-4 m-0 fixed-bottom" style="background-color: #003366; color: #ffffff; height: 14%">
+          <div class="media-body w-40" style="width: fit-content">
+            <p style="font-size: 0.8vw; margin-right: 2%; font-family: AvGardD; position: absolute; left: 15%;">
+              Hecho en México. Instituto de Ciencias Aplicadas y Tecnología UNAM.
+              Grupo Espacios y<br />
+              Sistemas Interactivos para la Educación. Todos los derechos
+              reservados 2023.
+            </p>
+  
+            <div style=" position: absolute; left: 25%; bottom: 12%;">
+              <br>
+              <a class="text-reset fw-bold" style="font-size: 0.7vw; font-family: AvGardD;" href="">
+                Aviso de privacidad | </a>
+              <a class="text-reset fw-bold" style="font-size: 0.7vw; font-family: AvGardD;" href="">Créditos</a>
+            </div>
+          </div>
+            <img src="/images/logo_unam.svg" alt="Logo_UNAM" style="width: 4%; right: 37%; position: absolute"/>
+            <img src="/images/logo_icat.svg" alt="Logo_ICAT" style="width: 3.5%; position: absolute; right: 32%"/>
+            <img src="/images/Aula Futuro Blanco.svg" alt="Logo_AF" style="width: 2.5%; position: absolute; right: 28%"/>
+        </div>
+      </section>
+
+    <!-- Modal to introduce create an account -->
+    <div class="modal fade" id="createAccountModal" role="dialog">
+      <div class="modal-dialog" style="width: 45vw">
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+              &times;
+            </button>
+            <h4
+              class="modal-title"
+              style="position: absolute; left: 4%; top: 3%"
+            >
+              Crear cuenta
+            </h4>
+          </div>
+
+          <div class="modal-body">
+            <div class="form-group">
+              <form>
+                <label for="name">Nombre de usuario:</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  name="name"
+                  id="sessionNameInput"
+                  placeholder="Nombre(s) Apellido(s)"
+                />
+
+                <label for="email">Correo electrónico:</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  name="email"
+                  id="emailInput"
+                  placeholder="muro@correo.com"
+                />
+
+                <label for="password">Contraseña:</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  name="password"
+                  id="passwordInput"
+                  value=""
+                  placeholder="*********"
+                />
+                <div id="strengthMessage"></div>
+              </form>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="height: 4vw">
+            <button
+              type="button"
+              id="saveNameBtn"
+              class="btn btn-sm btn-success"
+              data-dismiss="modal"
+              style="
+                width: 7vw;
+                font-size: 1vw;
+                height: 2vw;
+                position: absolute;
+                left: 69%;
+                bottom: 1%;
+                background-color: #e68115;
+                border-color: #e68115;
+                padding-bottom: 1.5vw;
+                padding-top: 0vw;
+              "
+            >
+              Crear
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-danger"
+              data-dismiss="modal"
+              style="
+                width: 7vw;
+                font-size: 1vw;
+                height: 2vw;
+                left: 40%;
+                bottom: 1%;
+                background-color: #ff3366;
+                border-color: #ff3366;
+                padding-bottom: 1.5vw;
+                padding-top: 0vw;
+              "
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Modal for password reset -->
+    <div class="modal fade" id="resetPasswordModal" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">
+              &times;
+            </button>
+            <h4
+              class="modal-title"
+              style="position: absolute; left: 4%; top: 3%"
+            >
+              Recuperar contraseña
+            </h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="email">Correo electrónico:</label>
+              <input
+                type="text"
+                class="form-control"
+                name="email"
+                id="resetPassEmail"
+                placeholder="muro@correo.com"
+              />
+            </div>
+          </div>
+          <div class="modal-footer" style="height: 4vw">
+            <button
+              type="button"
+              id="resetPassBtn"
+              class="btn btn-lg btn-success"
+              data-dismis="modal"
+              style="
+                width: 7vw;
+                font-size: 1vw;
+                height: 2vw;
+                position: absolute;
+                left: 69%;
+                bottom: 1%;
+                background-color: #e68115;
+                border-color: #e68115;
+                padding-bottom: 1.5vw;
+                padding-top: 0vw;
+              "
+            >
+              Enviar
+            </button>
+            <button
+              type="button"
+              class="btn btn-lg btn-danger"
+              data-dismiss="modal"
+              style="
+                width: 7vw;
+                font-size: 1vw;
+                height: 2vw;
+                left: 40%;
+                bottom: 1%;
+                background-color: #ff3366;
+                border-color: #ff3366;
+                padding-bottom: 1.5vw;
+                padding-top: 0vw;
+                padding-right: 1vw;
+                padding-left: 1vw;
+              "
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/javascripts/common/jquery211min.js"></script>
+    <script src="/javascripts/common/bootstrap.min.js"></script>
+    <script src="/javascripts/common/jquery-ui.js"></script>
+    <script src="/javascripts/common/sweetalert2.all.min.js"></script>
+    <script src="/javascripts/common/socketIoClient.js"></script>
+    <script src="/javascripts/login_admin/login_admin.js"></script>
+  </body>
+
+  <script>
+    $("#inicio").click(function () {
+      window.location = "/";
+    });
+  </script>
+</html>

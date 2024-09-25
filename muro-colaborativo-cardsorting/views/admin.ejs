@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en-EN">
+  <head>
+    <title>Administrar sesiones</title>
+    <link href="stylesheets/common/bootstrap.min.css" rel="stylesheet">
+		<!-- CSS FILES -->
+	  <link rel="stylesheet" type="text/css" href="stylesheets/admin/style.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/common/sweetalert2.min.css">
+	  <!-- Latest compiled and minified CSS -->
+  	<meta charset="UTF-8" />
+  	<meta name="viewport" content="width=device-width, initial-scale=0.7, minimum-scale=0.5, maximum-scale=0.7, user-scalable=yes" />
+	</head>
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="row">
+	    <div class="col-xs-10" >
+	    	<h3 style="color:white">Actividades existentes</h3>
+	    	<br>
+	    </div>
+	    <div class="col-xs-2" >
+
+ 	    <div class="input-group" style=" padding-top:15px">
+	      <input type="text" class="form-control" placeholder="buscar" name="buscar">
+	      <div class="input-group-btn">
+	        <button class="btn btn-default" type="submit"><i class="glyphicon glyphicon-search"></i></button>
+	      </div>
+	    </div>
+	    <br>
+
+	  	</div>
+  </div>
+</nav>
+
+<div class="container-fluid" style="height:100%;margin-top:100px;overflow-y: scroll">
+    <ul id="sessions_list" class="list-group">
+    </ul>
+        <div class="container">
+            <div class="row" style="height:200px">
+            </div>
+        </div>
+</div>
+
+
+
+</body>
+<footer>
+
+  <!-- Modal -->
+  <div class="modal fade" id="addSessionModal" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Crear nueva actividad</h4>
+        </div>
+        <div class="modal-body">
+          <form id="form_data_session" action="/createSession" method="post" target="targetForm">
+            <div class="form-group">
+              <label for="titulo">Titulo:</label>
+              <input type="text" class="form-control" name="titulo" id="titulo">
+            </div>
+            <div class="form-group">
+              <label for="owner">Propietario</label>
+              <input type="text" class="form-control" name="owner" id="owner">
+            </div>
+            <div class="form-group" style="display:none">
+            <label for="number_students">Numero de alumnos</label>
+            <select class="form-control" name="number_students" id="number_students">
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+              <option>6</option>
+              <option>7</option>
+              <option>8</option>
+              <option>9</option>
+              <option>10</option>
+              <option>11</option>
+              <option>12</option>
+              <option>13</option>
+              <option>14</option>
+              <option>15</option>
+              <option>16</option>
+              <option>17</option>
+              <option>18</option>
+              <option>19</option>
+              <option>20</option>
+              <option  selected="selected">20</option>
+            </select>
+            </div>
+            <!-- style="display:none" -->
+           <div style="display:none"  class="form-group">
+           <label for="image_id_server">Id de la imagen en el servidor</label>
+              <input type="text" class="form-control" name="image_id_server" id="image_id_server">
+           </div>
+
+            </form>
+            <div class="form-group">
+              <label for="background_image">Imagen de fondo</label>
+              <br>
+              <button id="uploadImage" class="btn  btn-info">subir imagen</button>
+           </div>
+
+            <div id="showImageUploaded" class="container rounded" style="height:270px;width:330px;border-radius: 25px;
+    border: 2px solid #73AD21;">
+
+            </div>
+
+
+        </div>
+          <div class="modal-footer">
+          <button id="submitDataSession" type="button" class="btn btn-success" data-dismiss="modal">Aceptar</button>
+          <button type="button" class="btn btn-danger" onclick="cleanAddSessionModal()" data-dismiss="modal">Cancelar</button>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+                    <!-- Form for upload the image  style="visibility:hidden"  onchange="submitForm()"  -->
+            <div style="display:none">
+            <form id="uploadForm" enctype="multipart/form-data" action="/api/photo" method="post" target="targetForm">
+            <input    id="imageSelected" type="file" name="userPhoto" accept="image/png, image/jpg, image/jpeg, image/gif, image/webp"   />
+            <button  type="submit" class="btn btn-primary">Crear</button>
+            </form>
+            </div>
+
+     <!--    trick to hide the response -->
+        <iframe name="targetForm" style="visibility: hidden" >
+        </iframe>
+    <div class="navbar navbar-inverse  navbar-fixed-bottom"  style="height:70px">
+		  <div class="row">
+			    <div class="col-sm-10" >
+
+			    </div>
+
+			    <div id="parent" class="col-sm-2" >
+			    <div class="inner">
+      <button type="button" class="btn btn-outline-success btn-lg" onclick='cleanAddSessionModal()' style="margin-top:15px" data-toggle="modal" data-target="#addSessionModal">Crear actividad</button>
+				</div>
+
+			  	</div>
+		  </div>
+
+    </div>
+</footer>
+
+    <script src="javascripts/common/jquery211min.js"></script>
+       <script src="javascripts/common/bootstrap.min.js"></script>
+
+    <script src="javascripts/common/jquery-ui.js"></script>
+  <script src="javascripts/common/sweetalert2.all.min.js"></script>
+  <script src="javascripts/common/socketIoClient.js"></script>
+	</html>

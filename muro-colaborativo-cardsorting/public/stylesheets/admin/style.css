@@ -1,0 +1,23 @@
+
+/*html, body {margin: 0; 
+	height: 100%;
+	 overflow: hidden;
+	}
+
+
+#parent {
+    text-align:center;
+}
+.block {
+    text-align:left;
+}
+.center {
+    margin:auto;
+}*/
+
+.selectedSessionInList{
+    border-style: solid;
+    border-color:#42f445;
+    border-width:3px;
+    border-bottom-width:4px;
+}

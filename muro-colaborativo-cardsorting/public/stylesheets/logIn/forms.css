@@ -1,0 +1,13 @@
+/*
+ * Style sheet for previously defined in style CSS rules found in forms.
+ * author: Manuel "Nachintoch" Castillo, manuel_castillo_cc@ciencias.unam.mx
+ * version: 1.0, may 2019
+ */
+.login-form {
+ height:90%;
+ width:50% !important
+}
+.login-options {
+ height:100%;
+ width:100%
+}

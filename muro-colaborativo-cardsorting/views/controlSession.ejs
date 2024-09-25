@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en-EN">
+
+  <head>
+    <title>Vista Profesor</title>
+    <link href="/stylesheets/common/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/common/sweetalert2.min.css">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/admin/style.css">
+    <!-- CSS FILES -->
+    <link rel="stylesheet" type="text/css" href="/stylesheets/controlsession/controlsession.css">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/controlsession/styleVistaProfesor.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=0.7, minimum-scale=0.5, maximum-scale=0.7, user-scalable=yes" />
+    <script>
+      if (localStorage.getItem("logged") != "true") {
+        window.location = "/auth/admin/";
+      }
+    </script>
+  </head>
+
+  <body>
+    <div id="success-message" class="alert alert-success" role="alert">
+      <img src="https://cdn.dribbble.com/users/1063378/screenshots/7969170/media/fc06202220004b8edc6a418962ee05fd.gif" height="150px" style="margin: 0px;">
+      ¡El foro se ha guardado con éxito!
+    </div>
+    
+    
+    <div class="container"> <!-- General division -->
+      <div class="container"> <!--Barra de inicio division -->
+        <div>
+          <img src= "/images/logotipo_horizontal.svg" class="logo">
+        </div>
+        <div>
+          <div class="orange-box" style="background: #E68115;"> </div>
+        </div>
+        <div>
+          <img src= "/images/barra_azul.png" class="barra_azul" width="1084" height="60">
+        </div>
+        <div class= "titulo">
+            <h1>  Foros </h1>
+        </div>
+
+        <div class="div-btn-user">    <!-- User button division -->
+          <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" onclick='desplegarConClickDropdown("usuarioDropdown")' 
+              type="button" data-toggle="dropdown" id="adminNameDiv2" 
+              style="background: white; border-color: transparent; color: black;
+              border-radius: 10vw; display: flex; align-items: center; justify-content: center;
+              font-weight: bold; width: 4vw; height: 8.5vh; margin-top: 0.4vh;"> </button>
+                <div class="dropdown-content" id ="usuarioDropdown" style="right: 5.008vw; top: 18.9vh; background-color: pink; z-index: -90;">
+                  <a style="color: black; background-color: white; font-weight: bolder; height: 8.5vh; border-radius: 0px;
+                  border: 0px;" id = "adminNameDiv">  </a>
+                  <a style="color: black;" href="#" onclick=""> Editar perfil </a>
+                  <a style="color: black;" href="#" id= exitBtn> Cerrar sesion </a>
+                </div>
+          </div>
+        </div>
+      </div> <!-- end barra de inicio division -->
+      <br>
+      <br>
+      <br>
+      <br>
+
+      <div class="max-scrollable-height">
+        <div id="workspace"> <!--Star workspace division -->
+            <div id="adminSessionsWorkspace" class="workspace">
+              <div class="container-fluid" >
+                <div class="col-xs-1" , style="cursor: pointer;" > <!-- add activity button division -->
+                  <img src="/images/hexa_mas.svg"
+                    onclick='cleanAddSessionModal()'
+                    class="add-modal-button" data-toggle="modal"
+                    data-target="#addSessionModal"/>
+                </div>
+
+                <div class="col-xs-10" > <!-- search bar -->
+                  <div class="input-group searchIndex" >
+                      <input type="search" class="form-control"
+                        placeholder="Buscar" name="searchSession" id="searchSession" style="width: 15.5vw;height: 5.7vh; font-size: 1.1vw;">
+                      <div class="input-group-btn">
+                        <button class="btn btn-default" type="submit" style="width: 2.9vw; height: 5.7vh;">
+                          <i class="glyphicon glyphicon-search" style="width: 1vw; height: 0vh; font-size: 1vw;"></i>
+                        </button>
+                      </div>
+                  </div>
+                </div>
+                <div class="dropdown">
+                      <img id="sort-button" src="/images/hexa_flechas.svg" class="sort-modal-button" onclick='desplegarConClickDropdown("filtroDropdown")'>
+                      <div id ="filtroDropdown" class="dropdown-content" style="right:5vw; top: 40vh;">
+                        <a href="#" onclick="filterSelectionAZ()"> Titulo: A-Z </a>
+                        <a href="#" onclick="filterSelectionZA()"> Titulo: Z-A </a>
+                        <!-- <a href="#"> Grupo </a> -->
+                        <a href="#" onclick="filterSelectionRecentDate()"> Fecha: Más reciente </a>
+                        <a href="#" onclick="filterSelectionOldestDate()"> Fecha: Más antiguo </a>
+                        <a href="#" onclick="filterSelectionActive()"> Estado: Activos </a>
+                        <a href="#" onclick="filterSelectionInactive()"> Estado: Desactivados </a>
+                      </div>
+                </div>
+                <br>
+              <!-- division to show all activities -->
+                <div style="margin-top: 2vh; width: 95vw; height: 210vh;">
+                  <ul id="sessions_list" class="list-group"></ul>
+                </div>
+
+                <br>
+                <div class="dropdown">
+                  <img id="icon-button" src="/images/Info.svg" class="icon-modal-button" onclick='desplegarConClickDropdown("infoDropdown")'>
+                  <div id ="infoDropdown" class="dropdown-content" style="left: 69vw; top: -8vh; font-size: 1vw; position: absolute; background-color:transparent;">
+                  <p> Icono de información </p>
+                  </div>
+                </div>
+
+
+              </div>
+              <div class="modal fade" id="addSessionModal" role="dialog">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Crear nuevo foro</h5>
+                      <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                      <form id="form_data_session" action="/CrearForo" method="post" target="targetForm" >
+                        <div class="form-group">
+                          <label for="titulo" style="font-size: 1.1vw;">Tema a discutir:</label>
+                          <input type="text" class="form-control" name="tema_foro" id="tema_foro" style="font-size: 1vw; width: 21.8vw; height: 6vh;" required>
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button id="submitDataSession" type="button" class="btn btn-success" data-dismiss="modal">Guardar</button>
+                      <button type="button" class="btn btn-danger" onclick="cleanAddSessionModal()" data-dismiss="modal">Cancelar</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>  
+              <div class="invisible-man">
+                <form id="uploadForm" enctype="multipart/form-data"
+                  action="/api/photo" method="post" target="targetForm">
+                  <input id="imageSelected" type="file" name="userPhoto"
+                  accept="image/png, image/jpg, image/jpeg, image/gif, image/webp" />
+                  <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+              </div>
+
+              <iframe name="targetForm" class="hidden-visibility-man">
+              </iframe>
+            </div>
+          </div> <!--end workspace division -->
+        </div>
+      </div>
+
+      <div id="myNav" class="overlay">
+        <div id="iframeExpadedWrapper" ></div>
+      </div>
+      <div id="miniPublicZoneWrapper" >
+        <iframe id="miniPublicZone" class="miniScreenIframe"></iframe>
+      </div>
+
+    <script src="/javascripts/common/jquery211min.js"></script>
+    <script src="/javascripts/common/jquery-ui.js"></script>
+    <script src="/javascripts/common/sweetalert2.all.min.js"></script>
+    <script src="/javascripts/common/socketIoClient.js"></script>
+    <script src="/javascripts/common/bootstrap.min.js"></script>
+    <script src="/javascripts/common/formatString.js"></script>
+    <script src="/javascripts/controlSession/controlSession.js"></script>
+    <script src="/javascripts/admin/admin.js"></script>
+
+
+  </body>
+  </html>

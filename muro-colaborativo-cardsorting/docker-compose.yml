@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  mc-postgres:
+    image: postgres
+    ports:
+      - "5455:5432"
+    volumes: 
+      - mc-postgres-volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=muroc
+    networks:
+      - mc-network
+
+  mc-node:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    stdin_open: true
+    tty: true
+    env_file:
+      - ./.env
+    volumes:
+      - .:/code
+      - /code/node_modules
+    ports:
+      - 3000:3000
+    depends_on:
+      - mc-postgres
+    networks:
+      - mc-network
+
+volumes:
+  mc-postgres-volume:
+    driver: local
+
+networks:
+  mc-network:
+    driver: "bridge"

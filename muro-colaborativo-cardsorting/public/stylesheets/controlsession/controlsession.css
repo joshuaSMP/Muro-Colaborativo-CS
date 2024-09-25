@@ -1,0 +1,279 @@
+body, html {
+  height: 4vh;
+  width: 21vw;
+  margin: 0;
+  overflow-x: scroll;
+  overflow-y: hidden;
+}
+
+
+h4{
+    margin-left:5px;
+    margin-right: 5px
+}
+
+.menuOption {
+    /*border-bottom: 1px solid;*/
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+     color:black;
+     border: 1px solid;
+     border-bottom-width:4px;
+     border-top-left-radius:0px;
+     border-top-right-radius:0px
+}
+
+.editProfile {
+    /*border-bottom: 1px solid;*/
+    text-align: center;
+    height: 100%;
+    cursor: pointer;
+     float: right;
+     color:white;
+     border: 6px solid;
+     border-top-left-radius:0px;
+     border-top-right-radius:0px
+}
+
+.exit {
+    /*border-bottom: 1px solid;*/
+    text-align: center;
+    height: 35px;
+    cursor: pointer;
+     float: right;
+     /*color:white;*/
+     /*border: 3px solid;*/
+ /*border-bottom-width:4px;*/
+     border-top-left-radius:0px;
+     border-top-right-radius:0px
+}
+
+.menu{
+    height: 100%;
+    background-color:white;
+    /*float: left;
+    width: 200px*/
+
+}
+
+.optionSelected{
+     border-bottom: none;
+}
+
+.workspaceWrapper{
+   border: 2px solid #2980b9 ;
+   height: 100%;
+    overflow: scroll;
+    /*background-color: #9b59b6;*/
+}
+
+.container-fluid {
+    height: 100vh;
+    width: 97vw;
+}
+
+
+.workspace{
+    width:95vw;
+    height:100vh;
+}
+
+
+.imageWrapper{
+    border:solid;
+    border-width: 1px;
+    border-color: #a8c9ff;
+}
+
+.fullScreenIframe{
+       border: 0;
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+         bottom:0;
+         width:100%;
+         height:100%
+}
+
+.miniScreenIframe{
+    width:600px;
+    height:350px;
+    frameBorder:1;
+    -webkit-transform:scale(0.8);
+    -moz-transform:scale(0.8);
+}
+
+.overlay {
+    height: 0%;
+    width: 100%;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0, 0.9);
+    overflow-y: hidden;
+    transition: 0.5s;
+}
+
+.overlay-content {
+    position: relative;
+    top: 25%;
+    width: 100%;
+    text-align: center;
+    margin-top: 30px;
+}
+
+.overlay a {
+    padding: 8px;
+    text-decoration: none;
+    font-size: 36px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+}
+
+.overlay a:hover, .overlay a:focus {
+    color: #f1f1f1;
+}
+
+.overlay .closebtn {
+    position: absolute;
+    top: 20px;
+    right: 45px;
+    font-size: 60px;
+}
+
+@media screen and (max-height: 450px) {
+  .overlay {overflow-y: auto;}
+  .overlay a {font-size: 20px}
+  .overlay .closebtn {
+    font-size: 40px;
+    top: 15px;
+    right: 35px;
+  }
+}
+
+.selectedUSerInList{
+    border-style: solid;
+    border-color:#42f445;
+    border-width:3px;
+    border-bottom-width:4px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {display:none;}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.activitycontainer{
+  position: relative;
+  width: 37vw;
+  height: 61vh;
+  background-color: #c4e1ff;
+  border-radius: 11vh;
+  padding: 50px;
+}
+
+#plusIcon {
+  color: white;
+  font-size:40px;
+  margin-top: 30%;
+  margin-left: 4%;
+}
+
+h3 {
+  color: rgb(0, 0, 0);
+  text-align: center;
+  font-family: AvantGardeFont;
+  font-size: 4vh;
+  display: inline-block;
+  font-weight: bold;
+  margin-top: 0vh;
+}
+
+h5 {
+  color: white;
+  font-weight: bold;
+}
+
+li {
+  background-color: transparent;
+  display:inline-block;
+  width: 44vw;
+  height: 65vh;
+} 
+
+@font-face {
+  font-family: "AvantGardeFont";
+  src: url("/stylesheets/fonts/avgardn_2-webfont.woff") format("woff");
+}
+
+.activitycontainer_background{
+  left: 25px;
+  width:90%;
+  height:45%;
+  position: relative;
+  background-color: white;
+}
+
+.list-group{
+  padding-left: 0;
+  margin-bottom: 2vh;
+  margin-top: 3vh;
+  margin-left: 6vw;
+}

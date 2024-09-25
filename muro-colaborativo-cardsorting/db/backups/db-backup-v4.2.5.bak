@@ -1,0 +1,1417 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 9.6.11
+-- Dumped by pg_dump version 11.5 (Debian 11.5-1+deb10u1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: assign_seat(); Type: FUNCTION; Schema: public; Owner: adef
+--
+
+CREATE FUNCTION public.assign_seat() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+  DECLARE
+    occuped_seats INTEGER;
+  BEGIN
+    IF TG_OP = 'UPDATE' THEN
+      IF NEW.last_login IS NULL THEN
+        NEW.last_login = OLD.last_login;
+      END IF;
+      IF NEW.last_logout IS NULL THEN
+        NEW.last_logout = OLD.last_logout;
+      END IF;
+    END IF;
+    IF NEW.cursor IS NOT NULL THEN
+      RETURN NEW;
+    END IF;
+    SELECT COUNT(*) INTO occuped_seats FROM public.activity_user
+      WHERE pin = NEW.pin;
+    SELECT MOD(occuped_seats, 20) INTO occuped_seats;
+    NEW.cursor = occuped_seats +1;
+    RETURN NEW;
+  END;
+$$;
+
+
+ALTER FUNCTION public.assign_seat() OWNER TO adef;
+
+--
+-- Name: issue_shared_object_public_id(); Type: FUNCTION; Schema: public; Owner: adef
+--
+
+CREATE FUNCTION public.issue_shared_object_public_id() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  new_public_id CHAR(16);
+  objects_with_same_id INTEGER;
+BEGIN
+  LOOP
+    SELECT regexp_replace(array_to_string(ARRAY(SELECT chr((48 +round(random() *59)) :: INTEGER)
+      FROM generate_series(1,16)), ''), '[^a-zA-Z0-9]', '-','g') INTO new_public_id;
+    SELECT COUNT(*) INTO objects_with_same_id
+      FROM public.shared_object AS object WHERE object.room = NEW.room
+        AND object.public_id = new_public_id;
+    EXIT WHEN objects_with_same_id = 0;
+  END LOOP;
+  NEW.public_id = new_public_id;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.issue_shared_object_public_id() OWNER TO adef;
+
+--
+-- Name: requestpasswordreset(text); Type: FUNCTION; Schema: public; Owner: adef
+--
+
+CREATE FUNCTION public.requestpasswordreset(user_email text) RETURNS character
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  request_id CHAR(64);
+  requests_with_same_id INTEGER;
+BEGIN
+  LOOP
+    SELECT regexp_replace(array_to_string(ARRAY(SELECT chr((48 +round(random() *59)) :: INTEGER)
+      FROM generate_series(1,64)), ''), '[^a-zA-Z0-9]', '-','g') INTO request_id;
+    SELECT COUNT(*) INTO requests_with_same_id FROM public.user
+      WHERE pw_reset_request_id = request_id;
+    EXIT WHEN requests_with_same_id = 0;
+  END LOOP;
+  UPDATE public.user SET last_pw_reset = now() at time zone 'America/Mexico_City',
+    pw_reset_request_id = request_id WHERE email = user_email;
+  IF NOT FOUND THEN RAISE EXCEPTION 'No user given email %', user_email;
+  END IF;
+  RETURN request_id;
+END;
+$$;
+
+
+ALTER FUNCTION public.requestpasswordreset(user_email text) OWNER TO adef;
+
+--
+-- Name: toggleactivityactivestate(uuid); Type: FUNCTION; Schema: public; Owner: adef
+--
+
+CREATE FUNCTION public.toggleactivityactivestate(activity_id uuid) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  current_state BOOLEAN;
+BEGIN
+  SELECT is_active INTO current_state FROM public.activity
+    WHERE id = activity_id;
+  UPDATE public.activity SET is_active = NOT current_state,
+    activation_date = now() at time zone 'America/Mexico_City'
+    WHERE id = activity_id RETURNING is_active INTO current_state;
+  RETURN current_state;
+END;
+$$;
+
+
+ALTER FUNCTION public.toggleactivityactivestate(activity_id uuid) OWNER TO adef;
+
+--
+-- Name: toggleactivitypause(uuid); Type: FUNCTION; Schema: public; Owner: adef
+--
+
+CREATE FUNCTION public.toggleactivitypause(activity_id uuid) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  current_state BOOLEAN;
+BEGIN
+  SELECT is_paused INTO current_state FROM public.activity
+    WHERE id = activity_id;
+  UPDATE public.activity SET is_paused = NOT current_state,
+    edited_date = now() at time zone 'America/Mexico_City'
+    WHERE id = activity_id RETURNING is_paused INTO current_state;
+  RETURN current_state;
+END;
+$$;
+
+
+ALTER FUNCTION public.toggleactivitypause(activity_id uuid) OWNER TO adef;
+
+--
+-- Name: update_activity_times(); Type: FUNCTION; Schema: public; Owner: adef
+--
+
+CREATE FUNCTION public.update_activity_times() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  NEW.edited_date = now() at time zone 'America/Mexico_City';
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_activity_times() OWNER TO adef;
+
+--
+-- Name: update_shared_object_times(); Type: FUNCTION; Schema: public; Owner: adef
+--
+
+CREATE FUNCTION public.update_shared_object_times() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  NEW.last_edited_date = now() at time zone 'America/Mexico_City';
+  NEW.edited_times = NEW.edited_times +1;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.update_shared_object_times() OWNER TO adef;
+
+--
+-- Name: validate_password_change(); Type: FUNCTION; Schema: public; Owner: adef
+--
+
+CREATE FUNCTION public.validate_password_change() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  elapsed_time DOUBLE PRECISION;
+BEGIN
+  SELECT(EXTRACT(
+    EPOCH FROM (now() at time zone 'America/Mexico_City') - OLD.last_pw_reset) /3600)
+    INTO elapsed_time;
+  IF NEW.pw <> OLD.pw AND elapsed_time > 1 THEN
+    RAISE EXCEPTION 'Its too late now to change the user % password', OLD.email;
+  END IF;
+  NEW.last_updated =  now() at time zone 'America/Mexico_City';
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.validate_password_change() OWNER TO adef;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: activity; Type: TABLE; Schema: public; Owner: adef
+--
+
+CREATE TABLE public.activity (
+    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
+    pin integer NOT NULL,
+    background_image text,
+    owner_id uuid,
+    is_deleted boolean DEFAULT false NOT NULL,
+    edited_date timestamp with time zone DEFAULT timezone('America/Mexico_City'::text, now()),
+    creation_date timestamp with time zone DEFAULT timezone('America/Mexico_City'::text, now()),
+    name character varying(100),
+    is_paused boolean DEFAULT false,
+    activation_date timestamp with time zone DEFAULT timezone('America/Mexico_City'::text, now()),
+    is_active boolean DEFAULT true NOT NULL,
+    max_number_users smallint DEFAULT 20
+);
+
+
+ALTER TABLE public.activity OWNER TO adef;
+
+--
+-- Name: activity_user; Type: TABLE; Schema: public; Owner: adef
+--
+
+CREATE TABLE public.activity_user (
+    pin integer NOT NULL,
+    username text NOT NULL,
+    cursor integer,
+    last_login timestamp with time zone,
+    last_logout timestamp with time zone
+);
+
+
+ALTER TABLE public.activity_user OWNER TO adef;
+
+--
+-- Name: shared_object; Type: TABLE; Schema: public; Owner: adef
+--
+
+CREATE TABLE public.shared_object (
+    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
+    room integer,
+    percentage_x numeric NOT NULL,
+    percentage_y numeric NOT NULL,
+    type character varying(50) NOT NULL,
+    cursor integer,
+    text text,
+    creation_date timestamp with time zone DEFAULT now() NOT NULL,
+    owners text[],
+    public_id character(16) NOT NULL,
+    image_path text,
+    last_edited_date timestamp with time zone DEFAULT timezone('America/Mexico_City'::text, now()),
+    edited_times integer DEFAULT 0,
+    activity_id uuid,
+    is_deleted boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.shared_object OWNER TO adef;
+
+--
+-- Name: user; Type: TABLE; Schema: public; Owner: adef
+--
+
+CREATE TABLE public."user" (
+    id uuid DEFAULT public.uuid_generate_v1() NOT NULL,
+    name text,
+    email text NOT NULL,
+    pw character varying(100),
+    last_pw_reset timestamp with time zone,
+    pw_reset_request_id character(64),
+    last_updated timestamp with time zone DEFAULT timezone('America/Mexico_City'::text, now()),
+    is_deleted boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public."user" OWNER TO adef;
+
+--
+-- Data for Name: activity; Type: TABLE DATA; Schema: public; Owner: adef
+--
+
+COPY public.activity (id, pin, background_image, owner_id, is_deleted, edited_date, creation_date, name, is_paused, activation_date, is_active, max_number_users) FROM stdin;
+bb273f64-cf37-11e9-9c5b-0686c08fc21a	97981	1567627385348.jpg	179cb77a-cf37-11e9-b768-0686c08fc21a	f	2019-09-04 12:16:28.15639+00	2019-09-04 12:16:28.15639+00	Tabajo colaborativo	f	\N	t	20
+b3b6c50c-c9b4-11e9-a5ce-0686c08fc21a	14236	\N	\N	f	2019-08-28 11:55:55.691821+00	2019-08-28 11:55:55.691821+00	Camatsan	f	\N	t	20
+992ce152-93aa-11e9-b583-0686c08fc21a	61395	\N	\N	f	2019-06-20 17:27:33.507162+00	2019-06-20 17:27:33.507162+00	\N	f	\N	t	20
+289aab6c-93ab-11e9-a2e0-0686c08fc21a	34240	\N	\N	f	2019-06-20 17:31:34.141806+00	2019-06-20 17:31:34.141806+00	\N	f	\N	t	20
+1a9a5fa6-93ad-11e9-8a5b-0686c08fc21a	59319	\N	\N	f	2019-06-20 17:45:29.645254+00	2019-06-20 17:45:29.645254+00	\N	f	\N	t	20
+3740c2dc-cf6f-11e9-b16a-0686c08fc21a	48905	\N	3731aeaa-cf6f-11e9-b169-0686c08fc21a	t	2019-09-04 18:53:38.68162+00	2019-09-04 18:53:38.68162+00	adef ffyl	t	2019-09-05 00:03:01.059+00	t	20
+58b07d72-b7b4-11e9-bf13-0686c08fc21a	15453	\N	\N	f	2019-08-05 14:08:02.041739+00	2019-08-05 14:08:02.041739+00	\N	f	\N	t	20
+eaed4590-bee3-11e9-90ce-0686c08fc21a	73629	\N	eade0f76-bee3-11e9-90cd-0686c08fc21a	f	2019-08-14 17:36:11.97426+00	2019-08-14 17:36:11.97426+00	Fernando Gamboa	f	\N	t	20
+e9b8f59a-cf6c-11e9-a0a1-0686c08fc21a	50171	1567641080855.jpg	\N	f	2019-09-04 18:37:09.239222+00	2019-09-04 18:37:09.239222+00	\N	f	\N	t	20
+17aad54e-cf37-11e9-b769-0686c08fc21a	28667	1568228007954.gif	179cb77a-cf37-11e9-b768-0686c08fc21a	f	2019-09-04 12:11:53.872909+00	2019-09-04 12:11:53.872909+00	Seminario	f	2019-09-11 18:08:29.778+00	t	20
+2b9ec5e4-d336-11e9-8da3-0686c08fc21a	36332	\N	2b80cc1a-d336-11e9-8da2-0686c08fc21a	f	2019-09-09 14:15:22.50256+00	2019-09-09 14:15:22.50256+00	Fernando Gamboa Rodríguez	f	\N	t	20
+f3bbd776-cf6f-11e9-9ad3-0686c08fc21a	38717	1567641531288.jpg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	t	2019-09-04 18:58:54.899528+00	2019-09-04 18:58:54.899528+00	adef ffyl	t	2019-09-05 00:04:34.841+00	t	20
+65934d08-cf38-11e9-a33a-0686c08fc21a	30058	1567617899762.jpg	6585ccdc-cf38-11e9-a339-0686c08fc21a	t	2019-09-04 12:21:14.07761+00	2019-09-04 12:21:14.07761+00	¿Desventajas del salón con el arreglo que observa	f	2019-09-09 16:18:17.147+00	t	20
+b9c08df2-cff4-11e9-8904-0686c08fc21a	18313	1567698550088.jpg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	t	2019-09-05 10:49:20.358555+00	2019-09-05 10:49:20.358555+00	ffyl	t	2019-09-05 15:49:40.175+00	t	20
+faddbfc6-ca77-11e9-b393-0686c08fc21a	58983	\N	\N	f	2019-08-29 11:13:46.940486+00	2019-08-29 11:13:46.940486+00	\N	f	\N	t	20
+ba97d724-ceca-11e9-b7ef-0686c08fc21a	57786	\N	\N	f	2019-09-03 23:16:11.943501+00	2019-09-03 23:16:11.943501+00	\N	f	\N	t	20
+f7a16d3e-cf32-11e9-9904-0686c08fc21a	98606	\N	\N	f	2019-09-04 11:42:22.121672+00	2019-09-04 11:42:22.121672+00	\N	f	\N	t	20
+207b904a-cf33-11e9-b4d5-0686c08fc21a	78581	\N	\N	f	2019-09-04 11:43:30.675323+00	2019-09-04 11:43:30.675323+00	\N	f	\N	t	20
+0369904c-bee4-11e9-89b7-0686c08fc21a	37331	1565822208771.jpg	eade0f76-bee3-11e9-90cd-0686c08fc21a	f	2019-08-14 17:36:53.057244+00	2019-08-14 17:36:53.057244+00	Primera sesión bis	t	2019-08-14 23:03:35.65+00	t	20
+c90abf06-d325-11e9-89b9-0686c08fc21a	44245	1568049673018.jpg	6585ccdc-cf38-11e9-a339-0686c08fc21a	f	2019-09-09 12:18:05.167737+00	2019-09-09 12:18:05.167737+00	sesion lunes	t	2019-09-09 17:26:10.844+00	t	20
+6674d582-d31d-11e9-b279-0686c08fc21a	51258	1568222360143.jpg	6585ccdc-cf38-11e9-a339-0686c08fc21a	f	2019-09-09 11:18:03.778837+00	2019-09-09 11:18:03.778837+00	Ventajas y desventajas de los espacios de la ENP 7	f	2019-09-11 17:28:42.648+00	t	20
+874aab50-d4b8-11e9-b733-0686c08fc21a	74809	\N	872e8f24-d4b8-11e9-b732-0686c08fc21a	t	2019-09-11 12:21:02.039573+00	2019-09-11 12:21:02.039573+00	Estefanía Prieto Larios	f	\N	t	20
+556a6958-c055-11e9-bd3a-0686c08fc21a	19473	1565981941216.jpg	\N	f	2019-08-16 13:40:34.879709+00	2019-08-16 13:40:34.879709+00	\N	f	\N	t	20
+83068384-cf45-11e9-86a5-0686c08fc21a	34337	1567624223940.jpg	82f7175a-cf45-11e9-86a4-0686c08fc21a	t	2019-09-04 13:55:06.944101+00	2019-09-04 13:55:06.944101+00	Libia Eslava	t	2019-09-04 19:05:31.622+00	t	20
+3a4fd206-d410-11e9-b1b2-0686c08fc21a	85791	1568150332195.png	\N	f	2019-09-10 16:16:17.312058+00	2019-09-10 16:16:17.312058+00	\N	f	\N	t	20
+3d0ab5f6-cf47-11e9-ae14-0686c08fc21a	29637	1567624573368.jpeg	82f7175a-cf45-11e9-86a4-0686c08fc21a	t	2019-09-04 14:07:28.524162+00	2019-09-04 14:07:28.524162+00	Prueba	t	2019-09-04 19:07:44.472+00	t	20
+b560c922-d330-11e9-b9b1-0686c08fc21a	50037	1568056027154.jpeg	\N	f	2019-09-09 13:36:16.613894+00	2019-09-09 13:36:16.613894+00	\N	f	\N	t	20
+7c5b1c6c-d45d-11e9-b8d4-0686c08fc21a	52375	\N	\N	f	2019-09-11 01:29:19.489524+00	2019-09-11 01:29:19.489524+00	\N	f	\N	t	20
+0a3a43ec-d458-11e9-a5a6-0686c08fc21a	52073	\N	0a24b98c-d458-11e9-a5a5-0686c08fc21a	f	2019-09-11 00:50:20.527966+00	2019-09-11 00:50:20.527966+00	Alina Dolores	t	2019-09-11 06:06:12.138+00	t	20
+dc66d540-d0d1-11e9-b595-0686c08fc21a	77489	1567793949810.png	\N	f	2019-09-06 13:12:17.513499+00	2019-09-06 13:12:17.513499+00	\N	f	\N	t	20
+c2397344-d4c3-11e9-8a3d-0686c08fc21a	51792	\N	c21b0972-d4c3-11e9-8a3c-0686c08fc21a	t	2019-09-11 13:41:25.376137+00	2019-09-11 13:41:25.376137+00	Jacqueline Hinojosa Rivera	f	\N	t	20
+06c722a2-d4b7-11e9-bea9-0686c08fc21a	33766	\N	\N	f	2019-09-11 12:10:16.848228+00	2019-09-11 12:10:16.848228+00	Ensayo	f	\N	t	20
+4e1eb1e2-d336-11e9-b186-0686c08fc21a	38934	1568056574427.jpeg	2b80cc1a-d336-11e9-8da2-0686c08fc21a	f	2019-09-09 14:16:20.383112+00	2019-09-09 14:16:20.383112+00	Discusión para abrir la materia	f	\N	t	20
+235d28c0-d57b-11e9-8eaa-0686c08fc21a	60193	\N	\N	f	2019-09-12 11:34:06.237188+00	2019-09-12 11:34:06.237188+00	\N	f	\N	t	20
+d73ca496-d4c3-11e9-b9c8-0686c08fc21a	85423	1568227449926.png	d72911c4-d4c3-11e9-b9c7-0686c08fc21a	f	2019-09-11 13:42:00.629249+00	2019-09-11 13:42:00.629249+00	Centro DidacTIC	f	2019-09-11 18:46:56.639+00	t	20
+ed0e1d86-d4c3-11e9-b241-0686c08fc21a	29493	1568227392858.jpg	c21b0972-d4c3-11e9-8a3c-0686c08fc21a	f	2019-09-11 13:42:37.233858+00	2019-09-11 13:42:37.233858+00	Representación Geográfica	t	2019-09-11 18:46:45.811+00	t	20
+8856f4ec-d4e3-11e9-8263-0686c08fc21a	79407	\N	884843d4-d4e3-11e9-8262-0686c08fc21a	t	2019-09-11 17:28:52.157022+00	2019-09-11 17:28:52.157022+00	Ernesto González	f	\N	t	20
+80e7ef54-d4e3-11e9-ab6d-0686c08fc21a	12155	\N	80d83cf8-d4e3-11e9-ab6c-0686c08fc21a	t	2019-09-11 17:28:39.685441+00	2019-09-11 17:28:39.685441+00	Dolores Erandio Castro Martínez	f	\N	t	20
+8b97c51e-d4e3-11e9-82b1-0686c08fc21a	32287	\N	8b7c066c-d4e3-11e9-82b0-0686c08fc21a	t	2019-09-11 17:28:57.614949+00	2019-09-11 17:28:57.614949+00	Rodolfo Ochoa Lagunes	f	\N	t	20
+c0732440-d4e3-11e9-81c8-0686c08fc21a	84769	1568237389323.JPG	c0636b5e-d4e3-11e9-81c7-0686c08fc21a	f	2019-09-11 17:30:26.29414+00	2019-09-11 17:30:26.29414+00	Edith Vázquez León	f	\N	t	20
+c57619d4-d4e3-11e9-ab0b-0686c08fc21a	81147	1568241029314.jpeg	8b7c066c-d4e3-11e9-82b0-0686c08fc21a	f	2019-09-11 17:30:34.701767+00	2019-09-11 17:30:34.701767+00	Animación y Diseño	t	2019-09-11 22:32:42.511+00	t	20
+1dec276a-d4e5-11e9-a4c5-0686c08fc21a	52158	1568224625847.JPG	1ddad546-d4e5-11e9-a4c4-0686c08fc21a	f	2019-09-11 17:40:12.612068+00	2019-09-11 17:40:12.612068+00	Prueba	f	\N	t	20
+d382ed2c-d4e3-11e9-92cf-0686c08fc21a	44449	1568241041510.jpg	80d83cf8-d4e3-11e9-ab6c-0686c08fc21a	f	2019-09-11 17:30:58.273932+00	2019-09-11 17:30:58.273932+00	Monografía 1	f	2019-09-11 22:35:13.387+00	t	20
+c4b964ec-d4e3-11e9-9f9d-0686c08fc21a	47571	1568241089001.jpg	884843d4-d4e3-11e9-8262-0686c08fc21a	f	2019-09-11 17:30:33.465023+00	2019-09-11 17:30:33.465023+00	Prueba	f	2019-09-11 22:34:53.431+00	t	20
+3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	73359	1568236138359.jpg	872e8f24-d4b8-11e9-b732-0686c08fc21a	f	2019-09-11 15:46:35.404084+00	2019-09-11 15:46:35.404084+00	Ventajas y Desventajas de los Espacios	f	2019-09-11 20:50:32.846+00	t	20
+494f76b8-d45a-11e9-bdc3-0686c08fc21a	19398	1568182080043.png	0a24b98c-d458-11e9-a5a5-0686c08fc21a	f	2019-09-11 01:06:25.359152+00	2019-09-11 01:06:25.359152+00	Sesión Prueba	t	2019-09-11 06:08:21.054+00	t	20
+04a67f12-d4b8-11e9-aec4-0686c08fc21a	84020	1568222233840.jpg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	t	2019-09-11 12:17:22.859312+00	2019-09-11 12:17:22.859312+00	prueba	t	2019-09-11 17:31:13.845+00	t	20
+b13c912e-d5aa-11e9-b7da-0686c08fc21a	87644	\N	b12b1dae-d5aa-11e9-b7d9-0686c08fc21a	f	2019-09-12 17:14:30.619851+00	2019-09-12 17:14:30.619851+00	Ingrid Cabrera	f	\N	t	20
+5439fc76-e07e-11e9-a090-0686c08fc21a	33020	1569515600313.jpg	881bef14-e07d-11e9-aa33-0686c08fc21a	f	2019-09-26 11:54:39.50894+00	2019-09-26 11:54:39.50894+00	x	f	2019-09-26 16:54:48.293+00	t	20
+fb8e3fd4-e0ae-11e9-a2e4-0686c08fc21a	82726	1569537771915.jpg	ae5cee7c-e07c-11e9-bce6-0686c08fc21a	t	2019-09-26 17:42:56.083675+00	2019-09-26 17:42:56.083675+00	Problema	t	2019-09-26 22:43:06.184+00	t	20
+46a9d96c-d65d-11e9-8951-0686c08fc21a	35577	\N	46975986-d65d-11e9-8950-0686c08fc21a	t	2019-09-13 14:32:51.734404+00	2019-09-13 14:32:51.734404+00	Laura Flores	f	\N	t	20
+7446df8a-e078-11e9-92a9-0686c08fc21a	42103	1569451946813.jpg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	f	2019-09-26 11:12:36.291957+00	2019-09-26 11:12:36.291957+00	clase de prueba	f	2019-09-27 19:50:38.818+00	t	20
+7ec4b772-d65d-11e9-a325-0686c08fc21a	10807	\N	7eae2a5c-d65d-11e9-a324-0686c08fc21a	t	2019-09-13 14:34:25.862917+00	2019-09-13 14:34:25.862917+00	Stephani Sánchez Domínguez	f	\N	t	20
+52daca50-db00-11e9-8dca-0686c08fc21a	54322	1568913000602.svg	1babe172-db00-11e9-bcde-0686c08fc21a	f	2019-09-19 12:10:04.805507+00	2019-09-19 12:10:04.805507+00	Migración MX-EEUU	f	2019-09-19 17:19:36.934+00	t	20
+c8b8307a-d65d-11e9-a63d-0686c08fc21a	42419	1568403355607.jpg	7eae2a5c-d65d-11e9-a324-0686c08fc21a	f	2019-09-13 14:36:29.931838+00	2019-09-13 14:36:29.931838+00	Geo1	t	2019-09-13 19:36:47.789+00	t	20
+1ed4d3a0-d65e-11e9-9af2-0686c08fc21a	83245	1568403356260.jpg	46975986-d65d-11e9-8950-0686c08fc21a	f	2019-09-13 14:38:54.403578+00	2019-09-13 14:38:54.403578+00	Laura	t	2019-09-13 19:39:02.339+00	t	20
+5c00772e-daec-11e9-9d61-0686c08fc21a	80880	1568904538403.	\N	f	2019-09-19 09:47:10.217386+00	2019-09-19 09:47:10.217386+00	Omg	f	\N	t	20
+97c76856-cf4a-11e9-8646-0686c08fc21a	29922	1568320709872.jpg	82f7175a-cf45-11e9-86a4-0686c08fc21a	f	2019-09-04 14:31:29.245975+00	2019-09-04 14:31:29.245975+00	Análisis de espacios y recursos	f	2019-09-13 19:27:19.703+00	t	20
+d6cb0792-d657-11e9-8e2e-0686c08fc21a	46183	\N	\N	f	2019-09-13 13:53:56.563114+00	2019-09-13 13:53:56.563114+00	\N	f	\N	t	20
+e6c5318c-d656-11e9-8aed-0686c08fc21a	71400	\N	e6b2c024-d656-11e9-8aec-0686c08fc21a	f	2019-09-13 13:47:13.871995+00	2019-09-13 13:47:13.871995+00	Demo clase muro colaborativo	f	\N	t	20
+f0aa9ef2-de4f-11e9-8a52-0686c08fc21a	15070	1569277217576.jpg	\N	f	2019-09-23 17:17:33.225119+00	2019-09-23 17:17:33.225119+00	\N	f	\N	t	20
+2c52d4f0-dbd6-11e9-8ac2-0686c08fc21a	78666	\N	2c3e15ce-dbd6-11e9-8ac1-0686c08fc21a	f	2019-09-20 13:40:52.461562+00	2019-09-20 13:40:52.461562+00	Rafael Zepeda Barrios	t	2019-09-20 18:41:43.243+00	t	20
+342e9d7e-d656-11e9-896b-0686c08fc21a	42468	1568400979866.jpg	341215a0-d656-11e9-896a-0686c08fc21a	t	2019-09-13 13:42:14.250714+00	2019-09-13 13:42:14.250714+00	Edith Geraldine Ruiz Lozada	f	2019-09-13 18:53:04.825+00	t	20
+52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	54295	1568912605707.jpg	\N	f	2019-09-19 11:27:07.981708+00	2019-09-19 11:27:07.981708+00	\N	f	\N	t	20
+8d59a938-d657-11e9-b81c-0686c08fc21a	64749	1568400997667.jpg	341215a0-d656-11e9-896a-0686c08fc21a	t	2019-09-13 13:51:53.346392+00	2019-09-13 13:51:53.346392+00	::ffff:132.247.242.68	f	2019-09-13 18:54:12.109+00	t	20
+5c31f438-d656-11e9-984e-0686c08fc21a	79867	1568400196955.jpg	341215a0-d656-11e9-896a-0686c08fc21a	t	2019-10-01 19:21:28.835289+00	2019-09-13 13:43:21.381109+00	Prueba	f	2019-09-13 18:50:32.731+00	t	20
+322a37da-d657-11e9-9a6a-0686c08fc21a	63615	1568400553166.jpeg	e6b2c024-d656-11e9-8aec-0686c08fc21a	f	2019-09-13 13:49:20.36277+00	2019-09-13 13:49:20.36277+00	Muro enapos	f	2019-09-13 18:52:55.592+00	t	20
+fcc0b350-d97e-11e9-b7fd-0686c08fc21a	92469	\N	\N	f	2019-09-17 14:11:43.891483+00	2019-09-17 14:11:43.891483+00	\N	f	\N	t	20
+d5d84a5e-da42-11e9-b589-0686c08fc21a	12073	\N	\N	f	2019-09-18 13:33:40.180461+00	2019-09-18 13:33:40.180461+00	\N	f	\N	t	20
+2be629a8-daec-11e9-b391-0686c08fc21a	42231	\N	\N	f	2019-09-19 09:45:49.444585+00	2019-09-19 09:45:49.444585+00	\N	f	\N	t	20
+1bb7618c-db00-11e9-bcdf-0686c08fc21a	54430	\N	1babe172-db00-11e9-bcde-0686c08fc21a	f	2019-09-19 12:08:32.299137+00	2019-09-19 12:08:32.299137+00	Iván Jiménez Maya	f	\N	t	20
+8895173c-dbcc-11e9-a8ba-0686c08fc21a	91466	1569002647525.JPG	\N	f	2019-09-20 12:31:52.070882+00	2019-09-20 12:31:52.070882+00	caracteristicas que debe tener el aula del futuro de la ENTS	f	\N	t	20
+40902198-dbd6-11e9-a2dd-0686c08fc21a	37637	\N	407a131c-dbd6-11e9-a2dc-0686c08fc21a	f	2019-09-20 13:41:26.41775+00	2019-09-20 13:41:26.41775+00	Pedro Hernández Gonzalez	t	2019-09-20 18:42:11.703+00	t	20
+62bacfca-dbd6-11e9-ad27-0686c08fc21a	34111		2c3e15ce-dbd6-11e9-8ac1-0686c08fc21a	f	2019-09-20 13:42:23.739599+00	2019-09-20 13:42:23.739599+00	Reforzar MTC	f	\N	t	20
+7be2019e-dbd6-11e9-8bd5-0686c08fc21a	28775	\N	7bc947d0-dbd6-11e9-8bd4-0686c08fc21a	f	2019-09-20 13:43:05.939901+00	2019-09-20 13:43:05.939901+00	Silvia Resendiz Hernanez	f	\N	t	20
+82bf8d74-dbd6-11e9-b63c-0686c08fc21a	33546	\N	\N	f	2019-09-20 13:43:17.457817+00	2019-09-20 13:43:17.457817+00	\N	f	\N	t	20
+d4b113ca-ded6-11e9-aa19-0686c08fc21a	85050	1569334962955.jpg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	t	2019-09-24 09:23:08.411756+00	2019-09-24 09:23:08.411756+00	Geoprueba	f	\N	t	20
+3e0d4bbc-dbd6-11e9-9dfd-0686c08fc21a	27112		13f8853a-dbd6-11e9-8a85-0686c08fc21a	f	2019-09-20 13:41:22.204475+00	2019-09-20 13:41:22.204475+00	Lucha de Clases	f	\N	t	20
+dbbf2392-de21-11e9-a6ad-0686c08fc21a	29903	1569257257269.jpg	bc81a280-de20-11e9-9ec3-0686c08fc21a	f	2019-09-23 11:47:41.35254+00	2019-09-23 11:47:41.35254+00	tabla	f	2019-09-23 16:48:29.752+00	t	20
+bc90fd8e-de20-11e9-9ec4-0686c08fc21a	30760	\N	bc81a280-de20-11e9-9ec3-0686c08fc21a	t	2019-09-23 11:39:39.543073+00	2019-09-23 11:39:39.543073+00	Jairo Romero	f	\N	t	20
+68becaa6-db00-11e9-857c-0686c08fc21a	52972	\N	1babe172-db00-11e9-bcde-0686c08fc21a	t	2019-09-19 12:10:41.531871+00	2019-09-19 12:10:41.531871+00	T-MEC 2019	f	2019-09-19 17:17:46.167+00	t	20
+2974133c-dfe3-11e9-bf08-0686c08fc21a	16789	\N	29688d64-dfe3-11e9-bf07-0686c08fc21a	f	2019-09-25 17:23:55.754882+00	2019-09-25 17:23:55.754882+00	Martha Diana Bosco Hernández	t	2019-09-25 22:25:15.401+00	t	20
+dd6d165a-de20-11e9-b90b-0686c08fc21a	55974	1569256830051.jpg	bc81a280-de20-11e9-9ec3-0686c08fc21a	f	2019-09-23 11:40:34.673559+00	2019-09-23 11:40:34.673559+00	Prueba	f	2019-09-23 16:55:16.353+00	t	20
+9e77cce4-ded7-11e9-b543-0686c08fc21a	94383	1569335320354.jpeg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	t	2019-09-24 09:28:46.948757+00	2019-09-24 09:28:46.948757+00	Lectura	f	2019-09-24 14:37:09.069+00	t	20
+5abe77c2-dbd6-11e9-8d80-0686c08fc21a	22773		13f8853a-dbd6-11e9-8a85-0686c08fc21a	f	2019-09-20 13:42:10.341843+00	2019-09-20 13:42:10.341843+00	Tipos ideales Webber	f	2019-09-20 18:45:16.874+00	t	20
+85204228-deda-11e9-b184-0686c08fc21a	36946	1569336510306.jpg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	f	2019-09-24 09:49:32.922151+00	2019-09-24 09:49:32.922151+00	EQUIPOS	f	2019-09-24 14:54:45.682+00	t	20
+b853fbcc-dfe7-11e9-9742-0686c08fc21a	82842	1569451946813.jpg	29688d64-dfe3-11e9-bf07-0686c08fc21a	f	2019-09-25 17:56:33.445326+00	2019-09-25 17:56:33.445326+00	Planeación	f	\N	t	20
+725b8134-dfe3-11e9-b939-0686c08fc21a	39684	1569336510306.jpg	29688d64-dfe3-11e9-bf07-0686c08fc21a	f	2019-09-25 17:25:58.067125+00	2019-09-25 17:25:58.067125+00	Prueba	f	2019-09-25 22:31:37.643+00	t	20
+4a8bef70-dfbd-11e9-99e7-0686c08fc21a	55150	1569438108258.png	4a78c260-dfbd-11e9-99e6-0686c08fc21a	f	2019-09-25 12:52:50.398771+00	2019-09-25 12:52:50.398771+00	Conociendo el Muro Colaborativo	f	2019-09-25 23:54:02.932+00	t	20
+444b5fa4-dfe7-11e9-92c5-0686c08fc21a	32870	1569450351347.jpg	29688d64-dfe3-11e9-bf07-0686c08fc21a	t	2019-09-25 17:53:18.773121+00	2019-09-25 17:53:18.773121+00	Planeación Didáctica	t	2019-09-25 22:53:27.624+00	t	20
+27ec1e0e-d676-11e9-8f85-0686c08fc21a	64628	1568413852512.jpg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	t	2019-09-13 17:30:57.522159+00	2019-09-13 17:30:57.522159+00	PRUEBA	t	2019-09-24 14:43:11.1+00	t	20
+e7edecd0-e07d-11e9-9517-0686c08fc21a	35080	1569516686785.jpeg	ae5cee7c-e07c-11e9-bce6-0686c08fc21a	t	2019-09-26 11:51:37.816489+00	2019-09-26 11:51:37.816489+00	Triángulos	f	\N	t	20
+882881d4-e07d-11e9-aa34-0686c08fc21a	59560	\N	881bef14-e07d-11e9-aa33-0686c08fc21a	f	2019-09-26 11:48:57.13954+00	2019-09-26 11:48:57.13954+00	Alejandra Lafuente Alarcón	f	2019-09-26 16:52:19.637+00	t	20
+ae76c00e-e07c-11e9-bce7-0686c08fc21a	74890	\N	ae5cee7c-e07c-11e9-bce6-0686c08fc21a	t	2019-09-26 11:42:51.90896+00	2019-09-26 11:42:51.90896+00	Ram Ort	f	\N	t	20
+3dec866e-e07e-11e9-b2bb-0686c08fc21a	79845	1569516827205.jpg	ae5cee7c-e07c-11e9-bce6-0686c08fc21a	t	2019-09-26 11:54:02.091423+00	2019-09-26 11:54:02.091423+00	Aula del futuro	f	\N	t	20
+7cb86aa0-e07b-11e9-b7c8-0686c08fc21a	56232	1569515053132.jpg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	t	2019-09-26 11:34:18.956123+00	2019-09-26 11:34:18.956123+00	INFORMACION	f	\N	t	20
+b8b0fc7e-e0ae-11e9-b690-0686c08fc21a	11576	\N	\N	f	2019-09-26 17:41:03.880755+00	2019-09-26 17:41:03.880755+00	\N	f	\N	t	20
+319add9e-e0af-11e9-92e4-0686c08fc21a	93220	1569537895248.jpg	\N	f	2019-09-26 17:44:26.763329+00	2019-09-26 17:44:26.763329+00	ddddddddddddddd	f	\N	t	20
+b116382a-e0af-11e9-8173-0686c08fc21a	20199	\N	\N	f	2019-09-26 17:48:00.642476+00	2019-09-26 17:48:00.642476+00	\N	f	\N	t	20
+6f4b0080-df22-11e9-b440-0686c08fc21a	64995	1569367444126.jpg	394f1a1a-ded8-11e9-8c47-0686c08fc21a	t	2019-09-24 18:24:20.052015+00	2019-09-24 18:24:20.052015+00	Fallas CDMX.	f	2019-09-27 18:04:00.558+00	t	20
+0949f576-e17e-11e9-8d45-0686c08fc21a	41294	1569626696974.jpg	394f1a1a-ded8-11e9-8c47-0686c08fc21a	f	2019-09-27 18:25:04.947243+00	2019-09-27 18:25:04.947243+00	Procedimientos y Técnicas 	t	2019-09-27 23:33:24.11+00	t	20
+dc7b375e-e15e-11e9-9030-0686c08fc21a	10668	\N	\N	f	2019-09-27 14:41:55.372379+00	2019-09-27 14:41:55.372379+00	\N	f	\N	t	20
+9d3f97fa-e15f-11e9-8ea3-0686c08fc21a	52877	\N	\N	f	2019-09-27 14:47:18.783603+00	2019-09-27 14:47:18.783603+00	\N	f	\N	t	20
+13f6f82c-e154-11e9-954c-0686c08fc21a	47637	1569608679880.jpg	394f1a1a-ded8-11e9-8c47-0686c08fc21a	t	2019-09-27 13:24:43.995698+00	2019-09-27 13:24:43.995698+00	::ffff:132.248.123.245	f	2019-09-27 18:27:35.328+00	t	20
+39627e2a-ded8-11e9-8c48-0686c08fc21a	21971	1569367268005.jpg	394f1a1a-ded8-11e9-8c47-0686c08fc21a	t	2019-09-24 09:33:06.856368+00	2019-09-24 09:33:06.856368+00	metodología	f	2019-09-27 18:25:11.781+00	t	20
+71c11d56-d656-11e9-9331-0686c08fc21a	80325	1568400764002.jpg	71ad4984-d656-11e9-9330-0686c08fc21a	f	2019-09-13 13:43:57.551801+00	2019-09-13 13:43:57.551801+00	Enriqueta Rosete	f	2019-09-29 10:31:46.427939+00	f	20
+be8c6faa-d656-11e9-b7b3-0686c08fc21a	20457	1569770884041.jpg	71ad4984-d656-11e9-9330-0686c08fc21a	f	2019-09-13 13:46:06.390832+00	2019-09-13 13:46:06.390832+00	Niveles de iconicidad	f	2019-09-29 10:40:44.677383+00	t	20
+12655da0-e528-11e9-a57f-0686c08fc21a	25415	1570029704344.png	82f7175a-cf45-11e9-86a4-0686c08fc21a	f	2019-10-02 10:19:48.149802+00	2019-10-02 10:19:48.149802+00	iii	f	2019-10-02 10:23:09.025949+00	t	20
+21269c24-e3ab-11e9-aabb-0686c08fc21a	71282	\N	21177eb0-e3ab-11e9-aaba-0686c08fc21a	f	2019-09-30 12:52:54.659708+00	2019-09-30 12:52:54.659708+00	Claudia Aguilar	f	2019-09-30 12:52:54.659708+00	t	20
+5d80cfde-e17e-11e9-bd1a-0686c08fc21a	17286	1569626841348.jpg	394f1a1a-ded8-11e9-8c47-0686c08fc21a	f	2019-09-27 18:27:26.235328+00	2019-09-27 18:27:26.235328+00	Métodos de Investigación	f	2019-09-30 13:33:05.067335+00	f	20
+b7e13ebc-e47d-11e9-b15e-0686c08fc21a	22168	\N	\N	f	2019-10-01 14:00:21.780885+00	2019-10-01 14:00:21.780885+00	\N	f	2019-10-01 14:00:21.780885+00	t	20
+6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	43093	1569441547190.png	4a78c260-dfbd-11e9-99e6-0686c08fc21a	f	2019-10-02 17:55:34.656047+00	2019-09-25 13:08:07.353356+00	¿Cuáles riesgos conoces	f	2019-10-02 17:45:39.44805+00	t	20
+ddec9022-e250-11e9-824a-0686c08fc21a	74668	1569717753229.jpeg	ddcd43ca-e250-11e9-8249-0686c08fc21a	f	2019-09-28 19:45:25.427532+00	2019-09-28 19:34:16.003527+00	Iconicidad y entornos	t	2019-09-28 19:43:52.928093+00	t	20
+6862a674-e53f-11e9-bd96-0686c08fc21a	20380	\N	\N	f	2019-10-02 13:06:50.77912+00	2019-10-02 13:06:50.77912+00	\N	f	2019-10-02 13:06:50.77912+00	t	20
+2e358b36-e6a9-11e9-83fe-0686c08fc21a	21957	\N	\N	f	2019-10-04 08:16:31.050482+00	2019-10-04 08:16:31.050482+00	415	f	2019-10-04 08:16:31.050482+00	t	20
+1c3bd3c4-e5e9-11e9-996e-0686c08fc21a	22263	\N	\N	f	2019-10-03 09:21:37.41597+00	2019-10-03 09:21:37.41597+00	MIGRACION PRUEBA	f	2019-10-03 09:21:37.41597+00	t	20
+c83af1f6-e4ad-11e9-b876-0686c08fc21a	18890	1569976847211.jpg	341215a0-d656-11e9-896a-0686c08fc21a	f	2019-10-01 19:44:25.128315+00	2019-10-01 19:44:25.128315+00	Niveles de Iconicidad	f	2019-10-03 23:14:50.879661+00	t	20
+c286e38c-e5ed-11e9-83d4-0686c08fc21a	24004	\N	\N	f	2019-10-03 09:54:54.513121+00	2019-10-03 09:54:54.513121+00	PARO 2 DE OCTUBRE	f	2019-10-03 09:54:54.513121+00	t	20
+be22f658-e63a-11e9-8199-0686c08fc21a	10499	1569537895248.jpg	ae5cee7c-e07c-11e9-bce6-0686c08fc21a	t	2019-10-03 19:05:58.394987+00	2019-10-03 19:05:58.394987+00	Actividad prueba	f	2019-10-03 19:06:49.854029+00	t	20
+7ab4acd6-e4aa-11e9-ac01-0686c08fc21a	56870	1569975640236.jpg	341215a0-d656-11e9-896a-0686c08fc21a	t	2019-10-03 23:14:53.363926+00	2019-10-01 19:20:46.567601+00	Niveles de iconicidad	f	2019-10-01 19:25:12.654474+00	t	20
+281d2e66-e6ae-11e9-a981-0686c08fc21a	92041	\N	\N	f	2019-10-04 08:52:08.32015+00	2019-10-04 08:52:08.32015+00	413	f	2019-10-04 08:52:08.32015+00	t	20
+d1cfe916-e6be-11e9-b843-0686c08fc21a	50604	\N	\N	f	2019-10-04 10:51:24.892991+00	2019-10-04 10:51:24.892991+00	403	f	2019-10-04 10:51:24.892991+00	t	20
+bdb6273c-e6bf-11e9-99ad-0686c08fc21a	63845	\N	\N	f	2019-10-04 10:58:00.747609+00	2019-10-04 10:58:00.747609+00	\N	f	2019-10-04 10:58:00.747609+00	t	20
+3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	27657	\N	\N	f	2019-10-04 11:30:12.068719+00	2019-10-04 11:30:12.068719+00	\N	f	2019-10-04 11:30:12.068719+00	t	20
+e0699516-e719-11e9-b0e6-0686c08fc21a	83698	\N	\N	f	2019-10-04 21:43:13.533653+00	2019-10-04 21:43:13.533653+00	\N	f	2019-10-04 21:43:13.533653+00	t	20
+7609ccac-e71b-11e9-b6fb-0686c08fc21a	11079	\N	\N	f	2019-10-04 21:54:34.199166+00	2019-10-04 21:54:34.199166+00	\N	f	2019-10-04 21:54:34.199166+00	t	20
+7609b424-e71b-11e9-8696-0686c08fc21a	27993	\N	\N	f	2019-10-04 21:54:34.198302+00	2019-10-04 21:54:34.198302+00	\N	f	2019-10-04 21:54:34.198302+00	t	20
+76106184-e71b-11e9-8697-0686c08fc21a	58614	\N	\N	f	2019-10-04 21:54:34.24268+00	2019-10-04 21:54:34.24268+00	\N	f	2019-10-04 21:54:34.24268+00	t	20
+7615176a-e71b-11e9-8698-0686c08fc21a	28537	\N	\N	f	2019-10-04 21:54:34.273562+00	2019-10-04 21:54:34.273562+00	\N	f	2019-10-04 21:54:34.273562+00	t	20
+c56dc852-d02d-11e9-8080-0686c08fc21a	66170	1567723046301.jpg	3731aeaa-cf6f-11e9-b169-0686c08fc21a	f	2019-10-02 10:40:27.047868+00	2019-09-05 17:37:41.587213+00	propuestas	f	2019-10-04 21:56:08.039762+00	t	20
+e48d9aa0-e71b-11e9-af88-0686c08fc21a	32590	\N	\N	f	2019-10-04 21:57:39.612082+00	2019-10-04 21:57:39.612082+00	\N	f	2019-10-04 21:57:39.612082+00	t	20
+edc146d0-e71b-11e9-9138-0686c08fc21a	98931	\N	\N	f	2019-10-04 21:57:55.05026+00	2019-10-04 21:57:55.05026+00	\N	f	2019-10-04 21:57:55.05026+00	t	20
+79c4ccf6-e226-11e9-9551-0686c08fc21a	14352	1569699141586.jpg	79b54768-e226-11e9-9550-0686c08fc21a	f	2019-09-28 14:34:14.466057+00	2019-09-28 14:30:49.108089+00	Testing	f	2019-10-06 02:22:54.085712+00	f	20
+f82cf6d4-93ae-11e9-b810-0686c08fc21a	54802	\N	f81aeb6a-93ae-11e9-b80f-0686c08fc21a	f	2019-10-06 02:24:37.725878+00	2019-06-20 17:58:50.879458+00	Nachintoch	f	2019-09-29 11:10:52.722781+00	t	20
+140f15d4-dbd6-11e9-8a86-0686c08fc21a	52239	\N	13f8853a-dbd6-11e9-8a85-0686c08fc21a	f	2019-09-20 13:40:11.752278+00	2019-09-20 13:40:11.752278+00	Miguel Angel Zamarron Serratos	f	2019-10-07 09:35:46.913079+00	f	20
+e0d011ea-e8b0-11e9-91f4-0686c08fc21a	98039	1570418177659.bmp	ae5cee7c-e07c-11e9-bce6-0686c08fc21a	f	2019-10-07 10:12:43.229026+00	2019-10-06 22:16:39.512242+00	Primera tabla para solución	t	2019-10-06 22:25:58.232862+00	t	20
+16350e08-e915-11e9-b62f-0686c08fc21a	24036	\N	\N	f	2019-10-07 10:13:58.766318+00	2019-10-07 10:13:58.766318+00	\N	f	2019-10-07 10:13:58.766318+00	t	20
+44c5c31e-e859-11e9-92af-0686c08fc21a	83363	1570380661360.jpg	44afc708-e859-11e9-92ae-0686c08fc21a	t	2019-10-06 12:19:42.195945+00	2019-10-06 11:49:31.500608+00	Experimento 1	f	2019-10-06 12:16:30.900485+00	t	20
+7af04512-e864-11e9-84f0-0686c08fc21a	18367	1570385359839.jpg	44afc708-e859-11e9-92ae-0686c08fc21a	f	2019-10-06 13:09:46.832661+00	2019-10-06 13:09:46.832661+00	Experimento 2	f	2019-10-06 13:09:46.832661+00	t	20
+db291628-e898-11e9-b998-0686c08fc21a	85118	1570407846674.jpg	ae5cee7c-e07c-11e9-bce6-0686c08fc21a	t	2019-10-06 19:24:42.078055+00	2019-10-06 19:24:42.078055+00	Problema de interés simple	f	2019-10-06 21:15:22.593604+00	t	20
+6430110c-e8b1-11e9-9ea4-0686c08fc21a	52374	1570418402627.bmp	ae5cee7c-e07c-11e9-bce6-0686c08fc21a	f	2019-10-06 22:20:19.92294+00	2019-10-06 22:20:19.92294+00	Segunda tabla para solución	f	2019-10-06 22:24:54.825307+00	t	20
+f110776e-e907-11e9-b260-0686c08fc21a	19002	\N	\N	f	2019-10-07 08:39:52.900205+00	2019-10-07 08:39:52.900205+00	402	f	2019-10-07 08:39:52.900205+00	t	20
+4271a456-e8af-11e9-acef-0686c08fc21a	91275	1570417422560.bmp	ae5cee7c-e07c-11e9-bce6-0686c08fc21a	f	2019-10-06 22:05:04.313249+00	2019-10-06 22:05:04.313249+00	Problema de interés simple	f	2019-10-07 09:45:19.618293+00	t	20
+\.
+
+
+--
+-- Data for Name: activity_user; Type: TABLE DATA; Schema: public; Owner: adef
+--
+
+COPY public.activity_user (pin, username, cursor, last_login, last_logout) FROM stdin;
+97981	Sin nombre 1	1	\N	\N
+14236	Sin nombre 1	3	\N	\N
+14236	Sin nombre 2	5	\N	\N
+14236	Sin nombre 3	4	\N	\N
+14236	Sin nombre 4	2	\N	\N
+54802	Sin nombre 1	1	\N	\N
+50171	Sin nombre 1	1	\N	\N
+50171	Sin nombre 2	2	\N	\N
+28667	Sin nombre 1	1	\N	\N
+30058	Sin nombre 1	1	\N	\N
+30058	Sin nombre 2	8	\N	\N
+30058	Sin nombre 3	7	\N	\N
+30058	Sin nombre 4	9	\N	\N
+30058	Sin nombre 5	3	\N	\N
+30058	Sin nombre 6	4	\N	\N
+30058	Sin nombre 7	5	\N	\N
+30058	Sin nombre 8	11	\N	\N
+30058	Sin nombre 9	2	\N	\N
+30058	Sin nombre 10	6	\N	\N
+30058	Sin nombre 11	10	\N	\N
+58983	Sin nombre 1	13	\N	\N
+58983	Sin nombre 2	1	\N	\N
+58983	Sin nombre 3	9	\N	\N
+58983	Sin nombre 4	6	\N	\N
+58983	Sin nombre 5	14	\N	\N
+58983	Sin nombre 6	8	\N	\N
+58983	Sin nombre 7	2	\N	\N
+58983	Sin nombre 8	3	\N	\N
+58983	Sin nombre 9	4	\N	\N
+58983	Sin nombre 10	5	\N	\N
+58983	Sin nombre 11	10	\N	\N
+58983	Sin nombre 12	12	\N	\N
+58983	Sin nombre 13	7	\N	\N
+58983	Sin nombre 14	11	\N	\N
+57786	Sin nombre 1	1	\N	\N
+51258	Sin nombre 1	3	\N	\N
+51258	Sin nombre 2	8	\N	\N
+51258	Sin nombre 3	12	\N	\N
+51258	Sin nombre 4	4	\N	\N
+51258	Sin nombre 5	11	\N	\N
+51258	Sin nombre 6	10	\N	\N
+51258	Sin nombre 7	6	\N	\N
+51258	Sin nombre 8	2	\N	\N
+51258	Sin nombre 9	1	\N	\N
+19473	Sin nombre 1	1	\N	\N
+19473	Sin nombre 2	3	\N	\N
+19473	Sin nombre 3	5	\N	\N
+85791	Sin nombre 1	2	\N	\N
+85791	Sin nombre 2	3	\N	\N
+85791	Sin nombre 3	5	\N	\N
+85791	Sin nombre 4	1	\N	\N
+85791	Sin nombre 5	4	\N	\N
+77489	Sin nombre 1	4	\N	\N
+77489	Sin nombre 2	1	\N	\N
+77489	Sin nombre 3	5	\N	\N
+33766	Sin nombre 1	1	\N	\N
+38934	Sin nombre 1	3	\N	\N
+60193	Sin nombre 1	1	\N	\N
+44449	Sin nombre 1	1	\N	\N
+47571	Sin nombre 1	3	\N	\N
+47571	Sin nombre 2	3	\N	\N
+73359	Sin nombre 1	2	\N	\N
+73359	Sin nombre 2	6	\N	\N
+73359	Sin nombre 3	8	\N	\N
+73359	Sin nombre 4	7	\N	\N
+73359	Sin nombre 5	3	\N	\N
+73359	Sin nombre 6	1	\N	\N
+42103	Sin nombre 1	3	\N	\N
+42103	Sin nombre 2	2	\N	\N
+42103	Sin nombre 3	7	\N	\N
+42103	Sin nombre 4	4	\N	\N
+42103	Sin nombre 5	1	\N	\N
+42103	Sin nombre 6	8	\N	\N
+42103	Sin nombre 7	6	\N	\N
+42103	Sin nombre 8	5	\N	\N
+54322	Sin nombre 1	1	\N	\N
+80880	Sin nombre 1	9	\N	\N
+80880	Sin nombre 2	6	\N	\N
+80880	Sin nombre 3	8	\N	\N
+80880	Sin nombre 4	5	\N	\N
+80880	Sin nombre 5	2	\N	\N
+80880	Sin nombre 6	11	\N	\N
+80880	Sin nombre 7	4	\N	\N
+80880	Sin nombre 8	1	\N	\N
+80880	Sin nombre 9	3	\N	\N
+80880	Sin nombre 10	12	\N	\N
+29922	Sin nombre 1	5	\N	\N
+29922	Sin nombre 2	6	\N	\N
+29922	Sin nombre 3	5	\N	\N
+29922	Sin nombre 4	3	\N	\N
+29922	Sin nombre 5	4	\N	\N
+15070	Sin nombre 1	2	\N	\N
+15070	Sin nombre 2	3	\N	\N
+15070	Sin nombre 3	1	\N	\N
+54295	Sin nombre 1	1	\N	\N
+54295	Sin nombre 2	2	\N	\N
+64749	Sin nombre 1	1	\N	\N
+79867	Sin nombre 1	3	\N	\N
+79867	Sin nombre 2	2	\N	\N
+79867	Sin nombre 3	1	\N	\N
+91466	Sin nombre 1	1	\N	\N
+29903	Sin nombre 1	1	\N	\N
+52972	Sin nombre 1	1	\N	\N
+55974	Sin nombre 1	1	\N	\N
+94383	Sin nombre 1	5	\N	\N
+94383	Sin nombre 2	1	\N	\N
+94383	Sin nombre 3	6	\N	\N
+22773	Sin nombre 1	1	\N	\N
+36946	Sin nombre 1	1	\N	\N
+36946	Sin nombre 2	2	\N	\N
+82842	Sin nombre 1	1	\N	\N
+82842	Sin nombre 2	2	\N	\N
+43093	Sin nombre 1	4	\N	\N
+43093	Sin nombre 2	3	\N	\N
+43093	Sin nombre 3	1	\N	\N
+43093	Sin nombre 4	2	\N	\N
+55150	Sin nombre 1	1	\N	\N
+55150	Sin nombre 2	3	\N	\N
+55150	Sin nombre 3	2	\N	\N
+79845	Sin nombre 1	1	\N	\N
+64995	Sin nombre 1	1	\N	\N
+10668	Sin nombre 1	2	\N	\N
+10668	Sin nombre 2	3	\N	\N
+10668	Sin nombre 3	1	\N	\N
+52877	Sin nombre 1	1	\N	\N
+17286	Sin nombre 1	3	\N	\N
+17286	Sin nombre 2	3	\N	\N
+17286	Sin nombre 3	2	\N	\N
+14352	Nachintoch	1	2019-09-28 19:34:08.327+00	2019-09-28 19:34:24.636+00
+54802	Nachintoch	2	2019-09-28 19:42:58.142+00	2019-09-28 19:30:09.571+00
+43093	Yaisa	7	2019-10-03 22:52:47.875+00	\N
+43093	Karina	5	2019-10-03 22:50:59.544+00	2019-10-03 23:12:04.858+00
+22168	Libia	1	2019-10-01 19:00:55.106+00	\N
+22168	Ricardo	2	2019-10-01 19:01:57.429+00	\N
+25415	H	1	2019-10-02 15:21:20.414+00	\N
+56870	Prueba	1	2019-10-02 00:26:12.463+00	2019-10-02 00:36:56.097+00
+18890	eruiz@fad.unam.mx	1	2019-10-04 04:15:10.173+00	2019-10-04 04:15:32.652+00
+24004	Karla	8	2019-10-04 13:15:22.838+00	\N
+24004	Jimena	9	2019-10-04 13:21:40.185+00	\N
+25415	G	2	2019-10-02 15:23:23.065+00	\N
+66170	Sin nombre 1	1	\N	2019-10-02 15:37:34.396+00
+66170	Sin nombre 2	4	\N	2019-10-02 15:37:34.396+00
+66170	Sin nombre 3	2	\N	2019-10-02 15:37:34.396+00
+20380	Ghh	1	2019-10-02 18:08:15.799+00	\N
+20380	Fsn	2	2019-10-02 18:09:31.894+00	\N
+22263	ALUMNOS	1	2019-10-03 14:24:27.501+00	2019-10-03 14:41:12.82+00
+21957	Daniela	2	2019-10-04 13:17:02.253+00	2019-10-04 13:22:36.944+00
+20457	Equipo 3	6	2019-10-01 16:05:58.331+00	2019-10-03 15:39:44.183+00
+20457	Erosete@fad.unam.mx	4	2019-10-01 14:55:45.485+00	2019-10-03 15:39:44.183+00
+20457	Erosete	1	2019-09-29 15:47:19.818+00	2019-10-03 15:39:44.183+00
+20457	Libia	2	2019-09-30 17:47:54.974+00	2019-10-03 15:39:44.183+00
+20457	Equipo 1	3	2019-10-01 14:45:36.935+00	2019-10-03 15:39:44.183+00
+20457	equipo1	5	2019-10-01 15:44:55.265+00	2019-10-03 15:39:44.183+00
+20457	EQUIPO 3	7	2019-10-03 14:41:49.524+00	2019-10-03 15:39:44.183+00
+43093	Mauricio	6	2019-10-03 22:52:15.367+00	\N
+43093	geofel19@hotmail.com	8	2019-10-03 23:06:14.878+00	2019-10-03 23:12:14.896+00
+24004	Tatiana	7	2019-10-04 13:15:12.623+00	\N
+24004	Daniela	15	2019-10-04 13:15:12.885+00	2019-10-04 13:16:46.09+00
+24004	ERNESTO	11	2019-10-04 13:15:23.5+00	2019-10-04 13:16:58.81+00
+21957	Tatiana	4	2019-10-04 13:20:33.605+00	2019-10-04 13:22:36.944+00
+21957	ernesto	3	2019-10-04 13:17:16.295+00	2019-10-04 13:22:36.944+00
+21957	Monse	5	2019-10-04 13:21:08.073+00	2019-10-04 13:22:36.944+00
+21957	Karla	1	2019-10-04 13:16:55.988+00	2019-10-04 13:22:36.944+00
+92041	Cornedios	1	2019-10-04 13:52:26.388+00	2019-10-04 13:56:21.142+00
+92041	Dayana 	7	2019-10-04 13:52:35.206+00	2019-10-04 13:56:21.142+00
+92041	ERNESTO	2	2019-10-04 13:52:30.436+00	2019-10-04 13:56:21.142+00
+92041	Frida	3	2019-10-04 13:52:30.68+00	2019-10-04 13:56:21.142+00
+92041	Martín 	4	2019-10-04 13:52:31.429+00	2019-10-04 13:56:21.142+00
+92041	Geraldine	5	2019-10-04 13:52:32.153+00	2019-10-04 13:56:21.142+00
+92041	Carreño	8	2019-10-04 13:52:37.43+00	2019-10-04 13:56:21.142+00
+92041	Omar	9	2019-10-04 13:52:37.835+00	2019-10-04 13:56:21.142+00
+92041	Yorch	10	2019-10-04 13:52:44.413+00	2019-10-04 13:56:21.142+00
+92041	Clarisse	6	2019-10-04 13:53:09.5+00	2019-10-04 13:56:21.142+00
+24004	Fwrnando	1	2019-10-03 15:50:21.765+00	2019-10-03 16:32:24.046+00
+24004	Brisa	3	2019-10-03 15:50:22.616+00	2019-10-03 16:32:24.046+00
+24004	Me gusta gael	5	2019-10-03 15:50:24.042+00	2019-10-03 16:32:24.046+00
+24004	Karen	7	2019-10-03 15:50:24.134+00	2019-10-03 16:32:24.046+00
+24004	Valentina	9	2019-10-03 15:50:30.779+00	2019-10-03 16:32:24.046+00
+24004	Nana	10	2019-10-03 15:50:38.984+00	2019-10-03 16:32:24.046+00
+24004	Gael 	2	2019-10-03 15:54:22.74+00	2019-10-03 16:32:24.046+00
+24004	Crhistian.	4	2019-10-03 15:50:23.274+00	2019-10-03 16:32:24.046+00
+24004	Cecilia	6	2019-10-03 15:50:24.08+00	2019-10-03 16:32:24.046+00
+24004	Antonio	8	2019-10-03 15:50:24.549+00	2019-10-03 16:32:24.046+00
+24004	Emma 	14	2019-10-03 16:25:54.977+00	2019-10-03 16:32:24.046+00
+24004	Marisa Caleche	20	2019-10-03 16:26:31.626+00	2019-10-03 16:32:24.046+00
+24004	Michel :3	16	2019-10-03 16:26:51.943+00	2019-10-03 16:32:24.046+00
+24004	Monthse	18	2019-10-03 16:26:54.325+00	2019-10-03 16:32:24.046+00
+24004	Sebastian 	17	2019-10-03 16:26:55.616+00	2019-10-03 16:32:24.046+00
+24004	Alondra	13	2019-10-03 16:26:58.857+00	2019-10-03 16:32:24.046+00
+24004	El Bicho 	19	2019-10-03 16:27:32.744+00	2019-10-03 16:32:24.046+00
+24004	Marisa Caleche 	2	2019-10-03 16:27:39.483+00	2019-10-03 16:32:24.046+00
+24004	Alexis =/	12	2019-10-03 16:27:55.311+00	2019-10-03 16:32:24.046+00
+24004	Esteban 😈😈😈🔥	3	2019-10-03 16:28:10.11+00	2019-10-03 16:32:24.046+00
+24004	Emma 💕	4	2019-10-03 16:28:36.836+00	2019-10-03 16:32:24.046+00
+24004	Aimar 😈😈👌👌👊🔥	5	2019-10-03 16:29:27.701+00	2019-10-03 16:32:24.046+00
+24004	Melany	1	2019-10-03 16:26:53.544+00	2019-10-03 16:32:24.046+00
+24004	Clavellina 	6	2019-10-03 16:30:49.981+00	2019-10-03 16:32:24.046+00
+50604	César	1	2019-10-04 15:52:11.505+00	2019-10-04 15:55:51.414+00
+50604	Lio	2	2019-10-04 15:52:12.245+00	2019-10-04 15:55:51.414+00
+50604	Itzel	3	2019-10-04 15:52:12.508+00	2019-10-04 15:55:51.414+00
+50604	Angela 	4	2019-10-04 15:52:13.057+00	2019-10-04 15:55:51.414+00
+50604	Vianca	5	2019-10-04 15:52:13.55+00	2019-10-04 15:55:51.414+00
+50604	Sabina 	6	2019-10-04 15:52:14.05+00	2019-10-04 15:55:51.414+00
+50604	Oscar	7	2019-10-04 15:52:17.387+00	2019-10-04 15:55:51.414+00
+50604	Eva	8	2019-10-04 15:52:17.459+00	2019-10-04 15:55:51.414+00
+50604	ERNESTO	9	2019-10-04 15:52:21.549+00	2019-10-04 15:55:51.414+00
+50604	Alan U.	11	2019-10-04 15:52:34.91+00	2019-10-04 15:55:51.414+00
+50604	Gabriel 	12	2019-10-04 15:52:38.567+00	2019-10-04 15:55:51.414+00
+50604	Bacardi	13	2019-10-04 15:53:22.242+00	2019-10-04 15:55:51.414+00
+50604	Samantha	10	2019-10-04 15:52:28.45+00	2019-10-04 15:55:51.414+00
+27657	Erick	1	2019-10-04 16:30:39.742+00	2019-10-04 16:33:57.583+00
+27657	Dana	2	2019-10-04 16:30:43.008+00	2019-10-04 16:33:57.583+00
+27657	Amayrani 	3	2019-10-04 16:30:43.928+00	2019-10-04 16:33:57.583+00
+27657	ERNESTO	4	2019-10-04 16:30:52.115+00	2019-10-04 16:33:57.583+00
+27657	Laura	5	2019-10-04 16:30:53.394+00	2019-10-04 16:33:57.583+00
+27657	Valeria y Karla 	6	2019-10-04 16:30:55.285+00	2019-10-04 16:33:57.583+00
+27657	SARAHI	7	2019-10-04 16:31:01.786+00	2019-10-04 16:33:57.583+00
+27657	Ximena	8	2019-10-04 16:31:14.64+00	2019-10-04 16:33:57.583+00
+27657	Emilio	9	2019-10-04 16:31:46.551+00	2019-10-04 16:33:57.583+00
+27657	Brenda	10	2019-10-04 16:32:50.719+00	2019-10-04 16:33:57.583+00
+83698	Fernando Ramirez	1	2019-10-05 02:52:29.866+00	\N
+36946	Fer	3	2019-10-05 03:00:00.374+00	\N
+54802	test	\N	2019-10-06 07:25:27.049+00	\N
+54802	natsch	5	2019-10-06 07:29:52.076+00	\N
+85118	Ram	1	2019-10-07 02:15:38.531+00	\N
+91275	Ram	1	2019-10-07 03:25:19.32+00	\N
+98039	Ram	1	2019-10-07 03:26:23.723+00	\N
+52374	Ram	1	2019-10-07 03:26:50.553+00	2019-10-07 03:26:55.586+00
+19002	ERNESTO	1	2019-10-07 14:00:03.302+00	2019-10-07 14:05:07.867+00
+19002	Dariana 	2	2019-10-07 14:00:04.583+00	2019-10-07 14:05:07.867+00
+19002	Rafael	3	2019-10-07 14:00:05.056+00	2019-10-07 14:05:07.867+00
+19002	Iván	4	2019-10-07 14:00:08.603+00	2019-10-07 14:05:07.867+00
+19002	PONCHITO BB 	6	2019-10-07 14:00:13.324+00	2019-10-07 14:05:07.867+00
+19002	Camila	7	2019-10-07 14:00:31.465+00	2019-10-07 14:05:07.867+00
+19002	Sarahi	5	2019-10-07 14:03:12.194+00	2019-10-07 14:05:07.867+00
+91275	Equipo 3 	2	2019-10-07 14:45:22.399+00	\N
+91275	Equipo 6	3	2019-10-07 14:45:25.078+00	\N
+91275	Equipo Matemáticas	4	2019-10-07 14:45:25.7+00	\N
+91275	Los boquita 	5	2019-10-07 14:46:28.048+00	\N
+91275	Eq alfabuenaonda	6	2019-10-07 14:47:09.012+00	\N
+91275	Caimanes	7	2019-10-07 14:49:22.543+00	\N
+18367	Igor	1	2019-10-07 14:27:30.331+00	2019-10-07 14:50:53.086+00
+91275	Gustavo 	8	2019-10-07 14:52:43.94+00	\N
+54802	sufro	5	2019-10-07 15:10:23.266+00	\N
+91275	Equipo 7	9	2019-10-07 15:14:10.109+00	\N
+24036	rkm	1	2019-10-07 15:14:36.032+00	\N
+24036	J	2	2019-10-07 15:14:42.37+00	\N
+24036	Papita	3	2019-10-07 15:18:10.122+00	\N
+\.
+
+
+--
+-- Data for Name: shared_object; Type: TABLE DATA; Schema: public; Owner: adef
+--
+
+COPY public.shared_object (id, room, percentage_x, percentage_y, type, cursor, text, creation_date, owners, public_id, image_path, last_edited_date, edited_times, activity_id, is_deleted) FROM stdin;
+cacb7de0-93aa-11e9-a24f-0686c08fc21a	61395	0.28553770086526575	0.540625	text	1	Trelol	2019-06-20 22:28:56.755896+00	{1561069703956}	3Y--Zg-T5Y-C7e-A	\N	2019-06-20 17:28:56.755896+00	0	992ce152-93aa-11e9-b583-0686c08fc21a	f
+d29505f0-93aa-11e9-82a4-0686c08fc21a	61395	0.8046971569839307	0.506875	image	1	\N	2019-06-20 22:29:09.820759+00	{1561069703956}	-fMRfF-f7PeRL7iO	1561069745868.jpeg	2019-06-20 17:29:09.820759+00	0	992ce152-93aa-11e9-b583-0686c08fc21a	f
+bdf7e342-93aa-11e9-b89a-0686c08fc21a	61395	0.44128553770086526	0.591875	image	1	\N	2019-06-20 22:28:35.236288+00	{1561069703956}	-Z-OVM8--c3B-bSM	1561069712139.jpeg	2019-06-20 17:28:35.236288+00	0	992ce152-93aa-11e9-b583-0686c08fc21a	t
+f8f9a020-93aa-11e9-b44b-0686c08fc21a	61395	0.33498145859085293	0.494375	image	1	\N	2019-06-20 22:30:14.233486+00	{1561069793527}	-64YLDTSdN9EU7eJ	1561069807861.gif	2019-06-20 17:30:14.233486+00	0	992ce152-93aa-11e9-b583-0686c08fc21a	f
+37b9e55e-93ab-11e9-a681-0686c08fc21a	34240	0.8541409147095179	0.299375	image	1	\N	2019-06-20 22:31:59.512256+00	{1561069907192}	aViL76-Bj-T-6--d	1561069913475.jpg	2019-06-20 17:31:59.512256+00	0	289aab6c-93ab-11e9-a2e0-0686c08fc21a	f
+416206d6-93ab-11e9-8e11-0686c08fc21a	34240	0.788627935723115	0.39875	image	1	\N	2019-06-20 22:32:15.713626+00	{1561069907192}	BCR-W-FPXOeBV--L	1561069931834.jpg	2019-06-20 17:32:15.713626+00	0	289aab6c-93ab-11e9-a2e0-0686c08fc21a	f
+4197585c-93ad-11e9-a8f8-0686c08fc21a	59319	0.6279357231149567	0.73875	image	1	\N	2019-06-20 22:46:35.056485+00	{1561070743811}	I-iPa-b-ILQOY-Hk	1561070788285.gif	2019-06-20 17:46:35.056485+00	0	1a9a5fa6-93ad-11e9-8a5b-0686c08fc21a	f
+4fe9753e-93ad-11e9-9470-0686c08fc21a	59319	0.3510506798516687	0.60875	text	1	Trelol	2019-06-20 22:46:59.082772+00	{1561070743811}	8j--99CbW-9B1f-J	\N	2019-06-20 17:46:59.082772+00	0	1a9a5fa6-93ad-11e9-8a5b-0686c08fc21a	t
+395976a2-93ad-11e9-8463-0686c08fc21a	59319	0.5784919653893696	0.23	image	1	\N	2019-06-20 22:46:21.229088+00	{1561070743811}	V-jLfaADBbckWAj-	1561070760474.jpeg	2019-06-20 17:46:21.229088+00	0	1a9a5fa6-93ad-11e9-8a5b-0686c08fc21a	t
+4b8c3dd8-bee5-11e9-90ad-0686c08fc21a	37331	0.5299647473560517	0.23739629865985962	text	4	Hola	2019-08-14 22:46:03.577295+00	{1565822445420}	KTQFN-hU-b-RPDPk	\N	2019-08-14 17:46:03.577295+00	0	0369904c-bee4-11e9-89b7-0686c08fc21a	t
+4878e902-bee5-11e9-8397-0686c08fc21a	37331	0.28217821782178215	0.33	text	3	El texto que describió Gus	2019-08-14 22:45:58.417286+00	{1565822298128}	ejFAZ5j-WXNOEOV-	\N	2019-08-14 17:45:58.417286+00	0	0369904c-bee4-11e9-89b7-0686c08fc21a	t
+991a6782-bee5-11e9-baba-0686c08fc21a	37331	0.6126237623762376	0.350625	text	1	Probando, probando.\n1\n2\n3	2019-08-14 22:48:13.693438+00	{1565822819342}	kQ81XIAWK7-bNY8c	\N	2019-08-14 17:48:13.693438+00	0	0369904c-bee4-11e9-89b7-0686c08fc21a	f
+e87a2006-bee5-11e9-b140-0686c08fc21a	37331	0.5618811881188119	0.5675	text	1	Probando, probando.\n1\n2\n3\n4\n	2019-08-14 22:50:26.86071+00	{1565822819342}	--aCX-C----389fa	\N	2019-08-14 17:50:26.86071+00	0	0369904c-bee4-11e9-89b7-0686c08fc21a	f
+49d8c6d2-c057-11e9-83c0-0686c08fc21a	19473	0.3127317676143387	0.3276797829036635	text	3	Lucila hola !!	2019-08-16 18:54:34.513291+00	{1565981620199}	---bi53--B-GL--K	\N	2019-08-16 13:54:34.513291+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+4d1985d4-c057-11e9-8e26-0686c08fc21a	19473	0.3270893371757925	0.29896083133493206	text	2	Hola, soy Claudia	2019-08-16 18:54:39.970819+00	{1565981616924}	3jPg-b-2aOcLJ-eT	\N	2019-08-16 13:54:39.970819+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+4d6c90f8-c057-11e9-8e27-0686c08fc21a	19473	0.4684796044499382	0.5404141616566466	text	1	Soy dolores	2019-08-16 18:54:40.515595+00	{1565981614238}	QWJO-NAj-6EAaR-d	\N	2019-08-16 13:54:40.515595+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+4be967f6-c057-11e9-ae16-0686c08fc21a	19473	0.6868811881188119	0.508125	text	5	Delia	2019-08-16 18:54:37.977803+00	{1565981624259}	QB--8P-i3XJMLD52	\N	2019-08-16 13:54:37.977803+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	t
+6a48bd82-c057-11e9-b645-0686c08fc21a	19473	0.6637824474660075	0.31875	text	4	Hola Daniel	2019-08-16 18:55:28.934157+00	{1565981623196}	jPQZ2bYbh38-UeV-	\N	2019-08-16 13:55:28.934157+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+6ca99dd0-c057-11e9-9863-0686c08fc21a	19473	0.6683168316831684	0.621875	text	5	Hola, soy Delia	2019-08-16 18:55:32.92453+00	{1565981624259}	-KiDk-B3K-Ph4Vi3	\N	2019-08-16 13:55:32.92453+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+96b68854-c057-11e9-ab78-0686c08fc21a	19473	0.630407911001236	0.38125	image	4	\N	2019-08-16 18:56:43.473503+00	{undefined}	-O--FK4CN-586-CA	1565981794915.jpg	2019-08-16 13:56:43.473503+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+9eb0f850-c057-11e9-bfac-0686c08fc21a	19473	0.15203955500618047	0.27544097693351427	image	3	\N	2019-08-16 18:56:56.858805+00	{undefined}	-AU-4f-PV-LZIK-S	1565981804289.jpg	2019-08-16 13:56:56.858805+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+b054864e-c057-11e9-a499-0686c08fc21a	19473	0.4438040345821326	0.0759392486011191	image	2	\N	2019-08-16 18:57:26.451858+00	{undefined}	jO-EjdXM6-U-MhMX	1565981823601.jpeg	2019-08-16 13:57:26.451858+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+c32e16f4-c057-11e9-b566-0686c08fc21a	19473	0.7858910891089109	0.786875	image	5	\N	2019-08-16 18:57:58.076754+00	{1565981624259}	-6cB26bXeCGC-8f-	1565981869359.jpeg	2019-08-16 13:57:58.076754+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+e031578e-c057-11e9-8c05-0686c08fc21a	19473	0.35446685878962536	0.5419664268585132	image	2	\N	2019-08-16 18:58:46.751934+00	{undefined}	W-7VU-8ZP-f2ZGZh	1565981911593.jpeg	2019-08-16 13:58:46.751934+00	0	556a6958-c055-11e9-bd3a-0686c08fc21a	f
+d60aa88a-c9b4-11e9-bd0d-0686c08fc21a	14236	0.5278121137206427	0.15623171445289644	text	4	Hola	2019-08-28 16:56:53.38214+00	{1567011366368}	NR-OY6-SHSf--ahH	\N	2019-08-28 11:56:53.38214+00	0	b3b6c50c-c9b4-11e9-a5ce-0686c08fc21a	f
+df241d16-c9b4-11e9-affa-0686c08fc21a	14236	0.5475910693301997	0.3036848792884371	text	2	Hola	2019-08-28 16:57:08.64844+00	{1567011364459}	R33-b-eGi-IX-8UZ	\N	2019-08-28 11:57:08.64844+00	0	b3b6c50c-c9b4-11e9-a5ce-0686c08fc21a	f
+daa7cdc8-c9b4-11e9-9c8e-0686c08fc21a	14236	0.25495049504950495	0.2617908407382092	text	5	\nViva México	2019-08-28 16:57:01.122874+00	{1567011368754}	Zd-HiJjG2eR--N-B	\N	2019-08-28 11:57:01.122874+00	0	b3b6c50c-c9b4-11e9-a5ce-0686c08fc21a	t
+fa76ed6e-c9b4-11e9-bce0-0686c08fc21a	14236	0.327970297029703	0.18933697881066303	text	5	\nViva México\nChido	2019-08-28 16:57:54.489596+00	{1567011368754}	R-MHHG-F--3HEW64	\N	2019-08-28 11:57:54.489596+00	0	b3b6c50c-c9b4-11e9-a5ce-0686c08fc21a	f
+03271b50-c9b5-11e9-8ade-0686c08fc21a	14236	0.2056404230317274	0.27001270648030495	image	2	\N	2019-08-28 16:58:09.066037+00	{1567011364459}	PDLO-Lf-FLS6k-HR	1567011480298.jpeg	2019-08-28 11:58:09.066037+00	0	b3b6c50c-c9b4-11e9-a5ce-0686c08fc21a	f
+0f930ab6-c9b5-11e9-9059-0686c08fc21a	14236	0.4388133498145859	0.40433001755412523	image	4	\N	2019-08-28 16:58:29.906056+00	{1567011366368}	jejGA--L1-dFLkJ1	1567011488336.jpg	2019-08-28 11:58:29.906056+00	0	b3b6c50c-c9b4-11e9-a5ce-0686c08fc21a	t
+20c4fd94-c9b5-11e9-a5cc-0686c08fc21a	14236	0.4591584158415842	0.5529733424470267	image	5	\N	2019-08-28 16:58:58.754674+00	{undefined}	9MVI-HfA--WX-6Y8	1567011524136.jpg	2019-08-28 11:58:58.754674+00	0	b3b6c50c-c9b4-11e9-a5ce-0686c08fc21a	f
+2c46712a-ca78-11e9-9c9f-0686c08fc21a	58983	0.445141065830721	0.26413255360623783	text	5	Hola	2019-08-29 16:15:09.920221+00	{1567095260211}	Ofd-D-5PS--GcfNd	\N	2019-08-29 11:15:09.920221+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+2efd2fda-ca78-11e9-8348-0686c08fc21a	58983	0.37752161383285304	0.18145483613109512	text	3	Hola a todos 	2019-08-29 16:15:14.473352+00	{1567095256304}	9-BbiMKXO0Ya3i-S	\N	2019-08-29 11:15:14.473352+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+33a1d220-ca78-11e9-b661-0686c08fc21a	58983	0.522867737948084	0.21388577827547592	text	4	Gracias	2019-08-29 16:15:22.263154+00	{1567095256891}	d-G-hM-P-jg6eKj3	\N	2019-08-29 11:15:22.263154+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+35242d78-ca78-11e9-b9ef-0686c08fc21a	58983	0.40594059405940597	0.23783783783783785	text	7	Hola	2019-08-29 16:15:24.795209+00	{1567095271912}	-Ad--EcBEQ8HOHkH	\N	2019-08-29 11:15:24.795209+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+359c9db2-ca78-11e9-b9f0-0686c08fc21a	58983	0.6150990099009901	0.349375	text	10	Hola!!!	2019-08-29 16:15:25.585063+00	{1567095294143}	RGUOdF57E1--L-AY	\N	2019-08-29 11:15:25.585063+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+3971b288-ca78-11e9-abc0-0686c08fc21a	58983	0.276657060518732	0.20926090828138913	text	9	Hola 	2019-08-29 16:15:32.014111+00	{1567095282783}	M-d-O-RdBYA-7A-X	\N	2019-08-29 11:15:32.014111+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+3a987cf0-ca78-11e9-a995-0686c08fc21a	58983	0.7614571092831962	0.4783989834815756	text	2	Prueba	2019-08-29 16:15:33.946063+00	{1567095256707}	Xb-Q-AXRBd--56LQ	\N	2019-08-29 11:15:33.946063+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+3b1d48c2-ca78-11e9-a996-0686c08fc21a	58983	0.4276885043263288	0.465	text	11	Hola mundo !!	2019-08-29 16:15:34.816903+00	{1567095300023}	ADa-5GZG60--AIej	\N	2019-08-29 11:15:34.816903+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+40a2d154-ca78-11e9-b921-0686c08fc21a	58983	0.5527690700104493	0.3913255360623782	text	1	Hoy es un buen dia	2019-08-29 16:15:44.080055+00	{1567095254952}	-6PLG-3Y6cL-ih--	\N	2019-08-29 11:15:44.080055+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+44ac85f6-ca78-11e9-b524-0686c08fc21a	58983	0.12155745489078823	0.4067439409905163	text	12	Hola\n	2019-08-29 16:15:50.854583+00	{1567095305413}	AR5Fj--5-hA5F-4V	\N	2019-08-29 11:15:50.854583+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+475aa134-ca78-11e9-a048-0686c08fc21a	58983	0.44668587896253603	0.5133287764866712	text	8	Hola	2019-08-29 16:15:55.351021+00	{1567095279796}	AT7Xa9Fg1b7j-c-5	\N	2019-08-29 11:15:55.351021+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+5022baf4-ca78-11e9-8136-0686c08fc21a	58983	0.30816831683168316	0.2472972972972973	image	7	\N	2019-08-29 16:16:10.084157+00	{undefined}	KCKJ6-Ne--jPj2--	1567095359701.jpg	2019-08-29 11:16:10.084157+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+5022d3ea-ca78-11e9-80ca-0686c08fc21a	58983	0.6603995299647474	0.23761118170266837	image	13	\N	2019-08-29 16:16:10.08506+00	{undefined}	VAhLKCHL-NKjGY4b	1567095358515.jpeg	2019-08-29 11:16:10.08506+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+55203ca2-ca78-11e9-951f-0686c08fc21a	58983	0.4482758620689655	0.29434697855750486	text	5	Hl	2019-08-29 16:16:18.456424+00	{1567095260211}	e-9D7P-B4--JhDAi	\N	2019-08-29 11:16:18.456424+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+558f40d4-ca78-11e9-9520-0686c08fc21a	58983	0.6711990111248455	0.570625	image	11	\N	2019-08-29 16:16:19.184543+00	{undefined}	bQ5RE5Lh5eO6NG-H	1567095363738.jpg	2019-08-29 11:16:19.184543+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+55c1a95c-ca78-11e9-9521-0686c08fc21a	58983	0.3357348703170029	0.3312555654496883	image	9	\N	2019-08-29 16:16:19.514939+00	{undefined}	-g-BLQSOaci----4	1567095357710.jpg	2019-08-29 11:16:19.514939+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+57cb9f0a-ca78-11e9-bd6d-0686c08fc21a	58983	0.5936599423631124	0.33733013589128696	image	3	\N	2019-08-29 16:16:22.93511+00	{undefined}	aaV-g7801W6O3df-		2019-08-29 11:16:22.93511+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+5d3393b2-ca78-11e9-82b3-0686c08fc21a	58983	0.10693301997649823	0.6092757306226175	image	2	\N	2019-08-29 16:16:32.004981+00	{1567095256707}	-XOA-7-4k-b-3S-c	1567095382340.jpeg	2019-08-29 11:16:32.004981+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+612560f4-ca78-11e9-9801-0686c08fc21a	58983	0.14339981006647673	0.4720758693361433	image	12	\N	2019-08-29 16:16:38.622779+00	{1567095305413}	Jf3E1-E2aLQdEL6-	1567095393674.jpg	2019-08-29 11:16:38.622779+00	0	faddbfc6-ca77-11e9-b393-0686c08fc21a	f
+dc281dea-ceca-11e9-8faa-0686c08fc21a	57786	0.24058823529411766	0.337851929092805	text	1	TRELOL	2019-09-04 04:17:08.383453+00	{1567570615108}	9UJG--K-2Bg5f-hD	\N	2019-09-03 23:17:08.383453+00	0	ba97d724-ceca-11e9-b7ef-0686c08fc21a	f
+9c09208c-cf39-11e9-902a-0686c08fc21a	30058	0.5131128848346637	0.404743687834736	text	4	Trabajo colaborativo 	2019-09-04 17:29:54.943195+00	{1567618059176}	7kY8-4-0O-dd-j3F	\N	2019-09-04 12:29:54.943195+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+9f8d453a-cf39-11e9-a5a4-0686c08fc21a	30058	0.1670792079207921	0.20854132002218526	text	8	Discusión. 	2019-09-04 17:30:00.842368+00	{1567618126215}	aLMkPXk4HdhTc0jM	\N	2019-09-04 12:30:00.842368+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+a36e1f3a-cf39-11e9-9d0b-0686c08fc21a	30058	0.4106628242074928	0.3048327137546468	text	7	Cierre de actividad	2019-09-04 17:30:07.349082+00	{1567618101066}	-4P--P-8J--B----	\N	2019-09-04 12:30:07.349082+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+be47930e-cf39-11e9-92e7-0686c08fc21a	30058	0.8371757925072046	0.19013524264120923	image	9	\N	2019-09-04 17:30:52.395181+00	{undefined}	H-P9aEA-73Qe-D-B	1567618224999.jpg	2019-09-04 12:30:52.395181+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+b8cac7f2-cf39-11e9-af01-0686c08fc21a	30058	0.6390605686032138	0.3465481886534518	text	5	Discusiones grupales 	2019-09-04 17:30:43.188438+00	{1567618069844}	-R-Ug2d45Jie-7--	\N	2019-09-04 12:30:43.188438+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	t
+6b1cdac6-cf3a-11e9-bad8-0686c08fc21a	30058	0.2202970297029703	0.14919578480310594	text	8	Planificación de ideas/actividades 	2019-09-04 17:35:42.360824+00	{1567618126215}	--I7aC-g-9-Q-1C3	\N	2019-09-04 12:35:42.360824+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+6c47f138-cf3a-11e9-9f0b-0686c08fc21a	30058	0.5256211180124224	0.2796486090775988	text	9	Mapas! 	2019-09-04 17:35:44.320921+00	{1567618146010}	SDLIWWEI--i4-B79	\N	2019-09-04 12:35:44.320921+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+6e63ecec-cf3a-11e9-957b-0686c08fc21a	30058	0.49855907780979825	0.39219330855018586	text	7	Revisión de infografias	2019-09-04 17:35:47.859974+00	{1567618101066}	GEa21-K-EIdP-1YW	\N	2019-09-04 12:35:47.859974+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+43122698-cf3b-11e9-a4c3-0686c08fc21a	30058	0.12747524752475248	0.24126455906821964	text	8	Hacer prácticas 	2019-09-04 17:41:44.678573+00	{1567618126215}	LjXM-8BOR-4B--iG	\N	2019-09-04 12:41:44.678573+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+6a064422-cf3c-11e9-99db-0686c08fc21a	30058	0.15594059405940594	0.389351081530782	text	8	Comparación de materiales/recursos 	2019-09-04 17:49:59.527902+00	{1567618126215}	HBTRJg617-BCf-Z-	\N	2019-09-04 12:49:59.527902+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	t
+80e74fba-cf3c-11e9-8f80-0686c08fc21a	30058	0.16212871287128713	0.3777038269550749	text	8	Comparación de materiales/recursos/ventajas y desventajas	2019-09-04 17:50:37.913229+00	{1567618126215}	DjQ-eW-1-5D-E3f-	\N	2019-09-04 12:50:37.913229+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+fdf791a4-cf3c-11e9-bb70-0686c08fc21a	30058	0.41733181299885974	0.4728385615914308	text	4	Discusión libre	2019-09-04 17:54:07.735002+00	{1567618059176}	fed-PWaF--67-1FJ	\N	2019-09-04 12:54:07.735002+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+1eeb7948-cf3d-11e9-9103-0686c08fc21a	30058	0.4207920792079208	0.2257348863006101	text	8	Consenso de ideas	2019-09-04 17:55:03.02054+00	{1567618126215}	k-kPdafV01--27X-	\N	2019-09-04 12:55:03.02054+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+221efb4e-cf3d-11e9-9049-0686c08fc21a	30058	0.4265129682997118	0.381066030230708	text	9	Participan todos los alumnos	2019-09-04 17:55:08.391296+00	{1567618146010}	g-X-RSJRT--VCLGN	\N	2019-09-04 12:55:08.391296+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+5f0244e4-cf3d-11e9-b954-0686c08fc21a	30058	0.7594070695553021	0.15378729915837797	text	4	Se necesita tiempo para acomodar el espacio 	2019-09-04 17:56:50.54407+00	{1567618059176}	cO-J7Y1-daG-B-Z-	\N	2019-09-04 12:56:50.54407+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+6d5d407a-cf3d-11e9-95a2-0686c08fc21a	30058	0.7537128712871287	0.3050471436494731	text	8	Si hay proyección, hay alumnos que dan la espalda	2019-09-04 17:57:14.628428+00	{1567618126215}	EIKL6L-kAS-SEgHY	\N	2019-09-04 12:57:14.628428+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+71e55394-cf3d-11e9-b5e4-0686c08fc21a	30058	0.3962536023054755	0.3228004956629492	text	7	Muchos usuarios se confunden	2019-09-04 17:57:22.231392+00	{1567618101066}	JeKPFWPX---UXXCV	\N	2019-09-04 12:57:22.231392+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+742c8e24-cf3d-11e9-817b-0686c08fc21a	30058	0.40296662546353523	0.4538619275461381	text	5	No todos pueden atender fácilmente a las indicaciones principales 	2019-09-04 17:57:26.052657+00	{1567618069844}	91hOXL-g-KQe8dP-	\N	2019-09-04 12:57:26.052657+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	t
+95aa5e3c-cf3d-11e9-9a10-0686c08fc21a	30058	0.7363112391930836	0.5409705648369133	text	9	Los alumnos tiene que voltear a ver la  proyección, puede ser un poco incómodo	2019-09-04 17:58:22.242661+00	{1567618146010}	GS-L---Df04f-3WD	\N	2019-09-04 12:58:22.242661+00	0	65934d08-cf38-11e9-a33a-0686c08fc21a	f
+21149c38-cf4f-11e9-a47d-0686c08fc21a	97981	0.2626201923076923	0.4202586206896552	text	1	m,.-.,m,-.	2019-09-04 20:03:57.586709+00	{1567626975283}	MEJ-9-Q4-UjkWVCf	\N	2019-09-04 15:03:57.586709+00	0	bb273f64-cf37-11e9-9c5b-0686c08fc21a	f
+34707338-cf6d-11e9-9ef5-0686c08fc21a	50171	0.5267412935323383	0.44	text	1	Hola a todos mis cuates	2019-09-04 23:39:14.967195+00	{1567640360198}	g9-5AH-9-IW-D-Za	\N	2019-09-04 18:39:14.967195+00	0	e9b8f59a-cf6c-11e9-a0a1-0686c08fc21a	t
+61960304-cf6e-11e9-b243-0686c08fc21a	50171	0.5945273631840796	0.6361829025844931	text	2	Ya llegué!!!!	2019-09-04 23:47:40.207468+00	{1567640633900}	783-FSCS-BSdhf-d	\N	2019-09-04 18:47:40.207468+00	0	e9b8f59a-cf6c-11e9-a0a1-0686c08fc21a	t
+5e7c012e-cf6d-11e9-af02-0686c08fc21a	50171	0.5385572139303483	0.23375	image	1	\N	2019-09-04 23:40:25.507196+00	{undefined}	4PjEh8N8R9degR-3	1567640415241.jpg	2019-09-04 18:40:25.507196+00	0	e9b8f59a-cf6c-11e9-a0a1-0686c08fc21a	t
+b274f51e-cf6e-11e9-b863-0686c08fc21a	50171	0.3246268656716418	0.6262425447316103	image	2	\N	2019-09-04 23:49:55.886315+00	{1567640633900}	--C5FVYShAKe----	1567640988297.jpg	2019-09-04 18:49:55.886315+00	0	e9b8f59a-cf6c-11e9-a0a1-0686c08fc21a	t
+d9548ba6-d02f-11e9-9d28-0686c08fc21a	66170	0.5929203539823009	0.021231422505307854	text	1	Voto	2019-09-05 22:52:33.973911+00	{1567723882052}	--V-e8dLA-F-D6-3	\N	2019-09-05 17:52:33.973911+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+0d2a2024-d0d2-11e9-9ecb-0686c08fc21a	77489	0.8095781071835804	0.6885998469778117	text	4	Hola\n	2019-09-06 18:13:39.407657+00	{1567793587636}	cS9--aa-7A5DQcTE	\N	2019-09-06 13:13:39.407657+00	0	dc66d540-d0d1-11e9-b595-0686c08fc21a	f
+1b6be69a-d0d2-11e9-89bf-0686c08fc21a	77489	0.44499381953028433	0.24751316559391456	text	1	Saludos\n	2019-09-06 18:14:03.326827+00	{1567793565952}	U-6OGjkX-Fe4L-7D	\N	2019-09-06 13:14:03.326827+00	0	dc66d540-d0d1-11e9-b595-0686c08fc21a	f
+35c73a44-d0d2-11e9-8632-0686c08fc21a	77489	0.4820766378244747	0.330393487109905	text	3	Hola	2019-09-06 18:14:47.546097+00	{1567793572798}	--Rk6H--Y-Q-7-T-	\N	2019-09-06 13:14:47.546097+00	0	dc66d540-d0d1-11e9-b595-0686c08fc21a	f
+803b29dc-d0d2-11e9-ac1f-0686c08fc21a	77489	0.43016069221260816	0.22118197776477472	image	1	\N	2019-09-06 18:16:52.457268+00	{1567793565952}	HZ--Y-LIVFM7PTKB	1567793668447.jpg	2019-09-06 13:16:52.457268+00	0	dc66d540-d0d1-11e9-b595-0686c08fc21a	t
+1f403e74-d0d2-11e9-bbf6-0686c08fc21a	77489	0.3772204806687565	0.24317738791423002	image	2	\N	2019-09-06 18:14:09.751587+00	{1567793556751}	4-QHbcQ-EJ5UG1QQ	1567793640697.jpg	2019-09-06 13:14:09.751587+00	0	dc66d540-d0d1-11e9-b595-0686c08fc21a	t
+e45fe100-d0d2-11e9-85fc-0686c08fc21a	77489	0.4012539184952978	0.28460038986354774	image	2	\N	2019-09-06 18:19:40.470085+00	{1567793556751}	CgA9-bI9AN-YOC-j	1567793973998.jpg	2019-09-06 13:19:40.470085+00	0	dc66d540-d0d1-11e9-b595-0686c08fc21a	t
+474efccc-d31e-11e9-a52b-0686c08fc21a	51258	0.4626865671641791	0.6714761376248612	image	1	\N	2019-09-09 16:24:21.034021+00	{undefined}	U--I1SQC6D0UW-U-	1568046250905.JPG	2019-09-09 11:24:21.034021+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+e1162e70-d31e-11e9-8811-0686c08fc21a	51258	0.8177860696517413	0.38401775804661487	text	1	Desventajas:\nLúgubre	2019-09-09 16:28:39.03093+00	{1568046613711}	2eE92-Z-e2-RZ9SD	\N	2019-09-09 11:28:39.03093+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+006fd8ac-d31f-11e9-80b8-0686c08fc21a	51258	0.7873134328358209	0.5038845726970034	text	1	Desventaja:\nPequeño y compacto	2019-09-09 16:29:31.627928+00	{1568046613711}	D--EDCXKWX5CfYQi	\N	2019-09-09 11:29:31.627928+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+2a52de8a-d31f-11e9-8d46-0686c08fc21a	51258	0.7798507462686567	0.6137624861265261	text	1	Desventaja:\nCaluroso	2019-09-09 16:30:41.90227+00	{1568046613711}	LW0-jX-VEEi-3O-W	\N	2019-09-09 11:30:41.90227+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+3aeac8f6-d320-11e9-a5cc-0686c08fc21a	51258	0.036069651741293535	0.04328523862375139	image	1	\N	2019-09-09 16:38:19.238184+00	{undefined}	-B-9j5-DJ-TMAb8-	1568047072463.JPG	2019-09-09 11:38:19.238184+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+45eb2a46-d322-11e9-a598-0686c08fc21a	51258	0.24191542288557213	0.41731409544950054	text	1	Ventajas	2019-09-09 16:52:56.689092+00	{1568046613711}	-JbEUOFiDiUcLhcV	\N	2019-09-09 11:52:56.689092+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+4787e56a-d322-11e9-8435-0686c08fc21a	51258	0.3910891089108911	0.480625	text	2	Un texto	2019-09-09 16:52:59.393974+00	{1568047083140}	-X---TR-F-XW3aH-	\N	2019-09-09 11:52:59.393974+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	t
+6a28d156-d322-11e9-9028-0686c08fc21a	51258	0.7611386138613861	0.463125	text	2	Ventaja: sí hay Internet	2019-09-09 16:53:57.490998+00	{1568047083140}	--Re-hc7fMjGJb2Y	\N	2019-09-09 11:53:57.490998+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	t
+d67aad34-d322-11e9-a986-0686c08fc21a	51258	0.7860696517412935	0.4406215316315205	text	1	Ventaja: sí hay Internet (editado)	2019-09-09 16:56:59.221474+00	{1568047083140,1568046613711}	OagAJOM---L-0dk-	\N	2019-09-09 11:56:59.221474+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+963f7360-d324-11e9-91dc-0686c08fc21a	51258	0.4496268656716418	0.10654827968923418	image	1	\N	2019-09-09 17:09:30.452669+00	{1568046613711}	8R9fO12KO1bhccVG	1568048958529.jpg	2019-09-09 12:09:30.452669+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+9f71e21c-d331-11e9-bfc0-0686c08fc21a	50037	0.8368237347294939	0.639269406392694	text	6	Buenas tardes, soy Fernando	2019-09-09 18:42:49.340064+00	{1568054321127}	ZSX87-haEISEBSUJ	\N	2019-09-09 13:42:49.340064+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+2af950d0-d333-11e9-9bbe-0686c08fc21a	50037	0.14859002169197397	0.7575566750629723	text	7	E	2019-09-09 18:53:52.927759+00	{1568054848408}	--EY-H9CIj-AcgWQ	\N	2019-09-09 13:53:52.927759+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+1a43f0ae-d335-11e9-b01d-0686c08fc21a	50037	0.9993781094527363	0.5543237250554324	text	1	Generan e intercambian.	2019-09-09 19:07:43.888949+00	{1568054206761}	U-PJRX-jX2-Pih6M	\N	2019-09-09 14:07:43.888949+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+e7fbeb68-d331-11e9-bd26-0686c08fc21a	50037	0.35509950248756217	0.4911308203991131	text	4	Buenas tardes, soy Diana	2019-09-09 18:44:51.040733+00	{1568054252336}	A-7-KSXPWefC--9F	\N	2019-09-09 13:44:51.040733+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+a21b3770-d331-11e9-a079-0686c08fc21a	50037	0.10588235294117647	0.83125	text	5	Buenas tardes mi nombre es Fabián	2019-09-09 18:42:53.805338+00	{1568054258398}	eY-LFQK3S-RQXX3i	\N	2019-09-09 13:42:53.805338+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+a049ed1a-d331-11e9-895b-0686c08fc21a	50037	0.9191542288557214	0.24390243902439024	text	3	Hola, soy Ingrid\n	2019-09-09 18:42:50.755988+00	{1568054213908}	M--h-JMHDH-59dK3	\N	2019-09-09 13:42:50.755988+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+b3598460-d331-11e9-b5bf-0686c08fc21a	50037	0.21890547263681592	0.31263858093126384	text	1	¡Hola! Soy Jorge. Mucho gusto.	2019-09-09 18:43:22.734822+00	{1568054206761}	R-Oh-jjIZRjG-1E-	\N	2019-09-09 13:43:22.734822+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+a60927de-d331-11e9-a000-0686c08fc21a	50037	0.24440298507462688	0.5177383592017738	text	4	Buenas tardes, mi nombre es Diana	2019-09-09 18:43:00.397856+00	{1568054252336}	-8YgR-DfT3j-gJ-N	\N	2019-09-09 13:43:00.397856+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+a3734a18-d331-11e9-8797-0686c08fc21a	50037	0.6453362255965293	0.28085642317380355	text	2	Buen día! Soy Gabriela 	2019-09-09 18:42:56.059342+00	{1568054207601}	YCJNBJg11fH-g-07	\N	2019-09-09 13:42:56.059342+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+72ff7aae-d332-11e9-8900-0686c08fc21a	50037	0.07151741293532338	0.3458980044345898	text	7	A	2019-09-09 18:48:44.267378+00	{1568054848408}	FD1W-hX-b53-b3f-	\N	2019-09-09 13:48:44.267378+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+9c9972a8-d336-11e9-b7f8-0686c08fc21a	38934	0.6330845771144279	0.5886917960088692	text	2	Generan	2019-09-09 19:18:32.049879+00	{1568056688823}	-i-WER9-hH--K5-a	\N	2019-09-09 14:18:32.049879+00	0	4e1eb1e2-d336-11e9-b186-0686c08fc21a	f
+f34b30aa-d336-11e9-9132-0686c08fc21a	38934	0.19838308457711443	0.5133037694013304	text	2	Difusión	2019-09-09 19:20:57.498805+00	{1568056688823}	I-M---j3-2a76-cc	\N	2019-09-09 14:20:57.498805+00	0	4e1eb1e2-d336-11e9-b186-0686c08fc21a	f
+a17e6dae-d332-11e9-8eae-0686c08fc21a	50037	0.10945273631840796	0.5776053215077606	text	7	W	2019-09-09 18:50:02.274452+00	{1568054848408}	ab-11-4A-eHeVA-E	\N	2019-09-09 13:50:02.274452+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+faefd7a6-d332-11e9-b765-0686c08fc21a	50037	0.2860696517412935	0.9512195121951219	text	1	Txt\n\n\nGH\n	2019-09-09 18:52:32.334961+00	{1568054206761}	E-I1hBT1FhPOPe6F	\N	2019-09-09 13:52:32.334961+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+db7c5d40-d332-11e9-b8bf-0686c08fc21a	50037	0.9067164179104478	0.07982261640798226	text	3	Cabeza	2019-09-09 18:51:39.568861+00	{1568054213908}	-dG-VK4KFLE1-7F7	\N	2019-09-09 13:51:39.568861+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+fcdb1d1e-d332-11e9-bdcd-0686c08fc21a	50037	0.39588235294117646	0.2375	text	5	Giro	2019-09-09 18:52:35.55461+00	{1568054258398}	1jCWKF7-bLaTT-Z0	\N	2019-09-09 13:52:35.55461+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+7ee92914-d332-11e9-aa55-0686c08fc21a	50037	0.05907960199004975	0.2616407982261641	text	7	Ae	2019-09-09 18:49:04.253681+00	{1568054848408}	1bE7SZTATVOI-8i-	\N	2019-09-09 13:49:04.253681+00	0	b560c922-d330-11e9-b9b1-0686c08fc21a	t
+078d58e0-d337-11e9-9151-0686c08fc21a	38934	0.40238611713665945	0.28148614609571787	image	1	\N	2019-09-09 19:21:31.486831+00	{1568056642149}	7AJRWRGN3-7VIaWJ	1568056885808.jpg	2019-09-09 14:21:31.486831+00	0	4e1eb1e2-d336-11e9-b186-0686c08fc21a	f
+88c093a6-d336-11e9-8eed-0686c08fc21a	38934	0.5227765726681128	0.33123425692695213	image	1	\N	2019-09-09 19:17:58.751897+00	{1568056642149}	0agXGC-JPB5i8-Ia	1568056674598.jpeg	2019-09-09 14:17:58.751897+00	0	4e1eb1e2-d336-11e9-b186-0686c08fc21a	t
+7f11af1a-d337-11e9-a8ed-0686c08fc21a	38934	0.7201492537313433	0.37583148558758317	image	2	\N	2019-09-09 19:24:52.003087+00	{1568057076206}	-j6L-Y-j-QR2-hGA	1568057083634.jpeg	2019-09-09 14:24:52.003087+00	0	4e1eb1e2-d336-11e9-b186-0686c08fc21a	f
+6f44c386-d410-11e9-b6bd-0686c08fc21a	85791	0.48009950248756217	0.5280575539568345	text	2	rkm	2019-09-10 21:17:46.28441+00	{1568150351970}	ROX--M-k2B2C-IS3	\N	2019-09-10 16:17:46.28441+00	0	3a4fd206-d410-11e9-b1b2-0686c08fc21a	f
+1cff5c8c-d337-11e9-a076-0686c08fc21a	38934	0.4651741293532338	0.4911308203991131	text	3	Hola!	2019-09-09 19:22:07.46619+00	{1568056900968}	-P-IXaU7O-ZjH7-j	\N	2019-09-09 14:22:07.46619+00	0	4e1eb1e2-d336-11e9-b186-0686c08fc21a	t
+81d647f4-d410-11e9-bb67-0686c08fc21a	85791	0.4291044776119403	0.5050359712230216	image	2	\N	2019-09-10 21:18:17.437103+00	{1568150351970}	Y3i3N-J-Y-BkLG4D	1568150293299.jpg	2019-09-10 16:18:17.437103+00	0	3a4fd206-d410-11e9-b1b2-0686c08fc21a	f
+859900a2-d410-11e9-985a-0686c08fc21a	85791	0.3774875621890547	0.11764705882352941	image	1	\N	2019-09-10 21:18:23.74629+00	{1568152394466}	XQe-YRJUh4iKe-SR	1568150295436.png	2019-09-10 16:18:23.74629+00	0	3a4fd206-d410-11e9-b1b2-0686c08fc21a	f
+ca48ff72-d410-11e9-b0fe-0686c08fc21a	85791	0.48009950248756217	0.5093525179856115	text	2	Divulgación de las ciencias	2019-09-10 21:20:18.984902+00	{1568150351970}	CQUaF464-H3Z-73M	\N	2019-09-10 16:20:18.984902+00	0	3a4fd206-d410-11e9-b1b2-0686c08fc21a	f
+de31947c-d410-11e9-95a1-0686c08fc21a	85791	0.5758706467661692	0.4	text	2	Investigación	2019-09-10 21:20:52.385806+00	{1568150351970}	XhAFO-kL-hgY-NAQ	\N	2019-09-10 16:20:52.385806+00	0	3a4fd206-d410-11e9-b1b2-0686c08fc21a	f
+7007543c-d410-11e9-8183-0686c08fc21a	85791	0.2431592039800995	0.3129855715871254	text	1	Holi boroli!	2019-09-10 21:17:47.559594+00	{1568152394466}	4fFJjLN-dQgYXj-F	\N	2019-09-10 16:17:47.559594+00	0	3a4fd206-d410-11e9-b1b2-0686c08fc21a	t
+33c44482-d413-11e9-a72a-0686c08fc21a	85791	0.43034825870646765	0.5294964028776978	text	2	Holi boroli!	2019-09-10 21:37:34.94696+00	{1568152394466,1568150351970}	gL-K--g1Xc-fF1KK	\N	2019-09-10 16:37:34.94696+00	0	3a4fd206-d410-11e9-b1b2-0686c08fc21a	f
+3d0897de-d411-11e9-a37c-0686c08fc21a	85791	0.5516169154228856	0.41509433962264153	text	1	Investigación\nDifusión\nDivulgación de las ciencias	2019-09-10 21:23:31.500846+00	{1568152394466}	fbeeCH7-i3eV251j	\N	2019-09-10 16:23:31.500846+00	0	3a4fd206-d410-11e9-b1b2-0686c08fc21a	t
+43969406-d4b7-11e9-87ac-0686c08fc21a	33766	0.2916666666666667	0.43875	text	1	Hola	2019-09-11 17:11:58.95479+00	{1568221946855}	Q-J-MF---N5TOP4J	\N	2019-09-11 12:11:58.95479+00	0	06c722a2-d4b7-11e9-bea9-0686c08fc21a	f
+542e7e6e-d4b7-11e9-8854-0686c08fc21a	33766	0.3812189054726368	0.57625	image	1	\N	2019-09-11 17:12:26.793874+00	{1568221946855}	GiDZFKfDN-jPe0OJ	1568221941902.png	2019-09-11 12:12:26.793874+00	0	06c722a2-d4b7-11e9-bea9-0686c08fc21a	f
+6323f606-d4b7-11e9-9fe6-0686c08fc21a	33766	0.236318407960199	0.58625	image	1	\N	2019-09-11 17:12:51.890711+00	{undefined}	-i--DjIRMN-13-KJ	1568221963442.jpg	2019-09-11 12:12:51.890711+00	0	06c722a2-d4b7-11e9-bea9-0686c08fc21a	f
+54dbcd28-d4ba-11e9-b77c-0686c08fc21a	51258	0.22536057692307693	0.5928057553956835	image	8	\N	2019-09-11 17:33:56.419829+00	{undefined}	--9S-3g-cfB-fa-X	1568223225699.jpg	2019-09-11 12:33:56.419829+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+653b153e-d4ba-11e9-81e4-0686c08fc21a	51258	0.4900497512437811	0.38137472283813745	image	5	\N	2019-09-11 17:34:23.88782+00	{1568222883804}	-Hg8GE-dcfef-EEH	1568223251270.jpg	2019-09-11 12:34:23.88782+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+690ffaf8-d4ba-11e9-8a07-0686c08fc21a	51258	0.5012437810945274	0.42350332594235035	image	7	\N	2019-09-11 17:34:30.316259+00	{1568222891790}	9NjGQf9JaK--BGI6	1568223253352.jpg	2019-09-11 12:34:30.316259+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+84504e08-d4ba-11e9-bc22-0686c08fc21a	51258	0.27549751243781095	0.43237250554323725	image	9	\N	2019-09-11 17:35:16.036305+00	{1568223122520}	-E--Zi5RdjN3DcKM	1568223306503.jpg	2019-09-11 12:35:16.036305+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+388ed5ec-d4bb-11e9-bb44-0686c08fc21a	51258	0.38992537313432835	0.5465631929046563	image	10	\N	2019-09-11 17:40:18.436002+00	{1568223564168}	FJdhE2F-NRf-iDe-	1568223610858.jpg	2019-09-11 12:40:18.436002+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+ff55d5e4-d4bc-11e9-a534-0686c08fc21a	51258	0.31902985074626866	0.1385809312638581	image	5	\N	2019-09-11 17:53:01.425784+00	{1568222883804}	Y8iH62jj2M2FEMb-	1568224372032.JPG	2019-09-11 12:53:01.425784+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+95d981be-d4bd-11e9-b30f-0686c08fc21a	51258	0.3370646766169154	0.45121951219512196	image	9	\N	2019-09-11 17:57:13.946974+00	{1568223122520}	g-XA-3LAUG5S-jEH	1568224625847.JPG	2019-09-11 12:57:13.946974+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+c777e45e-d4bd-11e9-8dcc-0686c08fc21a	51258	0.5335820895522388	0.4057649667405765	image	7	\N	2019-09-11 17:58:37.193231+00	{undefined}	7C--E--G---U-TEX	1568224698198.JPG	2019-09-11 12:58:37.193231+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+d10a5f2e-d4bd-11e9-87f0-0686c08fc21a	51258	0.32276119402985076	0.6662971175166297	image	10	\N	2019-09-11 17:58:53.252739+00	{undefined}	E2i85JHZaMBPLWiS	1568224696475.jpg	2019-09-11 12:58:53.252739+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+2d83553a-d4be-11e9-ac30-0686c08fc21a	51258	0.14614427860696516	0.34700665188470065	text	5	Ventaja:\nSe puede trabajar mejor colaborativamente \nSe puede monitorear mejor el trabajo en los equipos\nSe coordina mejor para actividades grupales \nDesventaja :\nLa iluminación a veces no ayuda \nTener cuidado con tanta información pues a veces puede ser conflictivo y no recordar claves \n	2019-09-11 18:01:28.39583+00	{1568222883804}	j-aDQ2-aAMK25-ZJ	\N	2019-09-11 13:01:28.39583+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	t
+8135a174-d4be-11e9-aa9a-0686c08fc21a	51258	0.14303482587064675	0.26274944567627495	text	11	Ventaja :\nSe favorece el trabajo colaborativo	2019-09-11 18:03:48.815279+00	{1568224994852}	-Fg-HWTY84--eJX-	\N	2019-09-11 13:03:48.815279+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+83ddc4ce-d4be-11e9-a168-0686c08fc21a	51258	0.20522388059701493	0.4866962305986696	image	10	\N	2019-09-11 18:03:53.272635+00	{undefined}	7-Y--D-YAYVe9-LF	1568224997939.jpg	2019-09-11 13:03:53.272635+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+b39c5cac-d4be-11e9-9397-0686c08fc21a	51258	0.595771144278607	0.9246119733924612	text	9	Ventajas: \nFlexibilidad\nIluminación suficiente\nDesventajas:\nPoco espacio entre equipos\nFalta de internet\n\n	2019-09-11 18:05:13.374617+00	{1568223122520}	RH-j3-X-bHI-b6Ni	\N	2019-09-11 13:05:13.374617+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	t
+feac8686-d4be-11e9-b8ce-0686c08fc21a	51258	0.7574626865671642	0.6330376940133038	text	9	Ventajas: \nFlexibilidad\nIluminación suficiente\nBuena interacción  en equipos\nDesventajas:\nPoco espacio entre equipos\nFalta de internet\n\n	2019-09-11 18:07:19.309592+00	{1568223122520}	D--QOG--5fZ-7-UY	\N	2019-09-11 13:07:19.309592+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+04e7dce4-d4bf-11e9-afb3-0686c08fc21a	51258	0.542910447761194	0.39135254988913526	text	7	Ventajas:\n1. Tiene la infraestructura adecuada\n2. 7 tabletas\n3. La organización de mobiliario permite el trabajo colaborativo\n4. El tamaño del pizarrón permite mayor participación de los alumnos\nDesventajas\n1. Se pierde tiempo en el traslado\n2. En algunas tabletas no abrían las aplicaciones\n\n\n	2019-09-11 18:07:29.76481+00	{1568222891790}	S-XVQEaI---TEWRY	\N	2019-09-11 13:07:29.76481+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+15cda14c-d4bf-11e9-9250-0686c08fc21a	51258	0.31032338308457713	0.9168514412416852	text	10	Ventajas: favorece trabajo colaborativo\nSe visualiza el trabajo de todos los equipos\n	2019-09-11 18:07:58.114146+00	{1568223564168}	c--G-O--JfOQ68-Y	\N	2019-09-11 13:07:58.114146+00	0	6674d582-d31d-11e9-b279-0686c08fc21a	f
+6a89db24-d4bf-11e9-bbaf-0686c08fc21a	28667	0.31588235294117645	0.3409316154608523	text	1	pregunta?	2019-09-11 18:10:20.276304+00	{1568224965308}	ggDMA-e3J4W---MS	\N	2019-09-11 13:10:20.276304+00	0	17aad54e-cf37-11e9-b769-0686c08fc21a	f
+dcc80c88-d4bf-11e9-8dd1-0686c08fc21a	28667	0.4076470588235294	0.38453914767096137	text	1	que aporte hubo existieron en tu practica docente	2019-09-11 18:13:31.9442+00	{1568224965308}	2-j-A-N-61A--Pe5	\N	2019-09-11 13:13:31.9442+00	0	17aad54e-cf37-11e9-b769-0686c08fc21a	f
+5cdec4cc-d4d2-11e9-b02c-0686c08fc21a	28667	0.18	0.2933597621407334	text	1	hjklhh	2019-09-11 20:25:57.782599+00	{1568224965308}	L-R-HM-aQMUA-7d-	\N	2019-09-11 15:25:57.782599+00	0	17aad54e-cf37-11e9-b769-0686c08fc21a	t
+de8bc7f0-d4d1-11e9-a2e4-0686c08fc21a	28667	0.4958823529411765	0.43409316154608524	image	1	\N	2019-09-11 20:22:25.845852+00	{undefined}	cc093Nd8O-DY----	1568233273732.png	2019-09-11 15:22:25.845852+00	0	17aad54e-cf37-11e9-b769-0686c08fc21a	t
+c53b3852-d4d2-11e9-a572-0686c08fc21a	28667	0.42058823529411765	0.4093161546085233	image	1	\N	2019-09-11 20:28:52.871465+00	{1568224965308}	bPZh-hRfZI--ZBMH	1568233724713.jpg	2019-09-11 15:28:52.871465+00	0	17aad54e-cf37-11e9-b769-0686c08fc21a	f
+24877fbc-d4da-11e9-929a-0686c08fc21a	73359	0.3271144278606965	0.4623059866962306	image	4	\N	2019-09-11 21:21:39.232109+00	{1568236698547}	DYBS-XHNQ-F--b27	1568236890005.jpg	2019-09-11 16:21:39.232109+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+261631d4-d4da-11e9-ac98-0686c08fc21a	73359	0.39800995024875624	0.6906873614190687	image	5	\N	2019-09-11 21:21:41.844986+00	{1568236713356}	G-4VYVQI4D--VX-j	1568236886082.jpg	2019-09-11 16:21:41.844986+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+318ab2a6-d4da-11e9-ba18-0686c08fc21a	73359	0.7139303482587065	0.33148558758314856	image	3	\N	2019-09-11 21:22:01.063454+00	{1568236692558}	FMS--jY--5MKfORC	1568236909037.jpg	2019-09-11 16:22:01.063454+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+45d91896-d4db-11e9-9dc1-0686c08fc21a	73359	0.6374378109452736	0.6840354767184036	image	5	\N	2019-09-11 21:29:44.628372+00	{1568236713356}	-ViiAOGEcR8N-DMV	1568237362239.JPG	2019-09-11 16:29:44.628372+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+4f20eda2-d4db-11e9-8e00-0686c08fc21a	73359	0.6355721393034826	0.26940133037694014	image	3	\N	2019-09-11 21:30:00.198685+00	{1568236692558}	a5a15O--T-ZO-Ab2	1568237389323.JPG	2019-09-11 16:30:00.198685+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+6ed1f8ee-d4db-11e9-9650-0686c08fc21a	73359	0.31032338308457713	0.13082039911308205	image	4	\N	2019-09-11 21:30:53.368256+00	{undefined}	g-1-DGS-j-Z-3-dd	1568237442868.JPG	2019-09-11 16:30:53.368256+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+8d3cebee-d4dc-11e9-a672-0686c08fc21a	73359	0.595771144278607	0.08314855875831485	text	3	Ventajas: Interacción 1a 1, inmediatez posibilidad de trabajo con compañeros de fila, puerta en parte trasera que evita distracción.\n\nDesventajas: algunos teclados obsoletos, interrupción continua de la red, algunas máquinas  sin servicio, sin proyector, sin ventilación adecuada	2019-09-11 21:38:53.897537+00	{1568236692558}	BYeF-WVaeDEWU-YQ	\N	2019-09-11 16:38:53.897537+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+8d435f4c-d4dc-11e9-a673-0686c08fc21a	73359	0.30659203980099503	0.32483370288248337	text	4	Ventajas\nEs un espacio que cuenta con el mobiliario y el equipo necesario para trabajar: computadoras, proyector, internet, bocinas.\nPuedes observar el trabajo de los alumnos sin desplazarte tanto.\nCuentas con apoyo del técnico en caso de alguna falla.\n\n	2019-09-11 21:38:53.940508+00	{1568236698547}	1Z-D6FP56-C9K-3-	\N	2019-09-11 16:38:53.940508+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+90d2fcb2-d4dc-11e9-8ffa-0686c08fc21a	73359	0.05907960199004975	0.8259423503325942	text	5	Ventajas.\nAudiovisual. Disponibilidad de internet; equipo ya instalado, poder acercarse a la pantalla y observar la imagen de cerca\n	2019-09-11 21:38:59.914233+00	{1568236713356}	eh87S-hM7B9-NbBN	\N	2019-09-11 16:38:59.914233+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+4378060a-d4dd-11e9-879b-0686c08fc21a	73359	0.05099502487562189	0.35920177383592017	text	6	Desventaja: caluroso	2019-09-11 21:43:59.630173+00	{1568237900359}	Q5bWKG-QV4Z6--b9	\N	2019-09-11 16:43:59.630173+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+8a7bb72c-d4dd-11e9-a460-0686c08fc21a	73359	0.39738805970149255	0.050997782705099776	text	6	Desventaja: Disponibilidad	2019-09-11 21:45:58.772692+00	{1568237900359}	Yj-A---cNgT1-fOE	\N	2019-09-11 16:45:58.772692+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+f8168780-d4dd-11e9-aca5-0686c08fc21a	73359	0.9266169154228856	0.3575949367088608	text	7	Ventaja\n\nCuenta con apoyo	2019-09-11 21:49:02.658941+00	{1568238129610}	0G1K--1IbZO6LF--	\N	2019-09-11 16:49:02.658941+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+04363f1a-d4de-11e9-a760-0686c08fc21a	73359	0.8034825870646766	0.4246119733924612	text	6	Desventaja: computadoras lentas	2019-09-11 21:49:22.99945+00	{1568237900359}	ENK7--j--S-jN-DN	\N	2019-09-11 16:49:22.99945+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+2d6df4e0-d4de-11e9-ad24-0686c08fc21a	73359	0.5373134328358209	0.05432372505543237	text	6	Desventaja: se graban algunas computadoras	2019-09-11 21:50:32.151168+00	{1568237900359}	b--Q3---D3-bbQF2	\N	2019-09-11 16:50:32.151168+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+81baa03e-d4de-11e9-92ba-0686c08fc21a	73359	0.4098258706467662	0.8314855875831486	text	6	Desventaja: bancas fijas. Limita la movilidad y comodidad	2019-09-11 21:52:53.582222+00	{1568237900359}	gDk4CF32A8-QKQ-B	\N	2019-09-11 16:52:53.582222+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+8ceede48-d4de-11e9-97d6-0686c08fc21a	73359	0.8924129353233831	0.6286919831223629	text	7	Desventaja A veces no cuenta con apoyo 	2019-09-11 21:53:12.379552+00	{1568238129610}	EhcHYWW2-ddRJ-TF	\N	2019-09-11 16:53:12.379552+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+9a8ffa1e-d4de-11e9-a7b0-0686c08fc21a	73359	0.35696517412935325	0.8503325942350333	text	6	Desventaja: falta de equipo de cómputo	2019-09-11 21:53:35.245772+00	{1568237900359}	TSJgiMi-U--5-0F5	\N	2019-09-11 16:53:35.245772+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+bc3a3c88-d4de-11e9-b1ee-0686c08fc21a	73359	0.23134328358208955	0.6851441241685144	text	6	Desventaja: no hay paletas para escribir	2019-09-11 21:54:31.726359+00	{1568237900359}	h-NVe-XU3Q-M--cI	\N	2019-09-11 16:54:31.726359+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+d8181524-d4de-11e9-b975-0686c08fc21a	73359	0.3289800995024876	0.7184035476718403	text	6	Desventaja: la red falla	2019-09-11 21:55:18.478763+00	{1568237900359}	GBEF-CUIMIN-IeCG	\N	2019-09-11 16:55:18.478763+00	0	3e8cd36c-d4d5-11e9-a1fe-0686c08fc21a	f
+816edad6-d4e4-11e9-ba2b-0686c08fc21a	47571	0.15932023366967604	0.463229078613694	image	3	\N	2019-09-11 22:35:50.066032+00	{1568241332940}	8-22jYW2-cO5WGN3	1568241346705.jpeg	2019-09-11 17:35:50.066032+00	0	c4b964ec-d4e3-11e9-9f9d-0686c08fc21a	f
+d649a748-d4e4-11e9-8203-0686c08fc21a	84769	0.8345771144278606	0.6352549889135255	image	1	\N	2019-09-11 22:38:12.428475+00	{undefined}	YbIN-3gXLJeeD-AL	1568241457354.jpg	2019-09-11 17:38:12.428475+00	0	c0732440-d4e3-11e9-81c8-0686c08fc21a	f
+f8c91eca-d4e4-11e9-ae93-0686c08fc21a	84769	0.14816781731279874	0.31107354184277264	image	2	\N	2019-09-11 22:39:10.306457+00	{1568241517461}	-b--2-N4Cd---PfK	1568241542016.jpeg	2019-09-11 17:39:10.306457+00	0	c0732440-d4e3-11e9-81c8-0686c08fc21a	f
+248d26dc-d4e5-11e9-b1ce-0686c08fc21a	84769	0.10621348911311737	0.29839391377852914	text	2	Quiero esto x2	2019-09-11 22:40:23.733099+00	{1568241517461}	bRajMNWc--fj5XGa	\N	2019-09-11 17:40:23.733099+00	0	c0732440-d4e3-11e9-81c8-0686c08fc21a	t
+088840e6-d4e7-11e9-a115-0686c08fc21a	47571	0.29075804776739356	0.22341024198086662	image	3	\N	2019-09-11 22:53:55.718317+00	{1568242381123}	-gMAJ99-F5-K-SAg	1568242431605.jpeg	2019-09-11 17:53:55.718317+00	0	c4b964ec-d4e3-11e9-9f9d-0686c08fc21a	f
+3a55e850-d4e5-11e9-addb-0686c08fc21a	84769	0.1460435475305364	0.3237531699070161	text	2	Quiero esto x2 aclaro en mi laboratorio xD	2019-09-11 22:41:00.281166+00	{1568241517461}	TgE35N-KRLfD4-AY	\N	2019-09-11 17:41:00.281166+00	0	c0732440-d4e3-11e9-81c8-0686c08fc21a	f
+3f20c864-d4e5-11e9-983d-0686c08fc21a	84769	0.7195273631840796	0.5288248337028825	text	1	Buenas tardes compañeros 	2019-09-11 22:41:08.321448+00	{1568241421027}	U-aYDV1f3A-9kWcU	\N	2019-09-11 17:41:08.321448+00	0	c0732440-d4e3-11e9-81c8-0686c08fc21a	t
+99a9fddc-d4e5-11e9-8909-0686c08fc21a	84769	0.15878916622411046	0.3871513102282333	text	2	Buenas tardes compañeros 👌	2019-09-11 22:43:40.215618+00	{1568241421027,1568241517461}	MA58-7AJa1EO1Yb-	\N	2019-09-11 17:43:40.215618+00	0	c0732440-d4e3-11e9-81c8-0686c08fc21a	t
+d23646ec-d4e5-11e9-8eca-0686c08fc21a	84769	0.367601246105919	0.22059651097355093	image	2	\N	2019-09-11 22:45:15.087411+00	{1568241517461}	h7Qb755gTU-07eee	1568241909696.jpeg	2019-09-11 17:45:15.087411+00	0	c0732440-d4e3-11e9-81c8-0686c08fc21a	t
+13e8ed92-d4e6-11e9-b040-0686c08fc21a	84769	0.2201453790238837	0.25604952166572875	text	2	Planes para la party en p7	2019-09-11 22:47:05.310049+00	{1568241517461}	jUW-9ha3K-23ehS8	\N	2019-09-11 17:47:05.310049+00	0	c0732440-d4e3-11e9-81c8-0686c08fc21a	t
+577f08e8-d4e6-11e9-8be6-0686c08fc21a	84769	0.34579439252336447	0.23297692740574	text	2	🤬	2019-09-11 22:48:58.701222+00	{1568241517461}	OW8kK-R-NGLaDA8e	\N	2019-09-11 17:48:58.701222+00	0	c0732440-d4e3-11e9-81c8-0686c08fc21a	t
+57665892-d4e7-11e9-9a3a-0686c08fc21a	47571	0.1651619755708975	0.32037193575655115	image	3	\N	2019-09-11 22:56:08.036138+00	{1568242381123}	Xbf--ieKh6IKKQLK	1568242560472.jpeg	2019-09-11 17:56:08.036138+00	0	c4b964ec-d4e3-11e9-9f9d-0686c08fc21a	f
+8cff32da-d4e7-11e9-88ee-0686c08fc21a	47571	0.21295804567180032	0.3592561284868977	text	3	Algunas aparecen de lado	2019-09-11 22:57:37.957127+00	{1568242381123}	bMgF59H5b-H--VQh	\N	2019-09-11 17:57:37.957127+00	0	c4b964ec-d4e3-11e9-9f9d-0686c08fc21a	f
+4a2555c2-d57b-11e9-9602-0686c08fc21a	60193	0.5217391304347826	0.1473951715374841	text	1	Hello	2019-09-12 16:35:11.315603+00	{1568306074465}	MLX-JR-GWTb7-CR2	\N	2019-09-12 11:35:11.315603+00	0	235d28c0-d57b-11e9-8eaa-0686c08fc21a	f
+e511c61a-d652-11e9-98c3-0686c08fc21a	29922	0.44029850746268656	0.4878048780487805	image	2	\N	2019-09-13 18:18:33.018641+00	{1568398525647}	-NGeW-jN4GCD1eBN	1568398700905.jpg	2019-09-13 13:18:33.018641+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+e6b06ea4-d652-11e9-8166-0686c08fc21a	29922	0.24564676616915423	0.3991130820399113	image	5	\N	2019-09-13 18:18:35.748063+00	{1568398550095}	IW65K5SOKfdM--k-	1568398696659.jpg	2019-09-13 13:18:35.748063+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+e6dbca18-d652-11e9-bc4e-0686c08fc21a	29922	0.10758706467661691	0.22784810126582278	image	4	\N	2019-09-13 18:18:36.033404+00	{1568398549169}	diVD2-cM9-jifj84	1568398691872.jpg	2019-09-13 13:18:36.033404+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+e8d847b0-d652-11e9-a9a2-0686c08fc21a	29922	0.3439054726368159	0.43237250554323725	image	1	\N	2019-09-13 18:18:39.365258+00	{1568398516452}	7-29JeWSVVQRUYVb	1568398702938.jpg	2019-09-13 13:18:39.365258+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+abaed0ba-d653-11e9-bc45-0686c08fc21a	29922	0.7033582089552238	0.7649667405764967	image	6	\N	2019-09-13 18:24:06.249254+00	{1568398997416}	-OS-I-a4dGVN5AEg	1568399038041.jpg	2019-09-13 13:24:06.249254+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+dbb94d26-d653-11e9-8f75-0686c08fc21a	29922	0.7388059701492538	0.20509977827050999	image	5	\N	2019-09-13 18:25:26.84793+00	{1568398550095}	CKA-Z7-SNK6S-KOJ	1568399117736.JPG	2019-09-13 13:25:26.84793+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+e587cc42-d653-11e9-aacb-0686c08fc21a	29922	0.3277363184079602	0.43237250554323725	image	2	\N	2019-09-13 18:25:43.301395+00	{undefined}	O-W-BLa-hfHYFg8g	1568399118143.jpg	2019-09-13 13:25:43.301395+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+e8717aca-d653-11e9-95c8-0686c08fc21a	29922	0.7039800995024875	0.6019955654101996	image	1	\N	2019-09-13 18:25:48.18817+00	{1568398516452}	-N16jafg-CU8--4a	1568399125514.JPG	2019-09-13 13:25:48.18817+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+ec5f1c6e-d653-11e9-8e6a-0686c08fc21a	29922	0.14303482587064675	0.4556541019955654	image	6	\N	2019-09-13 18:25:54.778815+00	{undefined}	9BA89-4fOY2-K6UO	1568399136869.jpg	2019-09-13 13:25:54.778815+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+3e990490-d654-11e9-9f33-0686c08fc21a	29922	0.21330845771144277	0.33813747228381374	text	5	Trabajo colaborativo más cercano	2019-09-13 18:28:12.731457+00	{1568398550095}	7NC-ZH--6-2PCV4L	\N	2019-09-13 13:28:12.731457+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+485e70be-d654-11e9-9be9-0686c08fc21a	29922	0.3849502487562189	0.4556541019955654	text	2	El maestro obtiene de su clase mayor grado de concentración individual de los alumnos.	2019-09-13 18:28:29.124777+00	{1568398525647}	-X-h5j-----Oc-0-	\N	2019-09-13 13:28:29.124777+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+4d3fdc30-d654-11e9-8887-0686c08fc21a	29922	0.07960199004975124	0.5620842572062085	text	6	Uso de tecnologías en apoyo al aprendizaje\n	2019-09-13 18:28:37.312989+00	{1568398997416}	-VADUMNaZ-ER2E-X	\N	2019-09-13 13:28:37.312989+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+61a11482-d654-11e9-a8d8-0686c08fc21a	29922	0.40049751243781095	0.4467849223946785	text	2	No hay trabajo colaborativo.\n	2019-09-13 18:29:11.504535+00	{1568398525647}	-3g-PJU-YjaZDTHc	\N	2019-09-13 13:29:11.504535+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+6b428b60-d654-11e9-a648-0686c08fc21a	29922	0.832089552238806	0.12416851441241686	text	5	Espacio reducido, espacios personales invadidos	2019-09-13 18:29:27.662251+00	{1568398550095}	5LTTf-cS-YCPB-Ii	\N	2019-09-13 13:29:27.662251+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+71a878d4-d654-11e9-897e-0686c08fc21a	29922	0.3774875621890547	0.5587583148558758	text	6	Espacio sociófugo 	2019-09-13 18:29:38.396529+00	{1568398997416}	-SN5aFX340SF-1Eh	\N	2019-09-13 13:29:38.396529+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+7f65cfb2-d654-11e9-82f6-0686c08fc21a	29922	0.5752487562189055	0.5665188470066519	text	1	La computadora de escritorio puede usarse en equipos de 4 alumnos\n\n\n\n	2019-09-13 18:30:01.447957+00	{1568398516452}	8-ZiPG0TGTk7UE4G	\N	2019-09-13 13:30:01.447957+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+a82d254e-d654-11e9-bf81-0686c08fc21a	29922	0.8233830845771144	0.6208425720620843	text	1	Únicamente un estudiante tiene acceso al teclado/mause	2019-09-13 18:31:09.863251+00	{1568398516452}	Pd-5--ZW-Z-H3a--	\N	2019-09-13 13:31:09.863251+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+e38324c2-d654-11e9-9376-0686c08fc21a	29922	0.31218905472636815	0.4778270509977827	text	2	Metodología activa.	2019-09-13 18:32:49.41216+00	{1568398525647}	SH4bT-NGL--P6TCV	\N	2019-09-13 13:32:49.41216+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+f5789e32-d654-11e9-aa6b-0686c08fc21a	29922	0.0740049751243781	0.3070953436807095	text	5	Orden y espacio definido, ayuda a tener un mejor control de la clase	2019-09-13 18:33:19.542159+00	{1568398550095}	W2----WAMKaS49--	\N	2019-09-13 13:33:19.542159+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+089de526-d655-11e9-96ab-0686c08fc21a	29922	0.5907960199004975	0.6518847006651884	text	6	Se propicia el aprendizaje colaborativo	2019-09-13 18:33:51.663126+00	{1568398997416}	H-8-2-NO-C7CMEQE	\N	2019-09-13 13:33:51.663126+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+0f7118be-d655-11e9-bca9-0686c08fc21a	29922	0.36069651741293535	0.6274944567627494	text	1	El uso del Smartphone aísla o distrae a los alumnos	2019-09-13 18:34:03.113652+00	{1568398516452}	8ME9-cXO--bX9H3d	\N	2019-09-13 13:34:03.113652+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+222cbc24-d655-11e9-94e9-0686c08fc21a	29922	0.3420398009950249	0.2106430155210643	text	5	Poca interacción entre alumnos	2019-09-13 18:34:34.542323+00	{1568398550095}	-5ENh228bda0AcdO	\N	2019-09-13 13:34:34.542323+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+3504726a-d655-11e9-b476-0686c08fc21a	29922	0.10945273631840796	0.6430155210643016	text	1	Todos tienen acceso a los recursos de la actividad	2019-09-13 18:35:06.15503+00	{1568398516452}	j-Yg--4UTeUe-NIk	\N	2019-09-13 13:35:06.15503+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+38d4ae3c-d655-11e9-aef7-0686c08fc21a	29922	0.8550995024875622	0.7106430155210643	text	6	No pueden intervenir en el proyecto sincrónicamente	2019-09-13 18:35:12.552863+00	{1568398997416}	8Y-fI-O299gfWEfN	\N	2019-09-13 13:35:12.552863+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+0fda6e4a-d655-11e9-a4a8-0686c08fc21a	29922	0.4527363184079602	0.49889135254988914	text	2	El docente pierde control de la clase.	2019-09-13 18:34:03.804498+00	{1568398525647}	dKZBZ-DdG--3U-QD	\N	2019-09-13 13:34:03.804498+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	t
+e3e44192-d656-11e9-be0b-0686c08fc21a	79867	0.4098258706467662	0.4556541019955654	text	2	Ya entré!!!!	2019-09-13 18:47:09.042079+00	{1568400371768}	KLk-ZD36Tb9-RZR7	\N	2019-09-13 13:47:09.042079+00	0	5c31f438-d656-11e9-984e-0686c08fc21a	f
+021e9b98-d658-11e9-8999-0686c08fc21a	63615	0.458955223880597	0.48337028824833705	image	1	\N	2019-09-13 18:55:09.252832+00	{undefined}	bVLQiNWRF--hNH3d	1568400902369.jpg	2019-09-13 13:55:09.252832+00	0	322a37da-d657-11e9-9a6a-0686c08fc21a	f
+0505adde-d65c-11e9-bd79-0686c08fc21a	29922	0.49191542288557216	0.5221729490022173	text	5	Holaaaa	2019-09-13 19:23:52.109575+00	{1568402463327}	---6-G-f-Fc5-NFT	\N	2019-09-13 14:23:52.109575+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+05ae3512-d65c-11e9-9beb-0686c08fc21a	29922	0.4639303482587065	0.33813747228381374	text	6	No leí el correo	2019-09-13 19:23:53.214067+00	{1568402482822}	9b-7E-Y-UOX8f-1W	\N	2019-09-13 14:23:53.214067+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+90cb10e8-d65c-11e9-b049-0686c08fc21a	29922	0.2667910447761194	0.6696230598669624	image	6	\N	2019-09-13 19:27:46.606477+00	{1568402482822}	gA-XXNSfdKkUiF-7	1568402856376.jpg	2019-09-13 14:27:46.606477+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+92945ad8-d65c-11e9-b35c-0686c08fc21a	29922	0.27114427860696516	0.3170731707317073	image	5	\N	2019-09-13 19:27:49.603325+00	{1568402463327}	-H-Q-gAbJijEYk1T	1568402862081.jpg	2019-09-13 14:27:49.603325+00	0	97c76856-cf4a-11e9-8646-0686c08fc21a	f
+ef82b0c2-d676-11e9-98ba-0686c08fc21a	64628	0.45454545454545453	0.21443736730360935	text	1	Uno	2019-09-13 22:36:32.430694+00	{1568414136496}	A-Bi-dd8Dd-B-0IK	\N	2019-09-13 17:36:32.430694+00	0	27ec1e0e-d676-11e9-8f85-0686c08fc21a	t
+8231d9f6-daec-11e9-a1a3-0686c08fc21a	80880	0.7527812113720643	0.3103212576896787	text	2	Hola 	2019-09-19 14:48:14.294467+00	{1568904471484}	HV1URBK1-JFhJGRZ	\N	2019-09-19 09:48:14.294467+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+89e9787a-daec-11e9-87b1-0686c08fc21a	80880	0.34529702970297027	0.1722488038277512	text	6	Salu2\n	2019-09-19 14:48:27.241809+00	{1568904475512}	9cXI-QQ6JCHXC-8-	\N	2019-09-19 09:48:27.241809+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+906595b2-daec-11e9-8da0-0686c08fc21a	80880	0.5111386138613861	0.37932900432900435	text	5	Hoña\n	2019-09-19 14:48:38.121672+00	{1568904474221}	K9E2K-3--IYY--Hi	\N	2019-09-19 09:48:38.121672+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+91fd3bfa-daec-11e9-81d7-0686c08fc21a	80880	0.3856613102595797	0.44021376085504343	text	4	X2	2019-09-19 14:48:40.793207+00	{1568904474258}	85GdVgj5-G-S-eCW	\N	2019-09-19 09:48:40.793207+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+92553d6e-daec-11e9-81d9-0686c08fc21a	80880	0.5030902348578492	0.27875	text	10	Oli\n	2019-09-19 14:48:41.370477+00	{1568904478555}	fD-RA-WPRI8-DKKG	\N	2019-09-19 09:48:41.370477+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+99ae411e-daec-11e9-8118-0686c08fc21a	80880	0.61557478368356	0.3588516746411483	image	2	\N	2019-09-19 14:48:53.697362+00	{1568904471484}	Gc6W4--V-EIO-dff	1568904529075.jpg	2019-09-19 09:48:53.697362+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+a2a2d960-daec-11e9-bcc4-0686c08fc21a	80880	0.2630480167014614	0.25919201089423516	text	9	Kiubobanda\n	2019-09-19 14:49:08.722219+00	{1568904476072}	jb-3TIY--7CR0-N2	\N	2019-09-19 09:49:08.722219+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+b0dfa652-daec-11e9-b434-0686c08fc21a	80880	0.41409147095179233	0.26389584376564845	text	1	Wow! 	2019-09-19 14:49:32.609136+00	{1568904469256}	jdBJH3X38MYK-Gc-	\N	2019-09-19 09:49:32.609136+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	t
+b09aae58-daec-11e9-b432-0686c08fc21a	80880	0.5877016129032258	0.31890660592255127	text	8	Qiubo	2019-09-19 14:49:32.156655+00	{1568904476192}	YC76G-9OAbi6-a-B	\N	2019-09-19 09:49:32.156655+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	t
+b9b34b30-daec-11e9-9806-0686c08fc21a	80880	0.5736677115987461	0.27053140096618356	text	3	OwO	2019-09-19 14:49:47.417437+00	{1568904481863}	Re-iXGLi-K4LAD-L	\N	2019-09-19 09:49:47.417437+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+c7de6e4c-daec-11e9-ae91-0686c08fc21a	80880	0.1608910891089109	0.19412166780587833	image	6	\N	2019-09-19 14:50:11.188264+00	{1568904475512}	-1LJHhGVHK7Y-f-a	1568904604506.jpg	2019-09-19 09:50:11.188264+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	t
+c93e156c-daec-11e9-b76c-0686c08fc21a	80880	0.4103831891223733	0.47227788911155644	text	4	F	2019-09-19 14:50:13.492861+00	{1568904474258}	-g-DP-C-bHG---A2	\N	2019-09-19 09:50:13.492861+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+d3ea3626-daec-11e9-9e9e-0686c08fc21a	80880	0.7826541274817137	0.4127750939345142	text	3	Que tranza raza	2019-09-19 14:50:31.398155+00	{1568904481863}	ReQB--J59--H-9L-	\N	2019-09-19 09:50:31.398155+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+d4e8009e-daec-11e9-b2c5-0686c08fc21a	80880	0.6452410383189122	0.3315105946684894	image	2	\N	2019-09-19 14:50:33.061395+00	{1568904471484}	LaU-U3B-CN-SXV-N	1568904628722.png	2019-09-19 09:50:33.061395+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	t
+f4165452-daec-11e9-922f-0686c08fc21a	80880	0.4566831683168317	0.18045112781954886	image	6	\N	2019-09-19 14:51:25.374375+00	{undefined}	CCBhFUZY8dB-P6C4	1568904674616.jpg	2019-09-19 09:51:25.374375+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+1543e5e0-daed-11e9-9430-0686c08fc21a	80880	0.5977722772277227	0.4096320346320346	image	5	\N	2019-09-19 14:52:21.037771+00	{1568904474221}	-3eSWTA-MST2Yg6B	1568904737455.jpg	2019-09-19 09:52:21.037771+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+33976bb6-daed-11e9-89ba-0686c08fc21a	80880	0.5247524752475248	0.48268398268398266	image	5	\N	2019-09-19 14:53:11.916845+00	{1568904474221}	MABZD-QHG-42X-ke	1568904782433.jpg	2019-09-19 09:53:11.916845+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+56966b12-daed-11e9-92b3-0686c08fc21a	80880	0.3362175525339926	0.2952836637047163	image	2	\N	2019-09-19 14:54:10.630536+00	{1568904471484}	beMNN-C1Fg25c8GD	1568904846290.jpg	2019-09-19 09:54:10.630536+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+636021a8-daed-11e9-89b3-0686c08fc21a	80880	0.2202970297029703	0.6861471861471862	image	5	\N	2019-09-19 14:54:32.085147+00	{1568904474221}	IY3-gT-CG-E43Die	1568904867164.jpg	2019-09-19 09:54:32.085147+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+76afdb04-daed-11e9-97a3-0686c08fc21a	80880	0.7896039603960396	0.15043290043290045	image	5	\N	2019-09-19 14:55:04.48424+00	{1568904474221}	-KH----TW-YNh5cF	1568904898260.jpg	2019-09-19 09:55:04.48424+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+8d6aea14-daed-11e9-8fa9-0686c08fc21a	80880	0.5470297029702971	0.13041125541125542	image	5	\N	2019-09-19 14:55:42.620081+00	{1568904474221}	-f8ZOB2fPGiS-gMj	1568904937050.jpg	2019-09-19 09:55:42.620081+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+269004d6-daf3-11e9-8ef8-0686c08fc21a	80880	0.4938118811881188	0.43073593073593075	image	5	\N	2019-09-19 15:35:47.038318+00	{1568904474221}	Fe-TUN-ACg--1WV-	1568907338765.jpg	2019-09-19 10:35:47.038318+00	0	5c00772e-daec-11e9-9d61-0686c08fc21a	f
+86062342-dafc-11e9-a944-0686c08fc21a	54295	0.5172131147540984	0.7224334600760456	image	2	\N	2019-09-19 16:42:52.666543+00	{1568910609980}	R-N65P1Ugj-XfZWB	1568911365063.jpg	2019-09-19 11:42:52.666543+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	t
+715176f0-dbcd-11e9-a1db-0686c08fc21a	91466	0.9085820895522388	0.376940133037694	text	1	Interactiva\n	2019-09-20 17:38:22.744532+00	{1569000736744}	SHf-f9N-5BN5h9dO	\N	2019-09-20 12:38:22.744532+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+59b2e2b8-dafb-11e9-944e-0686c08fc21a	54295	0.321403991741225	0.4584500466853408	text	1	MIGRACION MÉXICO-EEUU	2019-09-19 16:34:28.805006+00	{1568910581929}	gFU0fVUbUbOPQ-b9	\N	2019-09-19 11:34:28.805006+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	t
+271de73e-dafc-11e9-afbf-0686c08fc21a	54295	0.2264280798348245	0.42203548085901027	text	1	Despoblamiento	2019-09-19 16:40:13.438717+00	{1568910581929}	R-FMfd-j--48GhWC	\N	2019-09-19 11:40:13.438717+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	t
+594ceda0-dafb-11e9-944d-0686c08fc21a	54295	0.5418032786885246	0.28010139416983526	text	2	Migración	2019-09-19 16:34:28.136228+00	{1568910609980}	CAC-gi5Q-T7F-iOE	\N	2019-09-19 11:34:28.136228+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	t
+77d7e8ce-dafb-11e9-a363-0686c08fc21a	54295	0.31245698554714385	0.4696545284780579	text	1	Remesas	2019-09-19 16:35:19.378733+00	{1568910581929}	ZecU-SThbX4-U-Qh	\N	2019-09-19 11:35:19.378733+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	t
+7e6c3cd0-dafb-11e9-8a32-0686c08fc21a	54295	0.34273916035788027	0.4444444444444444	text	1	Cambio social	2019-09-19 16:35:30.417139+00	{1568910581929}	1d-ib-OWdV1WTP1C	\N	2019-09-19 11:35:30.417139+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	t
+b5748836-dafb-11e9-b19f-0686c08fc21a	54295	0.34480385409497594	0.44351073762838467	text	1	MIGRACION	2019-09-19 16:37:02.746236+00	{1568910581929}	Jdh-LQ-B--Pdi6ak	\N	2019-09-19 11:37:02.746236+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	t
+7c0afb06-dafc-11e9-9810-0686c08fc21a	54295	0.23950447350309703	0.43137254901960786	image	1	\N	2019-09-19 16:42:35.921031+00	{1568910581929}	j1haBLM-7Nb-3c3M	1568911352296.jpg	2019-09-19 11:42:35.921031+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	t
+c3fc4a32-dafc-11e9-9e3d-0686c08fc21a	54295	0.2401927047487956	0.4276377217553688	image	1	\N	2019-09-19 16:44:36.620761+00	{undefined}	-kZ-QdO-74X5-O4-	1568911468196.jpg	2019-09-19 11:44:36.620761+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	t
+9e784c0a-dafe-11e9-b910-0686c08fc21a	54295	0.3812801101169993	0.21942110177404295	text	1	Mujeres	2019-09-19 16:57:52.673473+00	{1568910581929}	P1kbML1TkcD3-GPL	\N	2019-09-19 11:57:52.673473+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	f
+c0144b70-dafe-11e9-9c0e-0686c08fc21a	54295	0.4053682037164487	0.2119514472455649	text	1	Maquilas	2019-09-19 16:58:49.060547+00	{1568910581929}	F-Xg8----ICKhGTM	\N	2019-09-19 11:58:49.060547+00	0	52f2ad4c-dafa-11e9-a0f3-0686c08fc21a	f
+6885cb98-dbcd-11e9-be42-0686c08fc21a	91466	0.14054726368159204	0.2521097046413502	text	6	Inclusiva\n	2019-09-20 17:38:07.987974+00	{1569000754417}	ITCf6EP5-d8h-XIU	\N	2019-09-20 12:38:07.987974+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+68913a28-dbcd-11e9-be43-0686c08fc21a	91466	0.36007462686567165	0.39844617092119866	text	8	Dinamismo	2019-09-20 17:38:08.063456+00	{1569002441559}	g6Q4BBBS-U2W1W9J	\N	2019-09-20 12:38:08.063456+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+923a0404-dbcd-11e9-ba64-0686c08fc21a	91466	0.3445273631840796	0.41352549889135254	text	7	Creatividad	2019-09-20 17:39:17.955661+00	{1569000755803}	-LEEaeK3-R11-IW-	\N	2019-09-20 12:39:17.955661+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+d698ac4a-dbcd-11e9-a919-0686c08fc21a	91466	0.6871890547263682	0.3946784922394678	text	3	Innovación	2019-09-20 17:41:12.661086+00	{1569000742305}	P--bNQI--Le-73WG	\N	2019-09-20 12:41:12.661086+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+f06a7036-dbcd-11e9-9f19-0686c08fc21a	91466	0.32960199004975127	0.4656319290465632	text	10	Redefinición	2019-09-20 17:41:55.978854+00	{1569001275011}	P1-Ff-IX-JY3cE-H	\N	2019-09-20 12:41:55.978854+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+25e9f3ee-dbce-11e9-9508-0686c08fc21a	91466	0.3482587064676617	0.41352549889135254	text	10	Pinocho	2019-09-20 17:43:25.733757+00	{1569001275011}	-H-4TT-G3JJf-XCE	\N	2019-09-20 12:43:25.733757+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+2a3b8444-dbce-11e9-96e9-0686c08fc21a	91466	0.10696517412935323	0.7516629711751663	text	1	Interxtiva	2019-09-20 17:43:32.979183+00	{1569000736744}	-RJ---NGikW-8C3B	\N	2019-09-20 12:43:32.979183+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+74f078a6-dbcd-11e9-b8ea-0686c08fc21a	91466	0.30472636815920395	0.4177215189873418	text	6	Colaborativa	2019-09-20 17:38:28.819796+00	{1569000754417}	--FDb7-dQ--Ec8-3	\N	2019-09-20 12:38:28.819796+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+32076a58-dbce-11e9-a951-0686c08fc21a	91466	0.22761194029850745	0.36603375527426163	text	12	Organisada	2019-09-20 17:43:46.05852+00	{1569001384961}	Y-Ahf-De-18hC--3	\N	2019-09-20 12:43:46.05852+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+3f1f5570-dbce-11e9-83cd-0686c08fc21a	91466	0.27798507462686567	0.41019955654101997	text	7	Gujar	2019-09-20 17:44:08.026664+00	{1569000755803}	IUG--79BBhX95G--	\N	2019-09-20 12:44:08.026664+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+5a1efd9e-dbce-11e9-b3a9-0686c08fc21a	91466	0.27549751243781095	0.4641350210970464	text	12	Organizada	2019-09-20 17:44:53.322896+00	{1569001384961}	hcFYjO1AMYJR5VEV	\N	2019-09-20 12:44:53.322896+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+83a5ff50-dbce-11e9-b57e-0686c08fc21a	91466	0.472636815920398	0.4090909090909091	text	1	Colaborativa	2019-09-20 17:46:02.99427+00	{1569000754417,1569000736744}	967K-MRA0WZYj--g	\N	2019-09-20 12:46:02.99427+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+9922c926-dbce-11e9-a1c1-0686c08fc21a	91466	0.17786069651741293	0.442350332594235	text	11	Sencillo	2019-09-20 17:46:39.044146+00	{1569001345143}	2-U2-VB-D--IH84Q	\N	2019-09-20 12:46:39.044146+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+3e03b860-dbcf-11e9-9bb1-0686c08fc21a	91466	0.1449004975124378	0.46452328159645234	text	14	Atractiva	2019-09-20 17:51:15.664512+00	{1569001815466}	G-V7JiD-Z7-7--XM	\N	2019-09-20 12:51:15.664512+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+3b42feec-dbcf-11e9-a7fd-0686c08fc21a	91466	0.4166666666666667	0.41287458379578246	text	8	Interactuar	2019-09-20 17:51:11.046222+00	{1569002441559}	JYf7BT-Q1--SFj--	\N	2019-09-20 12:51:11.046222+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+4ba55640-dbcf-11e9-8981-0686c08fc21a	91466	0.5646766169154229	0.10199556541019955	text	1	Interactiva editado	2019-09-20 17:51:38.534212+00	{1569000736744}	-ce-a-1PD-XSLE5f	\N	2019-09-20 12:51:38.534212+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+92418d76-dbcf-11e9-8028-0686c08fc21a	91466	0.30659203980099503	0.3835920177383592	text	10	Integraría:integradora	2019-09-20 17:53:36.998536+00	{1569001275011}	4k2FTagTk--EZI8M	\N	2019-09-20 12:53:36.998536+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+9aa14a1a-dbcf-11e9-8fcd-0686c08fc21a	91466	0.25	0.48337028824833705	text	7	Respeto al otro	2019-09-20 17:53:51.047739+00	{1569000755803}	A1-7--XShE-HZAC-	\N	2019-09-20 12:53:51.047739+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+a00df34a-dbcf-11e9-9bc2-0686c08fc21a	91466	0.1884328358208955	0.4356984478935698	text	14	Accesible	2019-09-20 17:54:00.148448+00	{1569001815466}	AE8e-4N---PO9X1J	\N	2019-09-20 12:54:00.148448+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+a9021328-dbcf-11e9-9c4c-0686c08fc21a	91466	0.21579601990049752	0.4467849223946785	text	3	Sociodramas	2019-09-20 17:54:15.170146+00	{1569000742305}	Y-QgL-OIS-aB194A	\N	2019-09-20 12:54:15.170146+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+abc7ea24-dbcf-11e9-957a-0686c08fc21a	91466	0.9148009950248757	0.9156118143459916	text	13	Trabajo colaborativo docente-estudiantes	2019-09-20 17:54:19.822255+00	{1569001811752}	N--YAYc6IHUQ5V1-	\N	2019-09-20 12:54:19.822255+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+c435d77e-dbcf-11e9-89fb-0686c08fc21a	91466	0.17972636815920398	0.42904656319290463	text	14	Dinámica	2019-09-20 17:55:00.80785+00	{1569001815466}	GRZd--AHi8YjA---	\N	2019-09-20 12:55:00.80785+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	f
+87c04fca-dbd1-11e9-b882-0686c08fc21a	91466	0.8930348258706468	0.41139240506329117	text	16	Accesible	2019-09-20 18:07:38.367745+00	{1569002231038}	iKM-9FER-i8cT9V1	\N	2019-09-20 13:07:38.367745+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+b9a937d6-dbd1-11e9-852a-0686c08fc21a	91466	0.18159203980099503	0.45454545454545453	text	14	Organizada	2019-09-20 18:09:02.102526+00	{1569001384961,1569001815466}	-EdPS-hQBVPSH-GG	\N	2019-09-20 13:09:02.102526+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+93d3910a-dbd1-11e9-9a9e-0686c08fc21a	91466	0.8942786069651741	0.43670886075949367	text	16	Clara y concreta	2019-09-20 18:07:58.626632+00	{1569002231038}	-dUI-j02h9eRBPR2	\N	2019-09-20 13:07:58.626632+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+c3af6fac-dbd1-11e9-af74-0686c08fc21a	91466	0.878731343283582	0.4989451476793249	text	16	"no pesada"	2019-09-20 18:09:18.920456+00	{1569002231038}	eKRMVN4h9TPQIhhY	\N	2019-09-20 13:09:18.920456+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+ef61a444-dbd1-11e9-bde5-0686c08fc21a	91466	0.2997512437810945	0.3736141906873614	text	2	Guiar	2019-09-20 18:10:32.23038+00	{1569000755803,1569000737362}	aR85Q88NA25SRWTL	\N	2019-09-20 13:10:32.23038+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+2a9ce3e8-dbd2-11e9-812a-0686c08fc21a	91466	0.24378109452736318	0.4035476718403548	text	18	Aplicaciones	2019-09-20 18:12:11.604207+00	{1569003090220}	8-j-Y3-bW-H5-E-3	\N	2019-09-20 13:12:11.604207+00	0	8895173c-dbcc-11e9-a8ba-0686c08fc21a	t
+3f522f76-de22-11e9-a4d8-0686c08fc21a	29903	0.12189054726368159	0.16518847006651885	text	1	Lll	2019-09-23 16:50:28.410731+00	{1569257351777}	gf8M3-0DB5gd-QEe	\N	2019-09-23 11:50:28.410731+00	0	dbbf2392-de21-11e9-a6ad-0686c08fc21a	f
+acd6e940-de24-11e9-a7ec-0686c08fc21a	66170	0.7786069651741293	0.6818181818181818	image	1	\N	2019-09-23 17:07:51.145667+00	{1569258153424}	-DWJGGA2XY7e3ehj	1569258461188.jpeg	2019-09-23 12:07:51.145667+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	t
+09246200-de24-11e9-8a6a-0686c08fc21a	66170	0.667910447761194	0.6685144124168514	text	1	Lllllvoto	2019-09-23 17:03:16.507036+00	{1569258153424}	-5LcEL-WR9PDYf-J	\N	2019-09-23 12:03:16.507036+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	t
+9f6826de-de24-11e9-9389-0686c08fc21a	66170	0.39116915422885573	0.6208425720620843	text	1	Excelente	2019-09-23 17:07:28.609382+00	{1569258153424}	-edVA-Xic-cfY-dN	\N	2019-09-23 12:07:28.609382+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	t
+6afab2b8-de24-11e9-91a0-0686c08fc21a	66170	0.5006218905472637	0.2625	text	2	Aqui\n	2019-09-23 17:06:00.650604+00	{1569258398339}	c-A9fi7--iYK-RiX	\N	2019-09-23 12:06:00.650604+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	t
+4998e554-de24-11e9-a089-0686c08fc21a	66170	0.4098258706467662	0.5942350332594235	image	1	\N	2019-09-23 17:05:04.644805+00	{1569258153424}	gDh-fd-WEh6-fjH-	1569258294319.jpeg	2019-09-23 12:05:04.644805+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	t
+d0976d28-de24-11e9-b650-0686c08fc21a	66170	0.44402985074626866	0.6031042128603105	image	1	\N	2019-09-23 17:08:51.127607+00	{1569258153424}	-YgWW3JI17c-YaMV	1569258520544.jpg	2019-09-23 12:08:51.127607+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+16d35dda-de50-11e9-a538-0686c08fc21a	15070	0.5783582089552238	0.6258992805755396	text	2	Fernando	2019-09-23 22:18:37.320223+00	{1569277079129}	-II5BT-WQbILa--Q	\N	2019-09-23 17:18:37.320223+00	0	f0aa9ef2-de4f-11e9-8a52-0686c08fc21a	f
+1ba73ac0-de50-11e9-8fca-0686c08fc21a	15070	0.6016451233842538	0.44377067254685776	text	3	Hola 	2019-09-23 22:18:45.419668+00	{1569277083556}	N----WR--K4LAQ7J	\N	2019-09-23 17:18:45.419668+00	0	f0aa9ef2-de4f-11e9-8a52-0686c08fc21a	f
+1bb4b5f6-de50-11e9-8fcb-0686c08fc21a	15070	0.23384253819036427	0.17162761241291957	text	1	Hola a todos	2019-09-23 22:18:45.508495+00	{1569277078760}	jOOA8-hY7F-h-JNZ	\N	2019-09-23 17:18:45.508495+00	0	f0aa9ef2-de4f-11e9-8a52-0686c08fc21a	f
+2f6b837c-de50-11e9-9d1d-0686c08fc21a	15070	0.39482961222091656	0.3103638368246968	image	3	\N	2019-09-23 22:19:18.582735+00	{1569277083556}	U-dcFK89f-U---V-	1569277150556.jpg	2019-09-23 17:19:18.582735+00	0	f0aa9ef2-de4f-11e9-8a52-0686c08fc21a	f
+079dd1ae-ded9-11e9-9832-0686c08fc21a	94383	0.5043263288009888	0.353009935710111	text	5	ICAT	2019-09-24 14:38:52.855542+00	{1569335869376}	--2IJj7QEANQ-1-E	\N	2019-09-24 09:38:52.855542+00	0	9e77cce4-ded7-11e9-b543-0686c08fc21a	t
+1932faa2-ded9-11e9-a9f9-0686c08fc21a	94383	0.5358910891089109	0.020245071923281833	text	3	Buenos días\n\n	2019-09-24 14:39:22.354346+00	{1569335782554}	-8-7SEANQfYCWD4g	\N	2019-09-24 09:39:22.354346+00	0	9e77cce4-ded7-11e9-b543-0686c08fc21a	t
+0c4045d4-ded9-11e9-9844-0686c08fc21a	94383	0.5156576200417536	0.21062441752096925	text	6	Hola buenos días\n	2019-09-24 14:39:00.631066+00	{1569335872761}	N6Eh5LOJ-2kM3-b-	\N	2019-09-24 09:39:00.631066+00	0	9e77cce4-ded7-11e9-b543-0686c08fc21a	t
+2b83d816-ded9-11e9-a04a-0686c08fc21a	94383	0.6205191594561187	0.4500292226767972	text	5	Los desastres no son naturales	2019-09-24 14:39:53.083269+00	{1569335869376}	G4fjI-Mj7-A-PEZ3	\N	2019-09-24 09:39:53.083269+00	0	9e77cce4-ded7-11e9-b543-0686c08fc21a	t
+32ddbf82-ded9-11e9-a2eb-0686c08fc21a	94383	0.2719406674907293	0.023066485753052916	text	4	Aquí estoy ;)\n	2019-09-24 14:40:05.416491+00	{1569335827152}	K40OOOiBQi-T-UHT	\N	2019-09-24 09:40:05.416491+00	0	9e77cce4-ded7-11e9-b543-0686c08fc21a	t
+2531fe2a-ded9-11e9-beb7-0686c08fc21a	94383	0.42538190364277323	0.2662007623888183	text	2	Hola buenos días \nEsta es una prueba 	2019-09-24 14:39:42.480476+00	{1569335780528}	YCS7O55UAGH--7c-	\N	2019-09-24 09:39:42.480476+00	0	9e77cce4-ded7-11e9-b543-0686c08fc21a	t
+507e351c-ded9-11e9-b589-0686c08fc21a	94383	0.4566831683168317	0.1848694725625999	text	3	Spam\n\n	2019-09-24 14:40:55.121985+00	{1569335782554}	-cZZGX0hV-QcIiL8	\N	2019-09-24 09:40:55.121985+00	0	9e77cce4-ded7-11e9-b543-0686c08fc21a	t
+5a484e02-ded9-11e9-b774-0686c08fc21a	94383	0.34342379958246344	0.26700838769804286	text	6		2019-09-24 14:41:11.545858+00	{1569335872761}	A4--9CJJZb-Ki7V9	\N	2019-09-24 09:41:11.545858+00	0	9e77cce4-ded7-11e9-b543-0686c08fc21a	t
+7cb177e8-ded9-11e9-b9ea-0686c08fc21a	94383	0.4042027194066749	0.3565166569257744	text	5	Mañana hay examen	2019-09-24 14:42:09.277678+00	{1569335869376}	5Ki--HWN-fh-3SF2	\N	2019-09-24 09:42:09.277678+00	0	9e77cce4-ded7-11e9-b543-0686c08fc21a	t
+0f443734-dedb-11e9-89e8-0686c08fc21a	36946	0.2045929018789144	0.19151910531220875	text	1	5\n	2019-09-24 14:53:24.68355+00	{1569336609681}	NVQB4--C9-Q-Dg-A	\N	2019-09-24 09:53:24.68355+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+22d23044-dedb-11e9-a446-0686c08fc21a	94383	0.23384253819036427	0.22808132147395171	text	2	Tengo idea 	2019-09-24 14:53:57.49067+00	{1569335780528}	-V--Hg149bSGe-ZH	\N	2019-09-24 09:53:57.49067+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+2853d4fa-dedb-11e9-9ab9-0686c08fc21a	36946	0.47342398022249693	0.23378141437755698	text	2	Sociedad y territorio	2019-09-24 14:54:06.728918+00	{1569336731113}	g-ZjLOBU-c-T-2ej	\N	2019-09-24 09:54:06.728918+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+3a619d6c-dedb-11e9-b5a3-0686c08fc21a	94383	0.2256169212690952	0.24269377382465057	text	2	Hola equipo 3	2019-09-24 14:54:37.018262+00	{1569335780528}	X9-55-9-6-Tk2CHh	\N	2019-09-24 09:54:37.018262+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+43fb78e8-dedb-11e9-8c81-0686c08fc21a	36946	0.23382045929018788	0.17101584342963652	text	1	1245	2019-09-24 14:54:53.126047+00	{1569336609681}	R8h3V-Xg7MPgOJf-	\N	2019-09-24 09:54:53.126047+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+44ff093a-dedb-11e9-8b97-0686c08fc21a	94383	0.7478368355995055	0.451831750339213	text	4	Dulce 	2019-09-24 14:54:54.82722+00	{1569335827152}	S9BWHKeM-NM--e-G	\N	2019-09-24 09:54:54.82722+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+614246de-dedb-11e9-ab5b-0686c08fc21a	36946	0.7252475247524752	0.4981353223228556	text	3	Geografía Crítica 	2019-09-24 14:55:42.243963+00	{1569336892703}	OWbf8-HD-fS4--Kb	\N	2019-09-24 09:55:42.243963+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+6d8cd9cc-dedb-11e9-938c-0686c08fc21a	36946	0.1931106471816284	0.3718546132339236	text	1	8234	2019-09-24 14:56:02.865375+00	{1569336609681}	9--f3-j-hg3bf6S-	\N	2019-09-24 09:56:02.865375+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+808c1ad8-dedb-11e9-a261-0686c08fc21a	36946	0.6044499381953028	0.3670368205727645	image	2	\N	2019-09-24 14:56:34.737186+00	{1569336731113}	Q-3P-QQXcO-Q--hh	1569336975285.jpg	2019-09-24 09:56:34.737186+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+808c3428-dedb-11e9-b395-0686c08fc21a	36946	0.18997912317327767	0.4790307548928239	image	1	\N	2019-09-24 14:56:34.738064+00	{undefined}	QDDFeCYJOSjL--i-	1569336980131.jpg	2019-09-24 09:56:34.738064+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+951cd456-dedb-11e9-adae-0686c08fc21a	36946	0.4338689740420272	0.3617767387492694	text	2	Geografía descrptiva	2019-09-24 14:57:09.240052+00	{1569336892703,1569336731113}	--X2bAcKf9E-I3VY	\N	2019-09-24 09:57:09.240052+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+b9a92bb2-dedb-11e9-b26d-0686c08fc21a	36946	0.048207663782447466	0.35943892460549387	image	2	\N	2019-09-24 14:58:10.557836+00	{1569336731113}	VN-M-4hZ-BjVEUDL	1569337075118.jpg	2019-09-24 09:58:10.557836+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+c6a43320-dedb-11e9-b842-0686c08fc21a	36946	0.4594594594594595	0.2636594663278272	text	5	Hola equipo 3	2019-09-24 14:58:32.335613+00	{1569337074494}	cdRP-7Fb-Z--P0F-	\N	2019-09-24 09:58:32.335613+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+e2cd8164-dedb-11e9-8097-0686c08fc21a	36946	0.75	0.5780500799147575	image	3	\N	2019-09-24 14:59:19.582407+00	{undefined}	IQC4-Dg7DKHiC9K4	1569337149929.jpg	2019-09-24 09:59:19.582407+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+e5919f34-dedb-11e9-b553-0686c08fc21a	36946	0.8986402966625463	0.23066485753052918	text	4	😎😊	2019-09-24 14:59:24.223233+00	{1569337073175}	MNOhgb-4DW-aMUaf	\N	2019-09-24 09:59:24.223233+00	0	85204228-deda-11e9-b184-0686c08fc21a	t
+ad47edd0-dedc-11e9-baf2-0686c08fc21a	66170	0.4613778705636743	0.6020503261882573	image	4	\N	2019-09-24 15:04:59.284589+00	{1569337469632}	S-O--P9IWS-Sak5Q	1569337491634.jpg	2019-09-24 10:04:59.284589+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+b7d380a2-dedc-11e9-b9c8-0686c08fc21a	66170	0.34981458590852904	0.49269433080070135	text	5	Me gusta	2019-09-24 15:05:16.976512+00	{1569337485573}	i-0-R-6-K--C694Y	\N	2019-09-24 10:05:16.976512+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+e19cde2e-dedc-11e9-b592-0686c08fc21a	66170	0.5083507306889353	0.4277726001863933	text	4	Inscripciones abiertas	2019-09-24 15:06:27.082802+00	{1569337469632}	dSeX836-VaGLaK2-	\N	2019-09-24 10:06:27.082802+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+50d63394-dedd-11e9-bc8b-0686c08fc21a	66170	0.05067985166872682	0.09234365867913501	text	5	El profe	2019-09-24 15:09:33.685627+00	{1569337485573}	-31-A73-H-4NI8-B	\N	2019-09-24 10:09:33.685627+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+71181b04-dedd-11e9-b061-0686c08fc21a	66170	0.48434237995824636	0.1863932898415657	image	4	\N	2019-09-24 15:10:27.804641+00	{undefined}	FSMWZPH6-MT-UaPD	1569337811958.jpg	2019-09-24 10:10:27.804641+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+7a7a159e-dedd-11e9-8218-0686c08fc21a	66170	0.9085290482076638	0.07364114552893045	text	5	004	2019-09-24 15:10:43.546265+00	{1569337485573}	KQQ-6j-eKe85-XIW	\N	2019-09-24 10:10:43.546265+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+9ad7a298-dedd-11e9-93a3-0686c08fc21a	66170	0.8182941903584673	0.5663354763296318	text	5	Ruta de evacuación	2019-09-24 15:11:37.846433+00	{1569337485573}	-U--LYDDeVZIN-Ci	\N	2019-09-24 10:11:37.846433+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+a34bcb52-dedd-11e9-b4c8-0686c08fc21a	66170	0.36430062630480164	0.3657968313140727	text	4	Cañón vertical	2019-09-24 15:11:52.029407+00	{1569337469632}	De7JcHDDALI19bXD	\N	2019-09-24 10:11:52.029407+00	0	c56dc852-d02d-11e9-8080-0686c08fc21a	f
+3605406e-df23-11e9-b1e1-0686c08fc21a	64995	0.2755741127348643	0.29869524697110905	text	1	Prueba 1	2019-09-24 23:29:53.466588+00	{1569367748373}	LJ9h8MA270KU--S8	\N	2019-09-24 18:29:53.466588+00	0	6f4b0080-df22-11e9-b440-0686c08fc21a	f
+7231e830-df23-11e9-9604-0686c08fc21a	64995	0.27348643006263046	0.24650512581547065	text	1	Prueba 1.1.1	2019-09-24 23:31:34.42253+00	{1569367748373}	XZRP7gdHHAIQ85eT	\N	2019-09-24 18:31:34.42253+00	0	6f4b0080-df22-11e9-b440-0686c08fc21a	f
+b7d9824e-df23-11e9-b3ce-0686c08fc21a	64995	0.5041753653444676	0.4608574091332712	text	1	Prueba 1.3	2019-09-24 23:33:31.283712+00	{1569367748373}	SE9ZA17XCP-KU84-	\N	2019-09-24 18:33:31.283712+00	0	6f4b0080-df22-11e9-b440-0686c08fc21a	f
+9b3fa76e-dfe4-11e9-afff-0686c08fc21a	39684	0.6266996291718171	0.22048846675712347	text	3	Soy Dulce 😁	2019-09-25 22:34:16.167937+00	{1569450802385}	PV-gQaW17a6Q4E9f	\N	2019-09-25 17:34:16.167937+00	0	725b8134-dfe3-11e9-b939-0686c08fc21a	t
+5014c85e-dfe5-11e9-9b95-0686c08fc21a	39684	0.1828358208955224	0.21151079136690648	text	2	Hola hola	2019-09-25 22:39:19.554649+00	{1569450748552}	JK-46bFEIB7-Ki70	\N	2019-09-25 17:39:19.554649+00	0	725b8134-dfe3-11e9-b939-0686c08fc21a	t
+96b24ba2-dfe4-11e9-95e2-0686c08fc21a	39684	0.4392523364485981	0.2523094688221709	text	1	Hola gracias por recibirnos	2019-09-25 22:34:08.530647+00	{1569450743436}	Tdh-ZS-bI-HMUQH4	\N	2019-09-25 17:34:08.530647+00	0	725b8134-dfe3-11e9-b939-0686c08fc21a	t
+7cc7fe02-dfe5-11e9-b6d0-0686c08fc21a	39684	0.4787123572170301	0.35854503464203236	text	1	Hola jesus	2019-09-25 22:40:34.548859+00	{1569450743436}	V-BE-L---S-G99K-	\N	2019-09-25 17:40:34.548859+00	0	725b8134-dfe3-11e9-b939-0686c08fc21a	t
+e1e1ae6c-dfe7-11e9-a01a-0686c08fc21a	82842	0.48702101359703337	0.14111261872455902	text	1	Hola	2019-09-25 22:57:43.160519+00	{1569452241811}	-RA-4--cC-8cPHk-	\N	2019-09-25 17:57:43.160519+00	0	b853fbcc-dfe7-11e9-9742-0686c08fc21a	f
+0af1ca08-dfe8-11e9-ab17-0686c08fc21a	82842	0.6947040498442367	0.2806004618937644	text	2	Hello	2019-09-25 22:58:52.052703+00	{1569452291943}	TAPI--WPDHfMQFWD	\N	2019-09-25 17:58:52.052703+00	0	b853fbcc-dfe7-11e9-9742-0686c08fc21a	f
+3b40efc2-dfe8-11e9-b44b-0686c08fc21a	82842	0.4423676012461059	0.40415704387990764	image	2	\N	2019-09-25 23:00:13.102038+00	{1569452291943}	hhT2Y-e1S2c8JcB3	1569452405902.jpg	2019-09-25 18:00:13.102038+00	0	b853fbcc-dfe7-11e9-9742-0686c08fc21a	f
+6b56a896-dfe8-11e9-91ef-0686c08fc21a	82842	0.7082818294190358	0.4314789687924016	image	1	\N	2019-09-25 23:01:33.77504+00	{1569452241811}	12-ZaVZHXRP7Jb-S	1569452478993.jpg	2019-09-25 18:01:33.77504+00	0	b853fbcc-dfe7-11e9-9742-0686c08fc21a	f
+26706ca0-dff0-11e9-9e28-0686c08fc21a	55150	0.6699629171817059	0.1396843950905903	text	2	Hola!\n\nSoy el alumno sorpresa	2019-09-25 23:56:54.154932+00	{1569455787474}	YVPA-0-CGTH9XadY	\N	2019-09-25 18:56:54.154932+00	0	4a8bef70-dfbd-11e9-99e7-0686c08fc21a	f
+6abcab80-dff0-11e9-b34f-0686c08fc21a	55150	0.6687268232385661	0.2787843366452367	image	2	\N	2019-09-25 23:58:48.739652+00	{undefined}	cUHY-76hYV48M---	1569455918271.jpg	2019-09-25 18:58:48.739652+00	0	4a8bef70-dfbd-11e9-99e7-0686c08fc21a	f
+f89cde82-e079-11e9-be66-0686c08fc21a	42103	0.2027194066749073	0.156875	text	1	No oigo bien!	2019-09-26 16:23:27.819722+00	{1569514652919}	dALWAXjXAGbi-ZW5	\N	2019-09-26 11:23:27.819722+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	t
+d9437e42-e079-11e9-b0b1-0686c08fc21a	42103	0.46954314720812185	0.525	text	5	Cualquier cuestión	2019-09-26 16:22:35.224599+00	{1569514749882}	D4-T-dQdNU11c---	\N	2019-09-26 11:22:35.224599+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	t
+eefe0996-e079-11e9-963a-0686c08fc21a	42103	0.754017305315204	0.1485753052917232	text	3	😘😊	2019-09-26 16:23:11.679256+00	{1569514649936}	3YHCFG0W-bUjQA4e	\N	2019-09-26 11:23:11.679256+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	t
+d096cbb4-e079-11e9-ba06-0686c08fc21a	42103	0.3522867737948084	0.10875	text	1	Hola soy Ale	2019-09-26 16:22:20.671073+00	{1569514652919}	EbNOZ4H-YI-Q-KB-	\N	2019-09-26 11:22:20.671073+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	t
+d51e4b44-e079-11e9-88c2-0686c08fc21a	42103	0.7626699629171817	0.12143826322930801	text	3	Hola soy Dulce 	2019-09-26 16:22:28.269909+00	{1569514649936}	9ZQO6Q-cH-bi7fdK	\N	2019-09-26 11:22:28.269909+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	t
+072d3dde-e07a-11e9-99e1-0686c08fc21a	42103	0.4873096446700508	0.2676470588235294	text	5	Selección	2019-09-26 16:23:52.253988+00	{1569514749882}	-GkLKHZ-ai-0H2-Q	\N	2019-09-26 11:23:52.253988+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	t
+196ade84-e07a-11e9-851e-0686c08fc21a	42103	0.44289340101522845	0.3941176470588235	image	5	\N	2019-09-26 16:24:22.856866+00	{1569514749882}	--5bE-Z-4R--MSW-	1569515053132.jpg	2019-09-26 11:24:22.856866+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	t
+a7653e04-e07b-11e9-908d-0686c08fc21a	42103	0.5334900117508813	0.33034571062740076	text	7	Probando probando	2019-09-26 16:35:30.553159+00	{1569515667696}	eKh--X0---j-CVkC	\N	2019-09-26 11:35:30.553159+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	f
+e0740e3c-e07b-11e9-94fb-0686c08fc21a	42103	0.4770857814336075	0.12868117797695264	text	7	Ffff	2019-09-26 16:37:06.280301+00	{1569515667696}	A--D-F-TZ6I4---7	\N	2019-09-26 11:37:06.280301+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	t
+bb3c2812-e151-11e9-ac7b-0686c08fc21a	21971	0.30167014613778703	0.22273998136067102	text	1	CDmx	2019-09-27 18:07:56.112534+00	{1569607653641}	A8F0-F-36--JJ---	\N	2019-09-27 13:07:56.112534+00	0	39627e2a-ded8-11e9-8c48-0686c08fc21a	f
+cb8caa48-e151-11e9-858e-0686c08fc21a	21971	0.4175365344467641	0.5209692451071761	text	1	Un nuevo avance	2019-09-27 18:08:23.509594+00	{1569607653641}	ON4ZdACSF-WSQbZb	\N	2019-09-27 13:08:23.509594+00	0	39627e2a-ded8-11e9-8c48-0686c08fc21a	f
+ddae9024-e151-11e9-9b5b-0686c08fc21a	21971	0.5720250521920668	0.2842497670083877	text	1	Aeropuerto	2019-09-27 18:08:53.930817+00	{1569607653641}	j5c-KWbQKV0eI-Uh	\N	2019-09-27 13:08:53.930817+00	0	39627e2a-ded8-11e9-8c48-0686c08fc21a	f
+fec1b228-e151-11e9-b0aa-0686c08fc21a	21971	0.5720250521920668	0.09599254426840634	text	1	Ime	2019-09-27 18:09:49.421023+00	{1569607653641}	-YW9ij-E-IgB-V9-	\N	2019-09-27 13:09:49.421023+00	0	39627e2a-ded8-11e9-8c48-0686c08fc21a	f
+33b86882-e152-11e9-906f-0686c08fc21a	21971	0.2974947807933194	0.559645852749301	image	1	\N	2019-09-27 18:11:18.279397+00	{1569607653641}	Z13-Xd-8O-2hMWf-	1569607871636.jpg	2019-09-27 13:11:18.279397+00	0	39627e2a-ded8-11e9-8c48-0686c08fc21a	f
+c83ebdc8-e15f-11e9-ad74-0686c08fc21a	52877	0.4496268656716418	0.43875	text	1	Hola mundo	2019-09-27 19:48:30.919966+00	{1569613766589}	N-g4MSER-hgKXPJI	\N	2019-09-27 14:48:30.919966+00	0	9d3f97fa-e15f-11e9-8ea3-0686c08fc21a	t
+3a5b0f9c-e160-11e9-ad2b-0686c08fc21a	42103	0.6455223880597015	0.485	image	8	\N	2019-09-27 19:51:42.365876+00	{1569613961484}	-Sb-LI-71----8c-	1569613893308.png	2019-09-27 14:51:42.365876+00	0	7446df8a-e078-11e9-92a9-0686c08fc21a	f
+8a13b6dc-e17f-11e9-8ce8-0686c08fc21a	17286	0.5620795107033639	0.49948822927328557	text	1	uno a uno	2019-09-27 23:35:50.514567+00	{1569627328058}	i-BJGW2TTi4ANNZY	\N	2019-09-27 18:35:50.514567+00	0	5d80cfde-e17e-11e9-bd1a-0686c08fc21a	f
+2324f2aa-e180-11e9-8ac9-0686c08fc21a	17286	0.23382045929018788	0.17567567567567569	text	3	Dos de dos	2019-09-27 23:40:07.318981+00	{1569627584055}	6RIRj-Xk2g--4821	\N	2019-09-27 18:40:07.318981+00	0	5d80cfde-e17e-11e9-bd1a-0686c08fc21a	f
+41817f48-e180-11e9-9f6f-0686c08fc21a	17286	0.5720250521920668	0.206430568499534	text	3	Tres	2019-09-27 23:40:58.25716+00	{1569627584055}	gELC1MgUK0eiNUVT	\N	2019-09-27 18:40:58.25716+00	0	5d80cfde-e17e-11e9-bd1a-0686c08fc21a	f
+7063680c-e17c-11e9-ac07-0686c08fc21a	55150	0.1343804537521815	0.4733637747336377	text	2	Traigan los mamut =)	2019-09-27 23:13:38.915501+00	{1569625900097}	NDaOa-9A-3--Xfdd	\N	2019-09-27 18:13:38.915501+00	0	4a8bef70-dfbd-11e9-99e7-0686c08fc21a	t
+a23ab79a-e17c-11e9-816c-0686c08fc21a	55150	0.20372398685651696	0.2659974905897114	text	3	Hola! Soy Yaisa 	2019-09-27 23:15:02.545384+00	{1569625928864}	-UgRG5c987Ja2CY1	\N	2019-09-27 18:15:02.545384+00	0	4a8bef70-dfbd-11e9-99e7-0686c08fc21a	t
+38263ff4-e17d-11e9-aaf4-0686c08fc21a	55150	0.35815991237677985	0.26348808030112925	image	3	\N	2019-09-27 23:19:14.069496+00	{1569625928864}	F-A-2ei-VM1Pd-hT	1569626331441.jpg	2019-09-27 18:19:14.069496+00	0	4a8bef70-dfbd-11e9-99e7-0686c08fc21a	t
+466aef74-e17d-11e9-bc3f-0686c08fc21a	55150	0.09598603839441536	0.2952815829528158	image	2	\N	2019-09-27 23:19:38.007727+00	{undefined}	Jd-ai3k6-Jg--V-7	1569626364263.jpg	2019-09-27 18:19:38.007727+00	0	4a8bef70-dfbd-11e9-99e7-0686c08fc21a	t
+6bfacc76-93af-11e9-bb14-0686c08fc21a	54802	0.1260815822002472	0.2825	text	1	Trelol	2019-06-20 23:02:05.166059+00	{1561071622739}	HOGJIE-4b-T-kPDJ	\N	2019-06-20 18:02:05.166059+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	t
+bd103a04-e226-11e9-bfaa-0686c08fc21a	14352	0.7404202719406675	0.434375	image	1	\N	2019-09-28 19:32:42.009389+00	{Nachintoch}	-i-E-Z8g97G-DiZ4	1569699150469.jpg	2019-09-28 14:32:42.009389+00	0	79c4ccf6-e226-11e9-9551-0686c08fc21a	f
+64b185f6-e4ac-11e9-9dc9-0686c08fc21a	56870	0.1641509433962264	0.43826322930800543	image	1	\N	2019-10-02 00:34:28.63656+00	{Prueba}	-H991EK0-Q2--QbF	1569976461670.jpg	2019-10-01 19:34:28.63656+00	0	7ab4acd6-e4aa-11e9-ac01-0686c08fc21a	f
+9c5fa010-e528-11e9-a493-0686c08fc21a	25415	0.4583333333333333	0.50375	image	2	\N	2019-10-02 15:23:39.646765+00	{G}	N-bI-i-jKGLARM1C	1570029814721.jpg	2019-10-02 10:23:39.646765+00	0	12655da0-e528-11e9-a57f-0686c08fc21a	f
+52bfd402-e528-11e9-9fa5-0686c08fc21a	25415	0.486318407960199	0.52875	text	1	Ffgghh	2019-10-02 15:21:36.125833+00	{H}	JhKZg-YGR-X9WYLR	\N	2019-10-02 10:21:36.125833+00	0	12655da0-e528-11e9-a57f-0686c08fc21a	t
+c5f3dcf2-e528-11e9-84bb-0686c08fc21a	25415	0.7524875621890548	0.4275	text	2	Juuhhhyyth	2019-10-02 15:24:49.404763+00	{H,G}	bhMFeI3GGK8gZ-j9	\N	2019-10-02 10:24:49.404763+00	0	12655da0-e528-11e9-a57f-0686c08fc21a	f
+a65ac5ba-e5e9-11e9-aa2d-0686c08fc21a	22263	0.16666666666666666	0.2404870624048706	text	1	Beneficia la actividad comercial\n\n	2019-10-03 14:25:29.260944+00	{ALUMNOS}	-K7Wd-3-U--DI-MU	\N	2019-10-03 09:25:29.260944+00	0	1c3bd3c4-e5e9-11e9-996e-0686c08fc21a	f
+424be7e6-e226-11e9-a41c-0686c08fc21a	54802	0.5500618046971569	0.493125	text	2	Trelol!!!	2019-09-28 19:29:16.040219+00	{1561071622739,Nachintoch}	IO-GS-N-YJjK4-RL	\N	2019-09-28 14:29:16.040219+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	t
+28c6380c-e2d1-11e9-87ba-0686c08fc21a	20457	0.19499105545617174	0.47175732217573224	image	1	\N	2019-09-29 15:52:37.162372+00	{Erosete}	J-cfUeQRCHaYj-k9	1569772352721.png	2019-09-29 10:52:37.162372+00	0	be8c6faa-d656-11e9-b7b3-0686c08fc21a	t
+a0c315c8-e2d1-11e9-957a-0686c08fc21a	20457	0.41012345679012346	0.1789865178986518	text	1	Nivel 1:Es aquella imagen que tiene abstraidas todas sus propiedades sensibles de relación	2019-09-29 15:55:58.468333+00	{Erosete}	-P2aNc--dFT-3-RM	\N	2019-09-29 10:55:58.468333+00	0	be8c6faa-d656-11e9-b7b3-0686c08fc21a	t
+b03d0b0a-e45a-11e9-8c20-0686c08fc21a	20457	0.10344827586206896	0.3120728929384966	image	3	\N	2019-10-01 14:49:36.63952+00	{"Equipo 1"}	8hCLf68BZLWMa-2-	1569941304413.JPG	2019-10-01 09:49:36.63952+00	0	be8c6faa-d656-11e9-b7b3-0686c08fc21a	t
+98e420ac-e3aa-11e9-b6d1-0686c08fc21a	20457	0.6986970684039088	0.4144736842105263	text	2	Solo puedes puedes visualizar los objetos en la zona pública, y por medio de la privada moverlos (es como si fuera el ratón de la computadora)	2019-09-30 17:49:06.036456+00	{Libia}	eQFIHT-Bj-62QXO7	\N	2019-09-30 12:49:06.036456+00	0	be8c6faa-d656-11e9-b7b3-0686c08fc21a	t
+f0cf4bcc-e2d1-11e9-bce6-0686c08fc21a	20457	0.11185185185185186	0.14272431427243143	text	1	5.-Evaluación de la actividad- II. Ilustración- Función e imagen   a)  Niveles de iconicidad 	2019-09-29 15:58:12.76618+00	{Erosete}	QJH-Di-WGTEF-EOP	\N	2019-09-29 10:58:12.76618+00	0	be8c6faa-d656-11e9-b7b3-0686c08fc21a	t
+ede60870-e5f5-11e9-85a7-0686c08fc21a	24004	0.4956772334293948	0.26247436773752564	text	8	No lo se Rick puede ser malo\n	2019-10-03 15:53:23.252639+00	{Antonio}	UE--fAKVM-2FT07G	\N	2019-10-03 10:53:23.252639+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+f85ad83a-e5f5-11e9-8140-0686c08fc21a	24004	0.594059405940594	0.28996499416569427	text	1	Fue bueno por la razón de que todos pudimos dar nuestras emociones en la marcha asi es😖👌	2019-10-03 15:53:40.795248+00	{Fwrnando}	K-2DG5T1--EZjaDT	\N	2019-10-03 10:53:40.795248+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+0b4a943a-e5f6-11e9-94f5-0686c08fc21a	24004	0.44801980198019803	0.36375	text	7	Bueno, porque dormí	2019-10-03 15:54:12.565509+00	{Karen}	-7c6HC-d7----F6-	\N	2019-10-03 10:54:12.565509+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+11e9eb88-e5f6-11e9-9577-0686c08fc21a	24004	0.7288557213930348	0.4520547945205479	text	11	Bueno porque no hice nada	2019-10-03 15:54:23.676141+00	{ERNESTO}	S9Sj--0O0E-k-RTF	\N	2019-10-03 10:54:23.676141+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+1335a9a0-e5f6-11e9-a18a-0686c08fc21a	24004	0.5769656699889258	0.21417947446703026	text	4	Bueno porque me dio tiempo para ponerme al corriente en algunas cosas.	2019-10-03 15:54:25.850182+00	{Crhistian.}	XLM5--ie2-UaS-5-	\N	2019-10-03 10:54:25.850182+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+1349fec8-e5f6-11e9-a18b-0686c08fc21a	24004	0.48267326732673266	0.2761449077238551	text	6	Fue bueno porque hubo más tiempo de hacer tarea 	2019-10-03 15:54:25.983968+00	{Cecilia}	dX-8c-VcOccZJL57	\N	2019-10-03 10:54:25.983968+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+14288b2a-e5f6-11e9-8eb2-0686c08fc21a	24004	0.6002475247524752	0.2111176818450621	text	3	Malo porque no fue una marcha pacífica	2019-10-03 15:54:27.441924+00	{Brisa}	hR----UbG-Xjj--d	\N	2019-10-03 10:54:27.441924+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+1eb8cb2c-e5f6-11e9-ac67-0686c08fc21a	24004	0.4542079207920792	0.2551299589603283	text	2	 Bueno porque pude hacer lo de Historia :) 	2019-10-03 15:54:45.164313+00	{Gael}	JE0BPV-4O2-iNc5K	\N	2019-10-03 10:54:45.164313+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+26016862-e5f6-11e9-b59d-0686c08fc21a	24004	0.3292079207920792	0.5588409225310467	text	9	Malo porque hicieron vandalismo y así no se puede 	2019-10-03 15:54:57.384414+00	{Valentina}	JA--J-6a3--2Pkfj	\N	2019-10-03 10:54:57.384414+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+3dbfe924-e5f6-11e9-8c8f-0686c08fc21a	24004	0.40222772277227725	0.35064177362893817	text	1	F en el chat😭👌 \nNo ví a mi crush😖👌😳	2019-10-03 15:55:37.22051+00	{Fwrnando}	EfAeQLi5N-31T8L3	\N	2019-10-03 10:55:37.22051+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+c9b14b9a-e5fa-11e9-ade3-0686c08fc21a	24004	0.311495673671199	0.18409090909090908	text	12	Hola! =3	2019-10-03 16:28:09.992972+00	{"Alexis =/"}	IWAcKGYN-NQZNKYc	\N	2019-10-03 11:28:09.992972+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+cd9cf6dc-e5fa-11e9-8f32-0686c08fc21a	24004	0.34034653465346537	0.20085242408098028	text	15	Holu	2019-10-03 16:28:16.570282+00	{Daniela}	Gj-hKZ2iJ5k3-L6V	\N	2019-10-03 11:28:16.570282+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+feb999b4-e5fa-11e9-af8c-0686c08fc21a	24004	0.6032338308457711	0.5692541856925418	text	11	bueno porque descansé	2019-10-03 16:29:38.966374+00	{ERNESTO}	OhhB93-cYg5-A-BU	\N	2019-10-03 11:29:38.966374+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+fedc04b8-e5fa-11e9-af8d-0686c08fc21a	24004	0.723342939481268	0.2742749054224464	text	2	Fue bueno por que me la jale 	2019-10-03 16:29:39.192436+00	{"Marisa Caleche"}	k-JO--N-kPU-W4T-	\N	2019-10-03 11:29:39.192436+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+0f5d7fc4-e5fb-11e9-a76f-0686c08fc21a	24004	0.9419035846724351	0.35800807537012114	text	12	El paro fue bueno pero estuvo bueno	2019-10-03 16:30:06.88401+00	{"Alexis =/"}	1QN-T-3CY87jBIUA	\N	2019-10-03 11:30:06.88401+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+1acbdd56-e5fb-11e9-9cac-0686c08fc21a	24004	0.41930835734870314	0.2791056283731688	text	3	Bueno porque dormí más 	2019-10-03 16:30:26.062055+00	{"Esteban 😈😈😈🔥"}	-4-HAC--cbNOf7-g	\N	2019-10-03 11:30:26.062055+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+1f6c8ad6-e5fb-11e9-b0b9-0686c08fc21a	24004	0.3226205191594561	0.29036073329390893	text	4	En mi caso fue bueno, tuve tiempo de hacer tarea atrasada 	2019-10-03 16:30:33.82617+00	{"Emma 💕"}	Y-7B0-UZA-YS-CdE	\N	2019-10-03 11:30:33.82617+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+2036ba54-e5fb-11e9-a3b6-0686c08fc21a	24004	0.515850144092219	0.2931904161412358	text	2	Hola bitches\n\n	2019-10-03 16:30:35.151209+00	{"Marisa Caleche"}	GZ-X2jheaKI-S9X-	\N	2019-10-03 11:30:35.151209+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+2816a9aa-e5fb-11e9-b024-0686c08fc21a	24004	0.48703170028818443	0.28296067848882034	text	3	Jale gansos\n	2019-10-03 16:30:48.36283+00	{"Esteban 😈😈😈🔥"}	G-SGh-6-i-b88-LN	\N	2019-10-03 11:30:48.36283+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+29a31e34-e5fb-11e9-9271-0686c08fc21a	24004	0.6291718170580964	0.3896366083445491	text	12	Que pasa mis tios	2019-10-03 16:30:50.961214+00	{"Alexis =/"}	J--M-8G3S---iLKE	\N	2019-10-03 11:30:50.961214+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+2bb78296-e5fb-11e9-8f37-0686c08fc21a	24004	0.7175792507204611	0.39974779319041615	text	2	El michi voltchis 	2019-10-03 16:30:54.450011+00	{"Marisa Caleche"}	-3---cL-XCE-4aCN	\N	2019-10-03 11:30:54.450011+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+2dc8020e-e5fb-11e9-9b4a-0686c08fc21a	24004	0.5420792079207921	0.30420884389984015	text	15	Me dio más tiempo de hacer mi trabajo de foto 	2019-10-03 16:30:57.913659+00	{Daniela}	5NkBUGE--9H-UcOe	\N	2019-10-03 11:30:57.913659+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+33c92f34-e5fb-11e9-9423-0686c08fc21a	24004	0.4684796044499382	0.2975	text	16	Bueno y malo, bueno porque así recordamos la historia,así exigimos respuestas y malo por lo que le sucedio a los de prepa 2 :"c 	2019-10-03 16:31:07.984128+00	{"Michel :3"}	fA7--THag-V0ShOX	\N	2019-10-03 11:31:07.984128+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+39124e1c-e5fb-11e9-a964-0686c08fc21a	24004	0.5244956772334294	0.787201233616037	text	3	Pasen pack 🔥😈	2019-10-03 16:31:16.855556+00	{"Esteban 😈😈😈🔥"}	KOj5eDC6M--7S-1N	\N	2019-10-03 11:31:16.855556+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+3bef47fc-e5fb-11e9-8a0d-0686c08fc21a	24004	0.4969097651421508	0.2833109017496635	text	12	Hola amigos 	2019-10-03 16:31:21.659171+00	{"Alexis =/"}	69X--56Yb-YJY-78	\N	2019-10-03 11:31:21.659171+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+4101dfc0-e5fb-11e9-a497-0686c08fc21a	24004	0.4365994236311239	0.3385876418663304	text	2	👉🏻👌🏼	2019-10-03 16:31:30.169622+00	{"Marisa Caleche"}	-6-UIP-f-k2c-3Ed	\N	2019-10-03 11:31:30.169622+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+442ce8e8-e5fb-11e9-bd4c-0686c08fc21a	24004	0.6724351050679852	0.3553162853297443	text	12	No entendi 	2019-10-03 16:31:35.484615+00	{"Alexis =/"}	-39h8-VjiDHWPO--	\N	2019-10-03 11:31:35.484615+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+46ab97b8-e5fb-11e9-a3e6-0686c08fc21a	24004	0.46298472385428907	0.278580814717477	text	6	¡Hey! I am using WhatsApp 	2019-10-03 16:31:39.670481+00	{Clavellina}	U2d3RTjbT1ZG45A-	\N	2019-10-03 11:31:39.670481+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+4b9b8d78-e5fb-11e9-8ec7-0686c08fc21a	24004	0.5673671199011124	0.30080753701211305	text	12	Ya reporbramossssss	2019-10-03 16:31:47.954007+00	{"Alexis =/"}	7I--Wd-U-VA--61-	\N	2019-10-03 11:31:47.954007+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+4c3a32d4-e5fb-11e9-b755-0686c08fc21a	24004	0.6930835734870316	0.7494217424826523	text	3	XXxdstroyxXxpussyxXx	2019-10-03 16:31:48.993685+00	{"Esteban 😈😈😈🔥"}	8ebZNaQ7bANfE--M	\N	2019-10-03 11:31:48.993685+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+4ff03d24-e5fb-11e9-a177-0686c08fc21a	24004	0.4596774193548387	0.29573804573804574	text	19	Porque me jetie bien perron	2019-10-03 16:31:55.21983+00	{"El Bicho"}	-J-dBjNOU---eAT2	\N	2019-10-03 11:31:55.21983+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+53051714-e5fb-11e9-b5c5-0686c08fc21a	24004	0.4504950495049505	0.1975108225108225	text	5	Hora libre	2019-10-03 16:32:00.389663+00	{"Aimar 😈😈👌👌👊🔥"}	-K-YAB-8SB3h6-JC	\N	2019-10-03 11:32:00.389663+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+5833d874-e5fb-11e9-8002-0686c08fc21a	24004	0.5148514851485149	0.2876931273308471	text	15	No estuvo mal :v	2019-10-03 16:32:09.084704+00	{Daniela}	X--j-ZN-O-TI4-K-	\N	2019-10-03 11:32:09.084704+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+5842fda4-e5fb-11e9-8003-0686c08fc21a	24004	0.4227441285537701	0.3492597577388964	text	12	Siganme en insta _alexisglez 	2019-10-03 16:32:09.184512+00	{"Alexis =/"}	W-ghN-563739FML3	\N	2019-10-03 11:32:09.184512+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+59e8bfb8-e5fb-11e9-aad3-0686c08fc21a	24004	0.5244956772334294	0.3587641866330391	text	2	Me gusta el Aimar esta bien pestañudo le quiero hacer la FOLLACION\n	2019-10-03 16:32:11.947959+00	{"Marisa Caleche"}	XX2bGPVeB-CFK-T7	\N	2019-10-03 11:32:11.947959+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+5e469990-e5fb-11e9-a471-0686c08fc21a	24004	0.5982694684796045	0.2839838492597577	text	12	Los amo	2019-10-03 16:32:19.273901+00	{"Alexis =/"}	iQ4LA8QE-TNU6jX-	\N	2019-10-03 11:32:19.273901+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+5e56dcce-e5fb-11e9-a472-0686c08fc21a	24004	0.36743515850144093	0.7401696222050886	text	3	Que chingue a su madre el america	2019-10-03 16:32:19.381062+00	{"Esteban 😈😈😈🔥"}	WZU3--hQN-gh3P41	\N	2019-10-03 11:32:19.381062+00	0	c286e38c-e5ed-11e9-83d4-0686c08fc21a	f
+ef710e20-e630-11e9-b319-0686c08fc21a	43093	0.25936599423631124	0.26474358974358975	text	6	Sismo	2019-10-03 22:55:46.130719+00	{Mauricio}	68MGA4-PX----cQe	\N	2019-10-03 17:55:46.130719+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+fa3c530a-e630-11e9-aaa0-0686c08fc21a	43093	0.038366336633663366	0.13807245386192754	text	5	Sismo\n	2019-10-03 22:56:04.257855+00	{Karina}	R-h-KeFh-Bf-bj-h	\N	2019-10-03 17:56:04.257855+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+10f38294-e631-11e9-bad4-0686c08fc21a	43093	0.04326396495071194	0.2396486825595985	text	7	Deslizamientos\n	2019-10-03 22:56:42.368163+00	{Yaisa}	8-DH-5iMD9AR0bLR	\N	2019-10-03 17:56:42.368163+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+1490279a-e631-11e9-bc0d-0686c08fc21a	43093	0.37175792507204614	0.25576923076923075	text	6	Agrietamiento/fallas	2019-10-03 22:56:48.427986+00	{Mauricio}	2IGLC-JN4E-fDkcL	\N	2019-10-03 17:56:48.427986+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+1c96a8e2-e631-11e9-9250-0686c08fc21a	43093	0.3180693069306931	0.1367053998632946	text	5	Inundación	2019-10-03 22:57:01.892385+00	{Karina}	--dRAb4UjE-k-YR-	\N	2019-10-03 17:57:01.892385+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+1f77c3a2-e631-11e9-b7fc-0686c08fc21a	43093	0.291894852135816	0.24215809284818068	text	7	Inundaciones\n	2019-10-03 22:57:06.723104+00	{Yaisa}	7iZJ-9h-NXZcXRCJ	\N	2019-10-03 17:57:06.723104+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+3392853e-e631-11e9-9922-0686c08fc21a	43093	0.49616648411829134	0.21706398996235884	text	7	Epidemias	2019-10-03 22:57:40.452868+00	{Yaisa}	--1435Y2Je2VSTdZ	\N	2019-10-03 17:57:40.452868+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+40aff71a-e631-11e9-bf89-0686c08fc21a	43093	0.6596534653465347	0.11893369788106631	text	5	Derrame	2019-10-03 22:58:02.456179+00	{Karina}	RS9B-66---7KGKe-	\N	2019-10-03 17:58:02.456179+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+40c661ee-e631-11e9-bf8a-0686c08fc21a	43093	0.3688760806916426	0.2705128205128205	text	6	Huracanes	2019-10-03 22:58:02.603685+00	{Mauricio}	We-Zjg-Ia-4IGh8i	\N	2019-10-03 17:58:02.603685+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+5bf3788a-e631-11e9-b02a-0686c08fc21a	43093	0.6916757940854327	0.20702634880803011	text	7	Derrame de un químico\n	2019-10-03 22:58:48.197101+00	{Yaisa}	PA-BGGQ--YUS8N--	\N	2019-10-03 17:58:48.197101+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+6c9e3b7a-e631-11e9-8783-0686c08fc21a	43093	0.5331412103746398	0.35705128205128206	text	6	Explosiones eléctricas	2019-10-03 22:59:16.159741+00	{Mauricio}	I0NHg-b-3f-JcDII	\N	2019-10-03 17:59:16.159741+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+772c17ba-e631-11e9-8e28-0686c08fc21a	43093	0.895947426067908	0.18695106649937265	text	7	Marchas	2019-10-03 22:59:33.866655+00	{Yaisa}	UYZ14A--j-c7CUf-	\N	2019-10-03 17:59:33.866655+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+8603bc34-e631-11e9-80a7-0686c08fc21a	43093	0.5922190201729106	0.29743589743589743	text	6	Guerras	2019-10-03 22:59:58.767946+00	{Mauricio}	UJ9QYjD-eO--cU-M	\N	2019-10-03 17:59:58.767946+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+9bdc3efa-e631-11e9-8dab-0686c08fc21a	43093	0.44812680115273773	0.2923076923076923	text	6	Plagas	2019-10-03 23:00:35.419082+00	{Mauricio}	CfMG-XW-LPA---N-	\N	2019-10-03 18:00:35.419082+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+b01046be-e631-11e9-8942-0686c08fc21a	43093	0.8564356435643564	0.3752563226247437	text	5	Accidente carretero	2019-10-03 23:01:09.314505+00	{Karina}	VWFDVY6P-BC5gNR-	\N	2019-10-03 18:01:09.314505+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+ca7fac4c-e631-11e9-b29b-0686c08fc21a	43093	0.2913472070098576	0.45545796737766625	image	7	\N	2019-10-03 23:01:53.665303+00	{Yaisa}	I4UT-A--a4kk-N-f	1570143704981.jpg	2019-10-03 18:01:53.665303+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+9ac22e48-e632-11e9-b9b1-0686c08fc21a	43093	0.5634005763688761	0.6224358974358974	image	6	\N	2019-10-03 23:07:43.067283+00	{Mauricio}	----dEE6WX-R--aT	1570143966334.png	2019-10-03 18:07:43.067283+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+ea34447a-e632-11e9-ac58-0686c08fc21a	43093	0.07549504950495049	0.6466165413533834	image	5	\N	2019-10-03 23:09:56.354963+00	{Karina}	bK-S-0-R4-RDBG-L	1570143950180.jpg	2019-10-03 18:09:56.354963+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+edfdf718-e632-11e9-879c-0686c08fc21a	43093	0.8108776266996292	0.603156049094097	image	8	\N	2019-10-03 23:10:02.70994+00	{geofel19@hotmail.com}	QNAIbWPND-5ONf8E	1570144097314.jpeg	2019-10-03 18:10:02.70994+00	0	6d17ebd2-dfbf-11e9-ad54-0686c08fc21a	f
+8fdceec4-e6a9-11e9-8eae-0686c08fc21a	21957	0.44029850746268656	0.6133942161339422	text	3	Es bueno porque no hay muchos niños	2019-10-04 13:19:14.898505+00	{ernesto}	FEi7F-ZJQA-dX2E-	\N	2019-10-04 08:19:14.898505+00	0	2e358b36-e6a9-11e9-83fe-0686c08fc21a	f
+9eb11240-e6a9-11e9-9a8e-0686c08fc21a	21957	0.4509394572025052	0.08574091332712022	text	1	Es bueno porque es tu cuerpo y tu tienes derecho a decidir  lo que pasa con el 	2019-10-04 13:19:39.776874+00	{Karla}	PVWGB-fUgk-JfB-A	\N	2019-10-04 08:19:39.776874+00	0	2e358b36-e6a9-11e9-83fe-0686c08fc21a	f
+a723cc10-e6a9-11e9-bc35-0686c08fc21a	21957	0.6761433868974042	0.25251330573625075	text	2	El aborto es bueno cuando se trata de una violación.	2019-10-04 13:19:53.950465+00	{Daniela}	W-I2P7L6H-j5BDCb	\N	2019-10-04 08:19:53.950465+00	0	2e358b36-e6a9-11e9-83fe-0686c08fc21a	f
+75d0502a-e6ae-11e9-a6d6-0686c08fc21a	92041	0.6716417910447762	0.5312024353120244	text	2	Bueno porque descansé	2019-10-04 13:54:18.678651+00	{ERNESTO}	ij---9f794Q4FFE3	\N	2019-10-04 08:54:18.678651+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+7b5da452-e6ae-11e9-8297-0686c08fc21a	92041	0.5	0.3271428571428571	text	8	Bueno porque puede estudiar	2019-10-04 13:54:27.993491+00	{Carreño}	9-5YeQ-Ba-H76Zi4	\N	2019-10-04 08:54:27.993491+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+7b65aa1c-e6ae-11e9-8298-0686c08fc21a	92041	0.5768025078369906	0.19785575048732942	text	10	Buenos dias\n	2019-10-04 13:54:28.046613+00	{Yorch}	Y-DdE-kMCQQZgf-5	\N	2019-10-04 08:54:28.046613+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+813372bc-e6ae-11e9-b061-0686c08fc21a	92041	0.2664576802507837	0.21832358674463936	text	9	Estuvo bueno porque no tuvimos examen de logica 7u7	2019-10-04 13:54:37.783324+00	{Omar}	Yb-RHQe-DAEJ0CNZ	\N	2019-10-04 08:54:37.783324+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+8253f07c-e6ae-11e9-9adf-0686c08fc21a	92041	0.5	0.6902887139107612	text	6	Fue bueno porque dormí 13 horas más :)	2019-10-04 13:54:39.673946+00	{Clarisse}	OcRc7RFJ8g94be9P	\N	2019-10-04 08:54:39.673946+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+8275f2b2-e6ae-11e9-9ae0-0686c08fc21a	92041	0.7589616810877626	0.3634420096205238	text	4	El paro de 2 de octubre fue innecesario por que podemos manifestarnos pacíficamente sin que haya necesidad de que  detengamos nuestras labores 	2019-10-04 13:54:39.897374+00	{Martín}	-f78L1F-BZ-B2-1Q	\N	2019-10-04 08:54:39.897374+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+830f2ad6-e6ae-11e9-9ae1-0686c08fc21a	92041	0.44746600741656367	0.40375	text	3	 bueno, porque se pone feo por aqui	2019-10-04 13:54:40.901516+00	{Frida}	TSI----B-CER-N7h	\N	2019-10-04 08:54:40.901516+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+84b4517c-e6ae-11e9-b4b9-0686c08fc21a	92041	0.569055036344756	0.29853273137697517	text	5	Fue bueno porque pude ir al salado :D	2019-10-04 13:54:43.66102+00	{Geraldine}	I-6f-L-Q-jd--e-E	\N	2019-10-04 08:54:43.66102+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+9f7c255c-e6ae-11e9-9fde-0686c08fc21a	92041	0.19435736677115986	0.3864265927977839	text	1	Fue bueno porque pude descansar y ver a mi novia y porque tenía dos examenes	2019-10-04 13:55:28.591392+00	{Cornedios}	Xb-hBeNMdF-T-Nj-	\N	2019-10-04 08:55:28.591392+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+b6810df8-e6ae-11e9-ad6d-0686c08fc21a	92041	0.34475597092419524	0.6501128668171557	image	5	\N	2019-10-04 13:56:07.211163+00	{Geraldine}	Z4IZCFJeY-XN-I-d	1570197351836.jpeg	2019-10-04 08:56:07.211163+00	0	281d2e66-e6ae-11e9-a981-0686c08fc21a	f
+1c16d732-e6bf-11e9-90ad-0686c08fc21a	50604	0.5138427464008859	0.18638647784376428	text	2	Hola	2019-10-04 15:53:29.590329+00	{Lio}	-g-RaC5ZY-CjBB-1	\N	2019-10-04 10:53:29.590329+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+38b523bc-e6bf-11e9-bb08-0686c08fc21a	50604	0.5360696517412935	0.5799086757990868	text	9	Bueno porque no hice nada\n	2019-10-04 15:54:17.603936+00	{ERNESTO}	F9ZYO9S-fA-6ZNjj	\N	2019-10-04 10:54:17.603936+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+40dedc86-e6bf-11e9-9cde-0686c08fc21a	50604	0.44941176470588234	0.46125	text	1	Bueno por que acabe mi tarea :"v\n	2019-10-04 15:54:31.299051+00	{César}	YLY-UBJPS-VBXUA7	\N	2019-10-04 10:54:31.299051+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+426269c4-e6bf-11e9-b414-0686c08fc21a	50604	0.6435643564356436	0.26032225579053375	text	12	Fue bueno porque me quede acostado 	2019-10-04 15:54:33.838989+00	{Gabriel}	IbGPMFFfX-WBYIBG	\N	2019-10-04 10:54:33.838989+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+49bcb30a-e6bf-11e9-8eb3-0686c08fc21a	50604	0.32014833127317677	0.6567164179104478	text	11	Mi opinión del paro. Fue que fue bueno por qué descanse\nY por qué me salve del examen 	2019-10-04 15:54:46.17477+00	{"Alan U."}	dkTNB33d-X-dBL0-	\N	2019-10-04 10:54:46.17477+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+4bf6469a-e6bf-11e9-9480-0686c08fc21a	50604	0.44556451612903225	0.24584199584199584	text	4	En mi punto de vista fue algo malo porque nos atrasamos en la escuela \n	2019-10-04 15:54:49.907537+00	{Angela}	CGA--V-J-G-O-2fY	\N	2019-10-04 10:54:49.907537+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+4c11c1e0-e6bf-11e9-9481-0686c08fc21a	50604	0.46971569839307786	0.30739081746920494	text	3	T de troy	2019-10-04 15:54:50.088202+00	{Itzel}	2O-DQ---gHW-dWi-	\N	2019-10-04 10:54:50.088202+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+4d911f16-e6bf-11e9-b6ce-0686c08fc21a	50604	0.6732673267326733	0.561875	text	5	Malo porque hice el quehacer	2019-10-04 15:54:52.600045+00	{Vianca}	3-0-e--Z7j-f29T4	\N	2019-10-04 10:54:52.600045+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+4f9bf704-e6bf-11e9-a584-0686c08fc21a	50604	0.6407894736842106	0.3328831870357866	text	13	Skeeeelee\neeeeer	2019-10-04 15:54:56.026602+00	{Bacardi}	W-H-2U0i3X-gD-8G	\N	2019-10-04 10:54:56.026602+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+53a7f9ce-e6bf-11e9-9895-0686c08fc21a	50604	0.522867737948084	0.28144853875476494	text	7	Malo porque no fue de 72h y porque no salí de mi casa 🙄	2019-10-04 15:55:02.816173+00	{Oscar}	I8-CcK3iJAdLIMP5	\N	2019-10-04 10:55:02.816173+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+57c1ec9a-e6bf-11e9-a398-0686c08fc21a	50604	0.2620519159456119	0.5637720488466758	text	11	Xd	2019-10-04 15:55:09.697119+00	{"Alan U."}	AhCCSCAUkMQDWY-4	\N	2019-10-04 10:55:09.697119+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+60d469ca-e6bf-11e9-b751-0686c08fc21a	50604	0.4053156146179402	0.22201918684330746	text	2	Malo porque estuve solo todo el día 	2019-10-04 15:55:24.91771+00	{Lio}	agHYGJWa-QB93a-D	\N	2019-10-04 10:55:24.91771+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+67b46088-e6bf-11e9-a035-0686c08fc21a	50604	0.7197368421052631	0.31330182309250504	text	13	www.xvideos.com	2019-10-04 15:55:36.451868+00	{Bacardi}	-QWFdi0dJR-6-h-6	\N	2019-10-04 10:55:36.451868+00	0	d1cfe916-e6be-11e9-b843-0686c08fc21a	f
+8e0fda8c-e6c4-11e9-99c2-0686c08fc21a	27657	0.6156716417910447	0.6027397260273972	text	4	Bueno porque descansé	2019-10-04 16:32:28.288413+00	{ERNESTO}	dR--1K5-1Ge3-9H1	\N	2019-10-04 11:32:28.288413+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+92a45442-e6c4-11e9-8441-0686c08fc21a	27657	0.7512376237623762	0.48	text	2	Kiuvo	2019-10-04 16:32:35.972346+00	{Dana}	Z4GS2GMLiYR-V-CO	\N	2019-10-04 11:32:35.972346+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+9d192772-e6c4-11e9-93ee-0686c08fc21a	27657	0.44676409185803756	0.23208191126279865	text	1	No, no fue bueno	2019-10-04 16:32:53.515191+00	{Erick}	D7-ERd6R-1VM92Nd	\N	2019-10-04 11:32:53.515191+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+9ff77d72-e6c4-11e9-99c7-0686c08fc21a	27657	0.5396039603960396	0.4775	text	2	Hola vendo pan	2019-10-04 16:32:58.327741+00	{Dana}	6dL8AiT-W-LBh-a-	\N	2019-10-04 11:32:58.327741+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+a6a27064-e6c4-11e9-8a6e-0686c08fc21a	27657	0.5581683168316832	0.24448897795591182	text	8	Está sobre las dos tanto bueno como malo, si fue para de verdad seguir luchando por la libertad de la expresión es bueno. Malo si solo lo ocupaste para echar la hueva. 	2019-10-04 16:33:09.514456+00	{Ximena}	fUUMN-4--Z-f---b	\N	2019-10-04 11:33:09.514456+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+ad1ed658-e6c4-11e9-83f5-0686c08fc21a	27657	0.1037463976945245	0.2642857142857143	text	6	Malo porque aburrí en mi ksa	2019-10-04 16:33:20.395999+00	{"Valeria y Karla"}	W-jg-S-d-W--K10F	\N	2019-10-04 11:33:20.395999+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+b15c6b7c-e6c4-11e9-b1e3-0686c08fc21a	27657	0.7750309023485785	0.650625	text	9	Bueno, porque terminé algunos trabajos.	2019-10-04 16:33:27.510487+00	{Emilio}	VVc9Fgg7V-2Gh--T	\N	2019-10-04 11:33:27.510487+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+b1ef9780-e6c4-11e9-b1e4-0686c08fc21a	27657	0.5288184438040345	0.3116883116883117	text	10	Por qué dormí todo el día fué bueno\n	2019-10-04 16:33:28.475547+00	{Brenda}	4-PAb-9UGDEbEE-1	\N	2019-10-04 11:33:28.475547+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+b450a2da-e6c4-11e9-91df-0686c08fc21a	27657	0.37995049504950495	0.28625	text	5	Bueno porque desperté más tarde xd	2019-10-04 16:33:32.466483+00	{Laura}	k5-F16NWAO4-DBcH	\N	2019-10-04 11:33:32.466483+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+b9069c76-e6c4-11e9-a9eb-0686c08fc21a	27657	0.5816831683168316	0.41625	text	2	Bolillo 2$\nConcha 3$\nDona5$	2019-10-04 16:33:40.369907+00	{Dana}	QHYG8b1O-FFQ-SQ-	\N	2019-10-04 11:33:40.369907+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+c32cca68-e6c4-11e9-a7dd-0686c08fc21a	27657	0.5457920792079208	0.4775	text	2	Mi tío 	2019-10-04 16:33:57.397322+00	{Dana}	W-6YaTE78HFL--e-	\N	2019-10-04 11:33:57.397322+00	0	3cde5dd2-e6c4-11e9-8f1a-0686c08fc21a	f
+559fe89c-e71c-11e9-947c-0686c08fc21a	36946	0.32416070445789763	0.6078680203045685	text	3	Hi\n\n	2019-10-05 03:00:49.314607+00	{Fer}	URW-JXAU3V----Ne	\N	2019-10-04 22:00:49.314607+00	0	85204228-deda-11e9-b184-0686c08fc21a	f
+5d094c40-e226-11e9-a6ef-0686c08fc21a	54802	0.3584672435105068	0.566875	image	2	\N	2019-09-28 19:30:00.902689+00	{Nachintoch}	-if-C4---be-G-Y-	1569698996015.jpg	2019-09-28 14:30:00.902689+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	t
+567a09fc-93af-11e9-bb8e-0686c08fc21a	54802	0.715698393077874	0.175625	image	1	\N	2019-06-20 23:01:29.090067+00	{1561071622739}	--RIfe-S7Ie8DYRi	1561071685633.jpeg	2019-06-20 18:01:29.090067+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	t
+61a4a422-93af-11e9-9a45-0686c08fc21a	54802	0.7021013597033374	0.599375	image	1	\N	2019-06-20 23:01:47.824186+00	{1561071622739}	KQJFG-ZYRRY-cX18	1561071701749.gif	2019-06-20 18:01:47.824186+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	t
+40a8b208-e80b-11e9-b9ec-0686c08fc21a	54802	0.5241038318912238	0.533125	text	5	Yupu	2019-10-06 07:31:03.858319+00	{natsch}	JHV-MG-K18Q-hdJc	\N	2019-10-06 02:31:03.858319+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	t
+4cb75e64-e80b-11e9-9e0e-0686c08fc21a	54802	0.7218788627935723	0.483125	text	5	Yupuweee	2019-10-06 07:31:24.087154+00	{natsch}	15Z-7-SJ5iYE7fgC	\N	2019-10-06 02:31:24.087154+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	t
+0e789702-e90b-11e9-a75f-0686c08fc21a	19002	0.021812810945273632	0.5202492211838006	text	1	Bueno porque descansé	2019-10-07 14:02:10.819713+00	{ERNESTO}	-kL2g-URY7hAS--H	\N	2019-10-07 09:02:10.819713+00	0	f110776e-e907-11e9-b260-0686c08fc21a	f
+93d8c0a2-e2d0-11e9-8c84-0686c08fc21a	20457	0.1617954070981211	0.2789400278940028	image	1	\N	2019-09-29 15:48:27.295702+00	{Erosete}	gT--YMHhDB--PePC	1569772092964.jpg	2019-09-29 10:48:27.295702+00	0	be8c6faa-d656-11e9-b7b3-0686c08fc21a	t
+13b6b9c8-e2d1-11e9-a5b4-0686c08fc21a	20457	0.1564705882352941	0.48430962343096234	image	1	\N	2019-09-29 15:52:01.828679+00	{Erosete}	-SQd4iaH-28-fX8-	1569772316104.png	2019-09-29 10:52:01.828679+00	0	be8c6faa-d656-11e9-b7b3-0686c08fc21a	t
+f36ade10-e2d0-11e9-b160-0686c08fc21a	20457	0.10882352941176471	0.8577405857740585	image	1	\N	2019-09-29 15:51:07.644404+00	{Erosete}	c-X5L-2UgIc-FQDB	1569772257747.jpg	2019-09-29 10:51:07.644404+00	0	be8c6faa-d656-11e9-b7b3-0686c08fc21a	t
+24272334-e90b-11e9-a965-0686c08fc21a	19002	0.834717039800995	0.25759345794392524	text	3	Malo porque hicieron desastre	2019-10-07 14:02:47.195745+00	{Rafael}	E5GHPIjLCAeK--I7	\N	2019-10-07 09:02:47.195745+00	0	f110776e-e907-11e9-b260-0686c08fc21a	f
+28535022-e90b-11e9-af98-0686c08fc21a	19002	0.024875621890547265	0.29908975856697817	text	6	Bueno por que fue en memoria de los muertitos de Tlatelolco	2019-10-07 14:02:54.196499+00	{"PONCHITO BB"}	929eX2kAEaU29ARF	\N	2019-10-07 09:02:54.196499+00	0	f110776e-e907-11e9-b260-0686c08fc21a	f
+38c7758c-e90b-11e9-81f9-0686c08fc21a	19002	0.915205223880597	0.40761292834890966	text	7	Malo, porque me dejaron mucha tarea\n	2019-10-07 14:03:21.800917+00	{Camila}	-UM-4--HbU6-2ZCh	\N	2019-10-07 09:03:21.800917+00	0	f110776e-e907-11e9-b260-0686c08fc21a	f
+3745ee64-e90b-11e9-8947-0686c08fc21a	19002	0.07008706467661692	0.1208138629283489	text	4	Bueno porque no nos tocó con la maestra de orientación	2019-10-07 14:03:19.274332+00	{Iván}	8Ib----D3M3Z-ZgF	\N	2019-10-07 09:03:19.274332+00	0	f110776e-e907-11e9-b260-0686c08fc21a	f
+3885d9f2-e80b-11e9-ad99-0686c08fc21a	54802	0.29402885324483774	0.544760101010101	image	5	\N	2019-10-06 07:30:50.208159+00	{natsch}	JZH-3-S-eV--E8-e	1570347045108.png	2019-10-06 02:30:50.208159+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	f
+78923752-e80b-11e9-a6f9-0686c08fc21a	54802	0.7093819137168141	0.6328756313131313	image	5	\N	2019-10-06 07:32:37.663418+00	{natsch}	OEHfE2G-JHXF6-YY	1570347153688.jpg	2019-10-06 02:32:37.663418+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	f
+39a768f4-e90b-11e9-b33d-0686c08fc21a	19002	0.07002487562189055	0.7276820482866043	text	2	Bueno porque tuvimos más tiempo para estudiar historia :) 	2019-10-07 14:03:23.268651+00	{Dariana}	--1-gTed7-Hb-dQ-	\N	2019-10-07 09:03:23.268651+00	0	f110776e-e907-11e9-b260-0686c08fc21a	f
+426c9ff4-e90b-11e9-972b-0686c08fc21a	19002	0.47439916405433646	0.32125834127740704	text	5	Bueno porque me Apure en todas las tareas.	2019-10-07 14:03:37.982892+00	{Sarahi}	---GTLgcE-7A7705	\N	2019-10-07 09:03:37.982892+00	0	f110776e-e907-11e9-b260-0686c08fc21a	f
+6122d5a8-e90b-11e9-ba92-0686c08fc21a	19002	0.2784653465346535	0.266875	text	6	Bueno por que fue en memoria de los muertitos de Tlatelolco xD\n	2019-10-07 14:04:29.508654+00	{"PONCHITO BB"}	-ZMH-L6d-i-c0cgN	\N	2019-10-07 09:04:29.508654+00	0	f110776e-e907-11e9-b260-0686c08fc21a	f
+91c4a048-e914-11e9-a606-0686c08fc21a	91275	0.3383084577114428	0.43237250554323725	image	3	\N	2019-10-07 15:10:16.570187+00	{"Equipo 6"}	QM-FN-5-H-gGYa-d	1570461010770.jpg	2019-10-07 10:10:16.570187+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	f
+1165f47e-e90f-11e9-abaa-0686c08fc21a	18367	0.03805338541666667	0.2512370584652862	text	1	Doblar a la mitad la hoja	2019-10-07 14:30:53.717744+00	{Igor}	YP4YB6Ob-dM3-2ii	\N	2019-10-07 09:30:53.717744+00	0	7af04512-e864-11e9-84f0-0686c08fc21a	f
+5f6bfd8a-e90f-11e9-abd8-0686c08fc21a	18367	0.22208116319444443	0.0730816077953715	text	1	Avión de papel	2019-10-07 14:33:04.619569+00	{Igor}	Q2-FYPeOX1P-S5NP	\N	2019-10-07 09:33:04.619569+00	0	7af04512-e864-11e9-84f0-0686c08fc21a	f
+ebabf674-e90f-11e9-85f6-0686c08fc21a	18367	0.20902777777777778	0.13870280146163216	text	1	Proceso para elaborar aviones de papel	2019-10-07 14:36:59.919815+00	{Igor}	gBJDX8AE-Dbi--7j	\N	2019-10-07 09:36:59.919815+00	0	7af04512-e864-11e9-84f0-0686c08fc21a	f
+61117288-e90e-11e9-812c-0686c08fc21a	18367	0.12569444444444444	0.8842874543239951	text	1	Igor	2019-10-07 14:25:57.884905+00	{Igor}	AN--QbB2Z-JdU9-f	\N	2019-10-07 09:25:57.884905+00	0	7af04512-e864-11e9-84f0-0686c08fc21a	f
+413d0982-e912-11e9-86de-0686c08fc21a	91275	0.6330412701317716	0.37835693359375	text	2	Pagaré: es un documento fiscal en el que se estlabace la posición de una persona que garantiza el pago de una cantidad monetaria en un determinado plazo de tiempo.	2019-10-07 14:53:42.470624+00	{"Equipo 3"}	50LCB-BJh41Gb-e-	\N	2019-10-07 09:53:42.470624+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	t
+3be7582a-e912-11e9-8047-0686c08fc21a	91275	0.2991855783308931	0.19000244140625	text	4	¿Qué es un pagaré? Documento extiende y entrega una persona a otra mediante el cual contrae la obligación de pagarle una cantidad de dinero en la fecha que figura en él 	2019-10-07 14:53:33.520153+00	{"Equipo Matemáticas"}	V-B8cXb--TRZC-X5	\N	2019-10-07 09:53:33.520153+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	t
+b0c711f4-e911-11e9-8b92-0686c08fc21a	91275	0.7680499633967789	0.4166666666666667	text	6	Equipo 7 (Prueba)\n\n	2019-10-07 14:49:40.105601+00	{"Eq alfabuenaonda"}	7QfX-4-fOCLM4hHf	\N	2019-10-07 09:49:40.105601+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	t
+8c315df6-e914-11e9-9cf8-0686c08fc21a	91275	0.5077667459736457	0.3509521484375	image	6	\N	2019-10-07 15:10:07.216653+00	{"Eq alfabuenaonda"}	--4--GE1-TfG--PI	1570461000107.jpg	2019-10-07 10:10:07.216653+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	f
+b81e8ff6-e914-11e9-903e-0686c08fc21a	54802	0.46971569839307786	0.345	text	5	Test	2019-10-07 15:11:20.912993+00	{sufro}	JLI86-VKKH0hE5-Z	\N	2019-10-07 10:11:20.912993+00	0	f82cf6d4-93ae-11e9-b810-0686c08fc21a	f
+b89c3dfc-e914-11e9-903f-0686c08fc21a	91275	0.4354525073206442	0.09950532724505327	image	2	\N	2019-10-07 15:11:21.737248+00	{"Equipo 3"}	5F--39-F7-cLZ7C-	1570461077136.jpg	2019-10-07 10:11:21.737248+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	f
+60762d74-e912-11e9-a19c-0686c08fc21a	91275	0.4680751281112738	0.3677775065104167	text	6	Pagaré: promesa escrita de una determinada cantidad de dinero, con intereses o sin ellos, en una fecha dada, suscrita por un deudor a favor de un acreedor. En un pagaré intervienen los siguientes elementos: \nPlazo: tiempo especificado explícitamente n el documento (número de meses) o (número de días	2019-10-07 14:54:34.854455+00	{"Eq alfabuenaonda"}	B-DWJXfd1V-Ph63-	\N	2019-10-07 09:54:34.854455+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	t
+8bc47388-e911-11e9-be5f-0686c08fc21a	91275	0.8094459187408491	0.52581787109375	text	3	Texto de prueba\n	2019-10-07 14:48:38.011763+00	{"Equipo 6"}	-L-L--21egZF0bCR	\N	2019-10-07 09:48:38.011763+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	t
+d81a8a50-e912-11e9-af0e-0686c08fc21a	91275	0.7220149253731343	0.2682926829268293	text	7	Un pagaré es un documento que garantiza el pago de una persona física o moral a otra de un monto con límite de pago en una fecha establecida.	2019-10-07 14:57:55.580399+00	{Caimanes}	-f-f-7-1IeE-5FJQ	\N	2019-10-07 09:57:55.580399+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	t
+587f75a8-e912-11e9-a351-0686c08fc21a	91275	NaN	0	text	3	Documento donde se contrae la obligación de pagar cierta cantidad de dinero en una fecha establecida.	2019-10-07 14:54:21.492528+00	{"Equipo 6"}	--Ij7TYR-c-Z835-	\N	2019-10-07 09:54:21.492528+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	t
+e9376bda-e914-11e9-9c07-0686c08fc21a	91275	0.1853233830845771	0.532150776053215	image	7	\N	2019-10-07 15:12:43.284372+00	{Caimanes}	Wk-1ii1PON-Be1AU	1570461121109.jpg	2019-10-07 10:12:43.284372+00	0	4271a456-e8af-11e9-acef-0686c08fc21a	f
+3c5a0610-e915-11e9-872c-0686c08fc21a	24036	0.4689054726368159	0.5410071942446043	text	1	texto	2019-10-07 15:15:02.761948+00	{rkm}	kBGV3JQDjfL4aK6L	\N	2019-10-07 10:15:02.761948+00	0	16350e08-e915-11e9-b62f-0686c08fc21a	f
+5e4ac6e2-e915-11e9-8222-0686c08fc21a	24036	0.181427001953125	0.23882643884892085	image	2	\N	2019-10-07 15:15:59.704534+00	{J}	ab-Kc2-NIe773i15	1570461349256.jpg	2019-10-07 10:15:59.704534+00	0	16350e08-e915-11e9-b62f-0686c08fc21a	f
+411fafba-e915-11e9-b734-0686c08fc21a	24036	0.6710199004975125	0.32625	text	2	Jes	2019-10-07 15:15:10.768196+00	{J}	0L7gNU7eh-Y-V-F-	\N	2019-10-07 10:15:10.768196+00	0	16350e08-e915-11e9-b62f-0686c08fc21a	t
+61d9bade-e915-11e9-9584-0686c08fc21a	24036	0.6614837646484375	0.44028776978417267	image	1	\N	2019-10-07 15:16:05.674563+00	{rkm}	M7c--2R3h76-iRGZ	1570461321261.jpg	2019-10-07 10:16:05.674563+00	0	16350e08-e915-11e9-b62f-0686c08fc21a	f
+911cfbd0-e915-11e9-8655-0686c08fc21a	24036	0.2263681592039801	0.45125	text	2	Jes está aquí	2019-10-07 15:17:24.968212+00	{J}	F--e-P2P-3-RB8he	\N	2019-10-07 10:17:24.968212+00	0	16350e08-e915-11e9-b62f-0686c08fc21a	f
+\.
+
+
+--
+-- Data for Name: user; Type: TABLE DATA; Schema: public; Owner: adef
+--
+
+COPY public."user" (id, name, email, pw, last_pw_reset, pw_reset_request_id, last_updated, is_deleted) FROM stdin;
+179cb77a-cf37-11e9-b768-0686c08fc21a	Ricardo Castañeda 	ricardo.castaneda@icat.unam.mx	$2a$10$7g51j/nrqM7q/Rb5gWRb9Opzsw8SZLatnfpOP6qdw5OsflIW2cX6q	\N	\N	2019-09-28 14:22:46.706765+00	f
+6585ccdc-cf38-11e9-a339-0686c08fc21a	Gustavo de la Cruz	gustavo.delacruz@icat.unam.mx	$2a$10$P8g93sMrkO50IxTD6ordHO4KP8C7tJPgNEFSqiL0zFdsVCulPTVqK	\N	\N	2019-09-28 14:22:46.706765+00	f
+82f7175a-cf45-11e9-86a4-0686c08fc21a	Libia Eslava	libia.eslava@icat.unam.mx	$2a$10$Z6JFuNdM8Ri5sE6LOxy6F.BT4jS1Bab9WmnJLytoimH6VYthpT.Ci	\N	\N	2019-09-28 14:22:46.706765+00	f
+8e41945e-cf46-11e9-b610-0686c08fc21a	Clara Alvarado	clara.alvarado@icat.unam.mx	$2a$10$1wBD0CWvw5KoUDEfLYLUJ.1XUyvYqUelW1lBGvXLriWCttA3fXvMS	\N	\N	2019-09-28 14:22:46.706765+00	f
+75cd7a7c-cf47-11e9-85bd-0686c08fc21a	Clara Alvarado	clara.alvaradoz@gmail.com	$2a$10$8Zci1O/4HqcuNIMXGW0Bb.dLMwBqzI8WsTplXX2L7QJHOmUwWQyRO	\N	\N	2019-09-28 14:22:46.706765+00	f
+3731aeaa-cf6f-11e9-b169-0686c08fc21a	JESUS RAMIREZ ORTEGA	jesus.ramirez@icat.unam.mx	$2a$10$mw/sPkPku9VJet8mRIUXWObtyifZE97uPNGS2RMTQSmEdswt96iSq	\N	\N	2019-09-28 14:22:46.706765+00	f
+2b80cc1a-d336-11e9-8da2-0686c08fc21a	Fernando Gamboa Rodríguez	fernando.gamboa@ccadet.unam.mx	$2a$10$0ZdbyneYJ1Pywx1hFVh.T.GuJ/CmSLcmsYrIMXy3q/iOuUGzg22O6	\N	\N	2019-09-28 14:22:46.706765+00	f
+0a24b98c-d458-11e9-a5a5-0686c08fc21a	Alina Dolores	sesame.sonrics27@gmail.com	$2a$10$6Of6GnWToBDwYabS7ougJ.HN7Ij3CjzhUyy7zmN027EvYrMizpO0W	\N	\N	2019-09-28 14:22:46.706765+00	f
+872e8f24-d4b8-11e9-b732-0686c08fc21a	Estefanía Prieto Larios	faniarinoa@gmail.com	$2a$10$roCIghnqU/eIOE40pMYCfub66.UjRjGE1RLgeZI0X8pm8131UqABG	\N	\N	2019-09-28 14:22:46.706765+00	f
+c21b0972-d4c3-11e9-8a3c-0686c08fc21a	Jacqueline Hinojosa Rivera	jacquelinehr10@gmail.com	$2a$10$7SCJVI/DxHgPFwORb2tjjuDSJJFbQwZSFaTCGUORYPybZecc5mFoq	\N	\N	2019-09-28 14:22:46.706765+00	f
+d72911c4-d4c3-11e9-b9c7-0686c08fc21a	Centro DidacTIC	didactic.enp7.unam@gmail.com	$2a$10$m5i7dustpT8zOYLxtj9qfuI02SCpuNVwX5vqF6QD73cDOEBNo4Y5G	\N	\N	2019-09-28 14:22:46.706765+00	f
+80d83cf8-d4e3-11e9-ab6c-0686c08fc21a	Dolores Erandio Castro Martínez	dolores.castro@enp.unam.mx	$2a$10$wGiuvcHaM7XKT/AcjBJPBOEs1839F9C.CoJysw/BmOsXpHgkfOVcu	\N	\N	2019-09-28 14:22:46.706765+00	f
+884843d4-d4e3-11e9-8262-0686c08fc21a	Ernesto González	ernesto.gonzalez@enp.unam.mx	$2a$10$lrIp36tBOzAsoLuj5YPQo.DODRzX0a8UcPRTNlFi4S2joWp07Yw3e	\N	\N	2019-09-28 14:22:46.706765+00	f
+8b7c066c-d4e3-11e9-82b0-0686c08fc21a	Rodolfo Ochoa Lagunes	Rodolfo.ochoa@enp.unam.mx	$2a$10$gQV6QuzZZ8GiaAUf1Sj3J.mQSd6z2teBbIqPojaWTvFBU5.6jW5IW	\N	\N	2019-09-28 14:22:46.706765+00	f
+c0636b5e-d4e3-11e9-81c7-0686c08fc21a	Edith Vázquez León	edith.vazquez@enp.unam.mx	$2a$10$q./EybIP6xffafqVzMqWy.CND0avOHxuAqxEHuYUEdr1Mw0Fc2/5S	\N	\N	2019-09-28 14:22:46.706765+00	f
+1ddad546-d4e5-11e9-a4c4-0686c08fc21a	Carlos Hugo Basurto Torres	carlos.basurto@enp.unam.mx	$2a$10$uCnhXLF8YrXCFrAf50Mq.OxzkhfmhS.voP9rGSt.mtkPGAdcEIyiK	\N	\N	2019-09-28 14:22:46.706765+00	f
+b12b1dae-d5aa-11e9-b7d9-0686c08fc21a	Ingrid Cabrera	marissa@unam.mx	$2a$10$5hgaDv/4AWkJvbSODVKeQusOrhldveg0GUtuLa/cSCqbt3pHtCwuW	\N	\N	2019-09-28 14:22:46.706765+00	f
+341215a0-d656-11e9-896a-0686c08fc21a	Edith Geraldine Ruiz Lozada	eruiz@fad.unam.mx	$2a$10$M6Asn8rZBEvdR3fPPBSGoO6yS6xaKwv6PFsUTSsjUi3AqE3L5NBle	\N	\N	2019-09-28 14:22:46.706765+00	f
+e6b2c024-d656-11e9-8aec-0686c08fc21a	Demo clase muro colaborativo	Irocha@fad.unam.mx	$2a$10$DBtgdhg4/x8EdY0KxQGuUOg8dI0Tt75S7toLQzuLLvnkcy6J66OcO	\N	\N	2019-09-28 14:22:46.706765+00	f
+46975986-d65d-11e9-8950-0686c08fc21a	Laura Flores	lflores@fad.unam.com	$2a$10$RW6xw4KYN7v/U6t9Hrt2Vum/vhlG1rBGRRRvMovOxzQG/ZwU3qfsC	\N	\N	2019-09-28 14:22:46.706765+00	f
+7eae2a5c-d65d-11e9-a324-0686c08fc21a	Stephani Sánchez Domínguez	ssanchez@fad.unam.mx	$2a$10$LXz4T9C13RphLM7tw9S8g.l0Xm3/Sap6zgdD3SBlgDS0YpKZBCg8S	\N	\N	2019-09-28 14:22:46.706765+00	f
+1babe172-db00-11e9-bcde-0686c08fc21a	Iván Jiménez Maya	ijmay@yahoo.com.mx	$2a$10$53CsoO9QPMq0xpc3SsukfeflMQgJIaphsjh8amz54xI/x/Yhzq4/K	\N	\N	2019-09-28 14:22:46.706765+00	f
+13f8853a-dbd6-11e9-8a85-0686c08fc21a	Miguel Angel Zamarron Serratos	miguel.zamarron@entsadistancia.unam.mx	$2a$10$3s9chvY6GZGOoPLweKzMpusybH1/ghi8xGZCCiZAut1Fa9l18guG2	\N	\N	2019-09-28 14:22:46.706765+00	f
+2c3e15ce-dbd6-11e9-8ac1-0686c08fc21a	Rafael Zepeda Barrios	rafaelzepedab@gmail.com	$2a$10$TiKEyhzj4hvyvxHeNKqbeefMa3zEWnf1Ce7zwrysYnklHnsZ/O68a	\N	\N	2019-09-28 14:22:46.706765+00	f
+407a131c-dbd6-11e9-a2dc-0686c08fc21a	Pedro Hernández Gonzalez	pedrounam@gmail.com	$2a$10$kcwRlhhzKOsDUrP58C097uSDlZvwlTxOZo3Shx/3cfUJIJicaJLSy	\N	\N	2019-09-28 14:22:46.706765+00	f
+7bc947d0-dbd6-11e9-8bd4-0686c08fc21a	Silvia Resendiz Hernanez	silre42@gmail.com	$2a$10$HZLe813ZUw/GtUyASSpbv.xUIJJ/AjLK3IqMaOV72Oqwx8Nu9qb1m	\N	\N	2019-09-28 14:22:46.706765+00	f
+bc81a280-de20-11e9-9ec3-0686c08fc21a	Jairo Romero	jairo_owen@yahoo.com.mx	$2a$10$/.EP7k2Hs0ETIXqSX7PaDuoXXk1bAAF3kT/K36wDDdD2bhB9fqm1S	\N	\N	2019-09-28 14:22:46.706765+00	f
+394f1a1a-ded8-11e9-8c47-0686c08fc21a	Eduardo Dominguez Herrera	geogastro@gmail.com	$2a$10$4qscmwH/CCXvhBgPyEeV0OIZW7TZa7IXgh/iAECoJOVC8ZOtCtf6e	\N	\N	2019-09-28 14:22:46.706765+00	f
+4a78c260-dfbd-11e9-99e6-0686c08fc21a	Felipe Juarez	felipejuarezvillanueva@gmail.com	$2a$10$Y7Qey9RAJA.lTFrzF3u0LO2afrl7rxxH1.VQE3fq.k.RFwHDnzK6q	\N	\N	2019-09-28 14:22:46.706765+00	f
+29688d64-dfe3-11e9-bf07-0686c08fc21a	Martha Diana Bosco Hernández	marthadiana@gmail.com	$2a$10$yJohWguubTsmjvpN63PSOe6uO3.IzY3gRdIvWevY/Tv7t/9V6F5bi	\N	\N	2019-09-28 14:22:46.706765+00	f
+ae5cee7c-e07c-11e9-bce6-0686c08fc21a	Ram Ort	raortigi@gmail.com	$2a$10$fGlAyzw7npn8EhAEQ5v8NuY7NtdM9bxQ5LeC0/6n5OAokKpl.BFUi	\N	\N	2019-09-28 14:22:46.706765+00	f
+881bef14-e07d-11e9-aa33-0686c08fc21a	Alejandra Lafuente Alarcón	aleoli@yahoo.com	$2a$10$uXrgPpRR2OqGP62CepaeOOO.RKvbAqxny0xsTrwXK3K9sdi4NtEsy	\N	\N	2019-09-28 14:22:46.706765+00	f
+79b54768-e226-11e9-9550-0686c08fc21a	Testing	nachintoch@gmail.com	$2a$10$TEPXtL9vKBIq6hAfyF12YeyIGuhnze.ApCBsneUdx2kVGPD/1VZb6	\N	\N	2019-09-28 14:30:49.005789+00	f
+ddcd43ca-e250-11e9-8249-0686c08fc21a	María Soledad Ortiz Ponce	msortiz2@hotmail.com	$2a$10$xCs3e8KOy2sQNv.ZAmFHQeB.UOGUSbwJXy1zzpZuTZdcYUtk2FcDq	\N	\N	2019-09-28 19:34:15.691574+00	f
+71ad4984-d656-11e9-9330-0686c08fc21a	Enriqueta Rosete	erosete@fad.unam.mx	$2a$10$DgzIKeqMTiW0x4P/zPmQfeJHwoGcs2KPvnX2Iqycf0Bgvd1rouEf6	2019-09-29 10:25:13.934103+00	Q8WGHML-e7RLj-SL8CTZf-FBaVY-adcG0O-H1-8fFZGEgka4CJ--U9OK--WU6O16	2019-09-29 10:25:13.934103+00	f
+eade0f76-bee3-11e9-90cd-0686c08fc21a	Fernando Gamboa	fernando.gamboa@icat.unam.mx	$2a$10$T.MFR5TEXTCtN/Ea9X3Lee8xVLD2Rvw0eFzGZGSHCHGdZPZDBKOoi	2019-09-29 19:15:26.715845+00	ZiB-CEKYi-f-N7M-Q-AV-4F2B1Fbj-aYY8L1Mg-K7V-U---C16h--CBLDYCDH926	2019-09-29 19:15:55.018742+00	f
+21177eb0-e3ab-11e9-aaba-0686c08fc21a	Claudia Aguilar	aguilarclaudia27@yahoo.com.mx	$2a$10$CjK4zXcSXc3hBhwLMSwBNuhzQxK.uaSoBPcH7cP16avtU03mKONlO	\N	\N	2019-09-30 12:52:54.560071+00	f
+f81aeb6a-93ae-11e9-b80f-0686c08fc21a	Nachintoch	teshanatsch@gmail.com	$2a$10$f6s06i7vOrlf94Lxx/HCvODefHjokZiMABtfeS7e7J0Aua8N097/a	2019-10-06 02:22:33.474915+00	fdQ9dKPFHJHUKZ1ic7d-PHYLEJ9P-Q-VJa-CAEYY-7C--E-YK6hkNVLc6UH--XLU	2019-09-28 14:41:41.050658+00	f
+44afc708-e859-11e9-92ae-0686c08fc21a	Mara González Guinea	maraglez.guinea@gmail.com	$2a$10$gm4VPzSUEC1rFUt82THpO..4VvDONczGGMqs/UfAs.jgquMrZDDCe	\N	\N	2019-10-06 11:49:31.28166+00	f
+\.
+
+
+--
+-- Name: activity activity_pin_key; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.activity
+    ADD CONSTRAINT activity_pin_key UNIQUE (pin);
+
+
+--
+-- Name: activity activity_pkey; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.activity
+    ADD CONSTRAINT activity_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: activity_user activity_user_pkey; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.activity_user
+    ADD CONSTRAINT activity_user_pkey PRIMARY KEY (pin, username);
+
+
+--
+-- Name: shared_object shared_object_pkey; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.shared_object
+    ADD CONSTRAINT shared_object_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: shared_object shared_object_room_cursor_image_path_key; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.shared_object
+    ADD CONSTRAINT shared_object_room_cursor_image_path_key UNIQUE (room, cursor, image_path);
+
+
+--
+-- Name: shared_object shared_object_room_cursor_text_key; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.shared_object
+    ADD CONSTRAINT shared_object_room_cursor_text_key UNIQUE (room, cursor, text);
+
+
+--
+-- Name: shared_object shared_object_room_public_id_key; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.shared_object
+    ADD CONSTRAINT shared_object_room_public_id_key UNIQUE (room, public_id);
+
+
+--
+-- Name: user user_email_key; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_email_key UNIQUE (email);
+
+
+--
+-- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user user_pw_reset_request_id_key; Type: CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_pw_reset_request_id_key UNIQUE (pw_reset_request_id);
+
+
+--
+-- Name: activity activity_time_updater; Type: TRIGGER; Schema: public; Owner: adef
+--
+
+CREATE TRIGGER activity_time_updater AFTER UPDATE ON public.activity FOR EACH ROW EXECUTE PROCEDURE public.update_activity_times();
+
+
+--
+-- Name: shared_object generate_shared_object_public_id; Type: TRIGGER; Schema: public; Owner: adef
+--
+
+CREATE TRIGGER generate_shared_object_public_id BEFORE INSERT ON public.shared_object FOR EACH ROW EXECUTE PROCEDURE public.issue_shared_object_public_id();
+
+
+--
+-- Name: activity_user seat_assigner; Type: TRIGGER; Schema: public; Owner: adef
+--
+
+CREATE TRIGGER seat_assigner BEFORE INSERT OR UPDATE ON public.activity_user FOR EACH ROW EXECUTE PROCEDURE public.assign_seat();
+
+
+--
+-- Name: shared_object shared_object_edited_time_updater; Type: TRIGGER; Schema: public; Owner: adef
+--
+
+CREATE TRIGGER shared_object_edited_time_updater AFTER UPDATE ON public.shared_object FOR EACH ROW EXECUTE PROCEDURE public.update_shared_object_times();
+
+
+--
+-- Name: user user_update_validator; Type: TRIGGER; Schema: public; Owner: adef
+--
+
+CREATE TRIGGER user_update_validator BEFORE UPDATE ON public."user" FOR EACH ROW EXECUTE PROCEDURE public.validate_password_change();
+
+
+--
+-- Name: activity activity_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.activity
+    ADD CONSTRAINT activity_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public."user"(id);
+
+
+--
+-- Name: activity_user activity_user_pin_fkey; Type: FK CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.activity_user
+    ADD CONSTRAINT activity_user_pin_fkey FOREIGN KEY (pin) REFERENCES public.activity(pin) ON DELETE CASCADE;
+
+
+--
+-- Name: shared_object shared_object_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: adef
+--
+
+ALTER TABLE ONLY public.shared_object
+    ADD CONSTRAINT shared_object_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activity(id);
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: adef
+--
+
+REVOKE ALL ON SCHEMA public FROM rdsadmin;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO adef;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- PostgreSQL database dump complete
+--
+

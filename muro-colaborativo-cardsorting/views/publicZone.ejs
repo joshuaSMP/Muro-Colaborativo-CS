@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html >
+  <head>
+    <title>Zona pública</title>
+    <link rel="stylesheet" href="/stylesheets/common/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/common/sweetalert2.min.css">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/publicZone/publicZone.css">
+
+    <link href="/stylesheets/common/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/common/sweetalert2.min.css">
+    <link href="/stylesheets/common/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/common/sweetalert2.min.css">
+    <link href="/stylesheets/privateZone/alumnoPresencialRemotoForo.css" rel="stylesheet">
+    <style>
+      #createObjectBtn {
+    margin-top: 0px;
+    }
+      #mural{
+        top:0;
+        border-radius: 0%;
+        border-color: #FCFCFC;
+      }
+      body, html {
+        height: 100%;
+        margin: 0;
+        overflow: hidden
+      }
+      #headerPublicZone {
+        background-color:#f67a00
+      }
+
+      .white-color {
+        color:white
+      }
+      .pin {
+        color:#c1ffdb;
+        float:left;
+        font-size: 2vw;
+        margin-top: 2.2vh;
+        height: 0vh;
+      }
+      .options-button {
+        width: 14vw;
+        height: 6vh;
+        max-height: 100vh;
+        max-width: 1300vw;
+        font-size: 3vh;
+        margin-top: 1vh;
+        margin-bottom: 0vh;
+        margin-left: -1vw;
+        background-color: #fc0051;
+        border: 3vw;
+        border-radius: 22vw;
+      }
+      #dropdownMenu{
+        border: 3vw;
+        border-radius: 22vw;
+      }
+
+      #backToControlSessionBtnWrapper {
+        display:none
+      }
+      #fullScreenPublicZone {
+        margin-right:2vw;
+        margin-top:2.5vh;
+        float: right;
+      }
+
+      #cursorsWrapper {
+        height:1px;
+        width:1px;
+        z-index:1;
+        position:absolute;
+      }
+      #dummyWraper {
+        height:100%;
+        width:100%;
+        position:relative;
+        left:0px;
+        top:0px;
+      }
+      #backgroundImage {
+        width:100%;
+        height:100%;
+        background:white
+      }
+      .loader {
+        height:270px;
+        width:270px;
+        margin: 0 auto;
+        border-radius: 25px;
+        border: 2px solid #73AD21;
+        background-image: url('/images/loading_colors.gif');
+        background-size: 100%
+      }
+      .session-chooser {
+        height:100%;
+        overflow-y: scroll
+      }
+      .invisible-dom {
+        display:none
+      }
+      .image-upload-preview {
+        height:270px;
+        width:330px;
+        border-radius: 25px;
+        border: 2px solid #1abc9c;
+      }
+      .hidden-dom {
+        visibility: hidden
+      }
+      #dropdownMenu > li > a > h4 > p {
+        font-size: 1.4vw;
+      }
+      #dropdownMenu > li > a {
+        text-align: center;
+        background : #fc0051;
+      }
+      #dropdownMenu > li {
+        cursor: pointer;
+        width: 13vw;
+        height: 6vh;
+
+        display: inline-block;
+        background-color: #fc0051;
+      }
+
+      .dropdown-menu{
+        height: 0vh;
+      }
+
+      #nameSession{
+        margin-top: 2.5vh;
+        margin-left: 3vw;
+        font-size: 3.5vh;
+        height: 0vh;
+      }
+      #statusAppMessage {
+        margin-top: 6vh;
+        margin-left: 12.5vw;
+        font-size: 2vh;
+        height: 0vh;
+      }
+      #statusAppMessageMenu{
+        position: center;
+      }
+
+      .parent {
+        position: relative;
+        top: 0;
+        left: 0 px;
+      }
+      .image1 {
+        max-height: 200vh;
+        max-width: 15000vw;
+        overflow: auto;
+        position: relative;
+        top: 0vh;
+        right: 10vw;
+      }
+      .image2 {
+        position: absolute;
+        top: 1.7vh;
+      }
+
+
+
+    </style>
+  </head>
+  <body >
+    <!-- Start Nav bar -->
+    <div id="headerPublicZone" class="container-fluid">
+      <div class="row">
+        <div class="col-xs-1 white-color">
+          <div class="parent">
+            <img class="image1" src="/images/barra_azul.svg", style="width: 80vw; height: 8vh;" />
+            <img class="image2" src='/images/logotipo_horizontal.svg', style="height: 35px; margin-top: 3px; left: 3px;" />
+          </div>
+        </div>
+        <div class="col-xs-4">
+          <div class="pull-left" style="word-wrap:break-word">
+            <h4 data-toggle="modal" data-target="#sessionNameModal" id="nameSession" class="white-color" ></h4>
+          </div>
+          <div>
+            <h5 id="statusAppMessage" class="white-color" > </h5>
+          </div>
+        </div>
+        <div class="col-xs-4">
+          <h4 class="pin">PIN: <span id="ipAdress" class="white-color"></span> </h4>
+        </div>
+        <div class="col-xs-2">
+          <div class="dropdown" id="optionsBtn">
+            <button class="btn btn-block btn-danger dropdown-toggle options-button" type="button" data-toggle="dropdown">
+                 Opciones<span class="caret"></span>
+            </button>
+            <ul id="dropdownMenu" style="margin-left:-0.5vw; margin-top:0vh; padding:0vh; width: 13vw; height: 0vh;"  class="dropdown-menu" role="menu" >
+              <li class="optionalSave optionOnlyForLoggedAdmin"><a onclick="saveOnTheFlySession()" href="#FCFCFC">Guardar</a></li>
+              <!--<li class="divider" class="optionOnlyForLoggedAdmin"></li>-->
+              <li><a href="#" data-toggle="modal" data-target="#changeBackgroundImageModal"><H4><p style="color:#FCFCFC";> Cambiar fondo</p></H4></a></li>
+              <li><a onclick=" emptyPublicZone()" href="#"><H4><p style="color:#FCFCFC";> Limpiar</p></H4></a></li>
+              <li><a onclick=" logOutAllUsers()" href="#"><H4><p style="color:#FCFCFC";>Quitar usuarios</p></H4></a></li>
+              <li><H4 style="text-align: center; font-size: 1.4vw;" ><a onclick="toggleStatus()" style="text-decoration:none;color:white;" id="statusAppMessageMenu" class="white-color"  href="#"></H4></a></li>
+              <li><a id="closeMural"><H4><p style="color:#FCFCFC";> Cerrar Mural</p></H4></a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-xs-1">
+          <img id="fullScreenPublicZone" src="/images/fullscreen_white_btn.png" style="width: 2.2vw; height: 4vh;" ></img>
+        </div>
+      </div>
+    </div>
+    <img class="fondotema" src="/images/Fondo2.jpg">
+    <div id="mural">
+      <div class="container-fluid" id="DiscuionName" style="color: #1D1D1B;">
+        <p> 
+          <div id="tema"></div>
+          <div id="pregunta" style="text-align: center;">Hola profesor, participa y administra a tus alumnos.</div>
+        </p>
+      </div>
+      <div id="cursorsWrapper">
+        <div id="dummyWraper">
+          <div id="createObjectBtn" class="createObject" type="button">
+            <div class="box-8"></div>
+            <div class="box-9">
+              <span id="plusIcon" class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+            </div>
+            <div class="box-10"></div>
+          </div>
+          <div id="selectMosaicSpace" class="btn-group-lg center-block">
+            <div class="col-xs-1">
+              <button id="returnButton" type="button"
+                class="btn btn-circle btn-sm backToTrackPadBtn non-floating-back-to-button-arrow">
+                <div id="cancelWrapper">
+                  <span id="cancelIcon" aria-hidden="true">&times;</span>
+                </div>
+              </button>
+            </div>
+            <div id="contentOptionsWrapper" class="col-xs-10">
+              <svg version="1.1" id="addNewObject" class="col-xs-2" xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 68.53 65.47"
+                style="enable-background:new 0 0 68.53 65.47;" xml:space="preserve" cursor="pointer">
+                <style type="text/css">
+                  .st0 {
+                    fill: #6DC8DD;
+                  }
+  
+                  .st1 {
+                    fill: #ffffff;
+                  }
+                </style>
+                <g>
+                  <g>
+                    <path class="st0" d="M59.55,64.5H9.31c-4.63,0-8.38-3.75-8.38-8.38V9.88c0-4.63,3.75-8.38,8.38-8.38h50.24
+                      c4.63,0,8.38,3.75,8.38,8.38v46.24C67.93,60.75,64.18,64.5,59.55,64.5z" />
+                  </g>
+                  <g>
+                    <path class="st1" d="M50.02,15.85l0.41,8.67H49.4c-0.2-1.53-0.47-2.62-0.82-3.27c-0.56-1.05-1.31-1.83-2.25-2.33
+                      c-0.94-0.5-2.17-0.75-3.7-0.75h-5.21v28.25c0,2.28,0.24,3.7,0.73,4.25c0.69,0.76,1.75,1.15,3.19,1.15h1.28v1.01H26.96v-1.01h1.31
+                      c1.56,0,2.67-0.47,3.32-1.42c0.4-0.58,0.61-1.91,0.61-3.99V18.17h-4.45c-1.73,0-2.96,0.13-3.68,0.39
+                      c-0.95,0.35-1.75,1.01-2.42,1.99c-0.67,0.98-1.07,2.31-1.2,3.98H19.4l0.44-8.67H50.02z" />
+                  </g>
+                </g>
+              </svg>
+  
+              <svg version="1.1" id="chooseFile" class="col-xs-2" xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 68 64"
+                style="enable-background:new 0 0 68 64;" xml:space="preserve" cursor="pointer">
+                <style type="text/css">
+                  .st0 {
+                    fill: #6DC8DD;
+                  }
+  
+                  .st1 {
+                    fill: #ffffff;
+                  }
+                </style>
+                <g>
+                  <g>
+                    <g>
+                      <path class="st0" d="M59.15,63.32H8.91c-4.63,0-8.38-3.75-8.38-8.38V8.7c0-4.63,3.75-8.38,8.38-8.38h50.24
+                        c4.63,0,8.38,3.75,8.38,8.38v46.24C67.53,59.57,63.78,63.32,59.15,63.32z" />
+                    </g>
+                  </g>
+                  <g>
+                    <g>
+                      <path class="st1" d="M24.86,25.7c-1.05-1.23-2.48-1.05-3.36,0.31c-0.12,0.18-0.22,0.37-0.32,0.57
+                        c-4.1,8.1-8.19,16.21-12.28,24.31c-0.17,0.34-0.31,0.72-0.4,1.09C8.27,53,8.75,53.87,9.76,54.16c0.51,0.14,1.07,0.18,1.6,0.18
+                        c7.44,0.01,14.89,0.01,22.33,0.01c7.49,0,14.97,0,22.46,0c0.91,0,1.91,0.09,2.41-0.9c0.49-0.97-0.16-1.75-0.67-2.49
+                        c-2.46-3.52-4.92-7.04-7.39-10.55c-0.15-0.21-0.3-0.42-0.47-0.62c-1.18-1.4-2.94-1.55-4.3-0.3c-1.08,1-2.08,2.09-3.14,3.12
+                        c-1.17,1.14-2.57,1.44-3.78,0.71c-0.54-0.33-1.01-0.82-1.4-1.32c-3.04-3.93-6.04-7.89-9.06-11.83
+                        C27.19,28.66,26.08,27.13,24.86,25.7z" />
+                    </g>
+                    <g>
+                      <path class="st1" d="M42.94,24.6c4.02,0.01,7.29-3.24,7.31-7.25c0.01-4.01-3.25-7.3-7.26-7.32c-3.99-0.02-7.3,3.26-7.32,7.26
+                        C35.66,21.29,38.93,24.59,42.94,24.6z" />
+                    </g>
+                  </g>
+                </g>
+              </svg>
+  
+              <svg version="1.1" id="addLink" class="col-xs-2" xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 68 64"
+                style="enable-background:new 0 0 68 64;" xml:space="preserve" cursor="pointer">
+                <style type="text/css">
+                  .st0 {
+                    fill: #6DC8DD;
+                  }
+  
+                  .st1 {
+                    fill: #ffffff;
+                  }
+                </style>
+                <g>
+                  <g>
+                    <path class="st0" d="M58.91,63.35H8.66c-4.63,0-8.38-3.75-8.38-8.38V8.73c0-4.63,3.75-8.38,8.38-8.38h50.24
+                      c4.63,0,8.38,3.75,8.38,8.38v46.24C67.28,59.6,63.53,63.35,58.91,63.35z" />
+                  </g>
+                  <g id="UnJd2o.tif">
+                    <g>
+                      <path class="st1" d="M55.66,21.89c-0.19,0.77-0.33,1.55-0.57,2.3c-0.34,1.07-0.98,1.99-1.72,2.83c-2.9,3.28-5.81,6.56-8.72,9.84
+                        c-1.98,2.23-4.47,3.25-7.45,2.99c-1.13-0.1-2.21-0.45-3.19-1.02c-1.46-0.85-1.96-2.67-1.19-4.24c0.7-1.43,2.55-2.13,4.05-1.56
+                        c0.43,0.16,0.89,0.29,1.34,0.32c0.61,0.04,1.11-0.26,1.51-0.71c2.95-3.33,5.91-6.65,8.85-9.99c0.89-1.01,0.8-2.21-0.19-3.1
+                        c-0.4-0.36-0.8-0.71-1.2-1.07c-1-0.88-2.26-0.81-3.14,0.18c-1.31,1.46-2.6,2.94-3.91,4.41c-0.89,0.99-1.99,1.41-3.26,0.96
+                        c-1.73-0.61-3.1-2.48-2.12-4.49c0.11-0.23,0.26-0.46,0.43-0.65c1.44-1.63,2.83-3.29,4.34-4.85c3.27-3.39,8.33-3.56,11.89-0.46
+                        c1.01,0.88,2.07,1.72,2.82,2.87c0.75,1.15,1.22,2.39,1.37,3.75c0.01,0.08,0.05,0.15,0.07,0.23C55.66,20.9,55.66,21.4,55.66,21.89
+                        z" />
+                      <path class="st1"
+                        d="M22.94,53.54c-0.75-0.16-1.51-0.28-2.24-0.49c-0.96-0.27-1.82-0.76-2.59-1.4c-1.07-0.9-2.2-1.75-3.02-2.91
+                        c-2.29-3.24-2.24-7.39,0.34-10.42c3.1-3.65,6.29-7.23,9.55-10.75c2.52-2.72,6.74-3.3,10.01-1.55c1.32,0.7,1.98,2.21,1.6,3.63
+                        c-0.38,1.4-1.76,2.45-3.23,2.39c-0.48-0.02-0.97-0.15-1.43-0.31c-1.03-0.36-1.85-0.2-2.57,0.61c-2.94,3.31-5.87,6.61-8.8,9.93
+                        c-0.89,1-0.81,2.19,0.18,3.1c0.4,0.37,0.82,0.73,1.23,1.09c0.99,0.86,2.23,0.78,3.11-0.19c1.3-1.45,2.59-2.92,3.88-4.38
+                        c1-1.12,2.43-1.46,3.73-0.79c1.78,0.93,2.5,2.67,1.67,4.32c-0.1,0.21-0.23,0.41-0.39,0.58c-1.46,1.64-2.89,3.31-4.39,4.91
+                        c-1.47,1.57-3.32,2.39-5.46,2.57c-0.09,0.01-0.19,0.04-0.28,0.06C23.54,53.54,23.24,53.54,22.94,53.54z" />
+                    </g>
+                  </g>
+                </g>
+              </svg>
+            </div>
+          </div>
+  
+          <div id="SubirFoto">
+            <div id="cargarfoto">
+              <img src="/images/subir.png" width="30px" height="30px" style="margin: 6px; filter: invert(100%);" >
+              <span class="textosubir">Subir Foto</span>
+            </div>
+            <input type="file" id="fileInput" style="display: none;" accept="image/*">
+            <div id="tomarfoto">
+              <img src="/images/foto.png" width="30px" style="margin: 7px; filter: invert(100%);"> <span class="textoforo">Tomar Foto</span>
+            </div>
+            <center>
+              <div id="imagencargada">Sin imagen</div>
+            </center>
+            <button id="botonimagenCancelar" type="button" class="btn btn-light backToTrackPadBtn">×</button>
+            <button id="botonimagenAceptar" type="button" class="btn btn-light"
+              onclick="enviarImagenAlServidor()">Aceptar</button>
+          </div>
+          <form id="uploadForm" action="/api/photo" method="post" enctype="multipart/form-data" style="display: none;">
+            <input type="file" id="fileInput" name="file">
+          </form>
+          <div id="workspaceMode" class="content-wrapper" role="dialog">
+            <div id="text-wrapper" action="/crearcontribucion" method="post" target="targetForm">
+              <textarea id="texto" maxlength="250" placeholder="¡Escribe aquí!" onkeyup="count(this)"></textarea>
+              <span id="count" style="color: rgb(255, 255, 255);">250</span>
+            </div>
+            <div id="OkCancelButtons">
+              <button id="cancelButton" type="button" class="btn btn-light backToTrackPadBtn">x</button>
+              <button id="botonAceptarTexto" type="button" class="btn btn-light" data-dismiss="modal">Aceptar</button>
+            </div>
+            <!-- end object-cretion Area -->
+          </div>
+          <!-- End selectMosaicSpace -->
+          <div id="linkMode" class="content-wrapper">
+            <div id="link-text-wrapper">
+              <p class="titulolink">Titulo:</p>
+              <textarea id="nombreLinkArea" placeholder="Escriba nombre para el url"></textarea>
+              <p class="titulourl">URL:</p>
+              <textarea id="linkArea" placeholder="Escriba url"></textarea>
+            </div>
+            <div id="botonesLink">
+              <button id="cancelarLink" type="button" class="btn btn-light backToTrackPadBtn">x</button>
+              <button id="okLink" type="button" class="btn btn-light">Aceptar</button>
+            </div>
+          </div>
+  
+        </div>
+      </div>
+  
+      <ul class="right-click-remote-menu">
+        <li data-action="editar">Editar</li>
+        <li data-action="copiar">Copiar</li>
+        <li data-action="eliminar">Eliminar</li>
+      </ul>
+  
+      
+      <div onclick="toggleDiscussion('Discusion')" class="toggle-icon">▼</div>
+      <div id="Discusion">
+        <div id="ZoneComent">
+          <div id="contributions_list">
+            <!-- Example contribution -->
+            <div id="exampleContribution" class="listElement">
+              <p>Esta es una contribución de ejemplo</p>
+              <button onclick="deleteContribucion('exampleContribution')">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button id="scrollToTopBtn" onclick="scrollToTop()">↑</button>
+  
+    <!-- JavaScript -->
+    <script src="/javascripts/common/jquery211min.js"></script>
+    <script src="/javascripts/common/jquery-ui.js"></script>
+    <script src="/javascripts/common/jqueryTouchPunch.js"></script>
+    <script src="/javascripts/common/bootstrap.min.js"></script>
+    <script src="/javascripts/common/socketIoClient.js"></script>
+    <script src="/javascripts/common/jquery.fullscreen-min.js"></script>
+    <script src="/javascripts/common/sweetalert2.all.min.js"></script>
+    <script src="/javascripts/publicZone/publicJqueryFunctions.js"></script>
+  </body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Alumno Modo Remoto</title>
+    <!-- Stylesheets -->
+    <link href="/stylesheets/common/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/stylesheets/common/sweetalert2.min.css">
+    <link href="/stylesheets/privateZone/alumnoPresencialRemoto.css" rel="stylesheet">
+    <script>
+      if (localStorage.getItem("userId") == null) {
+      	window.location = "/auth/user/";
+      }
+    </script>
+  </head>
+  <body>
+    <div class="container upperBarContainer">
+        <div class="col-xs-10 upperBar">
+          <div class="col-xs-1" id="logo">
+            <svg version="1.1" id="logoMuroColaborativo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                viewBox="0 0 480.8 129" style="enable-background:new 0 0 480.8 129;" xml:space="preserve">
+              <style type="text/css">
+                .st0{fill:#FFFFFF;}
+                .st1{fill:#B4D1E6;}
+                .st2{fill:#77ADD9;}
+                .st3{fill:#5D86C0;}
+                .st4{fill:#43628A;}
+                .st5{fill:#33496C;}
+                .st6{fill:#283A53;}
+                .st7{fill:none;stroke:#1D1D1B;stroke-width:0.25;stroke-miterlimit:10;}
+                .st8{fill:none;}
+                .st9{enable-background:new;}
+                .st10{fill:#FCFCFC;}
+                .st11{fill:#16679C;}
+              </style>
+              <circle class="st0" cx="64.5" cy="64.7" r="64.3"/>
+              <g>
+                <g>
+                  <path class="st1" d="M64.2,2.9c0,0,23.7,3.1,18.2,29.6l18.2,31.6c0,0,25.6-4.7,15.2-32.8C115.9,31.2,99.9,3.3,64.2,2.9"/>
+                </g>
+                <g>
+                  <path class="st2" d="M82.5,95.7c0,0,17.3,19.8,34.8-0.9c0,0,19.2-29.2-1.3-63.5c0,0,10.9,25.9-15.2,32.8L82.5,95.7z"/>
+                </g>
+                <g>
+                  <path class="st3" d="M64.2,125.3c0,0,33.6,2.1,53-30.6c0,0-15.6,19.8-34.8,0.9H46C46,95.7,34.8,118.5,64.2,125.3"/>
+                </g>
+                <g>
+                  <path class="st4" d="M64.2,125.3c0,0-27.1-4.8-18.2-29.6L27.8,64.1c0,0-24.8,8.8-13.1,36C14.7,100.1,31.8,125.8,64.2,125.3"/>
+                </g>
+                <g>
+                  <path class="st5" d="M13.5,29.9c0,0,14.1-16.7,32.5,2.6L27.8,64.1c0,0-24.2,8.2-13.1,36C14.7,100.1-10.8,68.5,13.5,29.9z"/>
+                </g>
+                <g>
+                  <path class="st6" d="M64.2,2.9c0,0-29.5-2.5-50.8,27c0,0,14.3-16.4,32.5,2.6h36.5C82.5,32.5,89.9,7.7,64.2,2.9"/>
+                </g>
+                <g>
+                  <path class="st7" d="M74.2,45.6"/>
+                </g>
+              </g>
+              <rect x="141.2" y="32.6" class="st8" width="278.8" height="76.9"/>
+              <g class="st9">
+                <path class="st10" d="M148.7,59.9h-5.3V32.6h7.1l6.9,19.9l6.9-19.9h7.1v27.3h-5.3l0.2-19.8l-6.9,19.8h-4l-6.9-19.8L148.7,59.9z"/>
+                <path class="st10" d="M176,32.6h5.3v15.8c0,2.5,0.3,4.2,0.8,5.1c0.5,1,1.4,1.4,2.7,1.4s2.2-0.5,2.7-1.4c0.5-1,0.8-2.7,0.8-5.1V32.6
+                  h5.4V50c0,1.9-0.1,3.4-0.3,4.3c-0.2,1-0.6,1.8-1.1,2.5c-0.9,1.3-1.9,2.2-3.1,2.8c-1.2,0.6-2.6,0.9-4.3,0.9s-3.1-0.3-4.3-0.9
+                  c-1.2-0.6-2.2-1.5-3.1-2.8c-0.5-0.7-0.9-1.5-1.1-2.4c-0.2-0.9-0.3-2.4-0.3-4.4V32.6z"/>
+                <path class="st10" d="M203.5,59.9h-5.3V32.6h6.5c2.1,0,3.6,0.1,4.6,0.2c1,0.1,1.9,0.4,2.6,0.7c1.6,0.7,2.7,1.7,3.5,3
+                  c0.8,1.3,1.2,2.8,1.2,4.6c0,2.1-0.6,3.9-1.7,5.4c-1.2,1.5-2.7,2.4-4.7,2.8l6.8,10.6h-6.4l-7.1-12.7V59.9z M203.5,45.9h1.2
+                  c2.2,0,3.8-0.4,4.9-1.2c1.1-0.8,1.7-1.9,1.7-3.4c0-1.5-0.5-2.5-1.4-3.2c-0.9-0.7-2.4-1-4.4-1h-2V45.9z"/>
+                <path class="st10" d="M218.8,46.2c0-1.5,0.2-2.9,0.6-4.3c0.4-1.3,1-2.6,1.8-3.7c1.4-2,3-3.5,5.1-4.6c2-1.1,4.3-1.6,6.7-1.6
+                  c1.8,0,3.6,0.4,5.2,1.1c1.7,0.7,3.2,1.7,4.5,3c1.4,1.4,2.4,2.9,3.1,4.6c0.7,1.7,1.1,3.5,1.1,5.4c0,2-0.3,3.8-1,5.5
+                  c-0.7,1.7-1.7,3.2-3,4.6c-1.3,1.4-2.8,2.5-4.6,3.2c-1.7,0.7-3.6,1.1-5.5,1.1c-2,0-3.9-0.4-5.6-1.1c-1.7-0.7-3.2-1.8-4.6-3.2
+                  c-1.3-1.4-2.2-2.9-2.9-4.6C219.2,49.9,218.8,48.1,218.8,46.2z M224.4,46c0,1.2,0.2,2.3,0.6,3.3c0.4,1,1,1.9,1.7,2.8
+                  c0.8,0.9,1.8,1.6,2.9,2.1s2.2,0.7,3.3,0.7c2.4,0,4.4-0.9,6-2.6c1.6-1.7,2.4-3.8,2.4-6.4c0-2.3-0.8-4.3-2.4-6
+                  c-1.6-1.6-3.6-2.5-5.9-2.5c-2.4,0-4.4,0.8-6.1,2.5C225.3,41.7,224.4,43.7,224.4,46z"/>
+              </g>
+              <g class="st9">
+                <path class="st10" d="M169.1,86.9h-6.5c-0.8-1.1-1.7-1.8-2.8-2.4c-1.1-0.5-2.3-0.8-3.7-0.8c-1.1,0-2.1,0.2-3.1,0.6
+                  c-1,0.4-1.9,1-2.6,1.8c-0.8,0.8-1.4,1.8-1.9,2.9c-0.4,1.1-0.7,2.2-0.7,3.3c0,2.5,0.8,4.6,2.4,6.3c1.6,1.7,3.6,2.5,5.9,2.5
+                  c1.3,0,2.5-0.2,3.6-0.8c1.1-0.5,1.9-1.2,2.6-2.2h6.6c-1.3,2.8-3,4.9-5.1,6.3s-4.7,2.1-7.6,2.1c-2.1,0-3.9-0.4-5.7-1.2
+                  c-1.7-0.8-3.3-2-4.7-3.5c-1.2-1.3-2-2.8-2.6-4.4c-0.6-1.6-0.9-3.4-0.9-5.3c0-1.9,0.4-3.7,1.1-5.4c0.7-1.7,1.8-3.3,3.2-4.7
+                  c1.3-1.3,2.8-2.3,4.4-3c1.6-0.7,3.4-1,5.2-1c3,0,5.5,0.7,7.7,2.1C166,81.8,167.8,83.9,169.1,86.9z"/>
+                <path class="st10" d="M171.1,92.4c0-1.5,0.2-2.9,0.6-4.3c0.4-1.3,1-2.6,1.8-3.7c1.4-2,3-3.5,5.1-4.6c2-1.1,4.3-1.6,6.7-1.6
+                  c1.8,0,3.6,0.4,5.2,1.1c1.7,0.7,3.2,1.7,4.5,3c1.4,1.4,2.4,2.9,3.1,4.6s1.1,3.5,1.1,5.4c0,2-0.3,3.8-1,5.5c-0.7,1.7-1.7,3.2-3,4.6
+                  c-1.3,1.4-2.8,2.5-4.6,3.2c-1.7,0.7-3.6,1.1-5.5,1.1c-2,0-3.9-0.4-5.6-1.1s-3.2-1.8-4.6-3.2c-1.3-1.4-2.2-2.9-2.9-4.6
+                  C171.5,96.1,171.1,94.3,171.1,92.4z M176.8,92.2c0,1.2,0.2,2.3,0.6,3.3c0.4,1,1,1.9,1.7,2.8c0.8,0.9,1.8,1.6,2.9,2.1
+                  s2.2,0.7,3.3,0.7c2.4,0,4.4-0.9,6-2.6s2.4-3.8,2.4-6.4c0-2.3-0.8-4.3-2.4-6c-1.6-1.6-3.6-2.5-5.9-2.5c-2.4,0-4.4,0.8-6.1,2.5
+                  S176.8,89.8,176.8,92.2z"/>
+                <path class="st10" d="M216.5,106.1h-13.9V78.7h5.3v22.5h8.6V106.1z"/>
+                <path class="st10" d="M224.9,100.3l-2.1,5.7h-5.5l10.6-27.3h4.6l10.5,27.3h-5.7l-2.2-5.7H224.9z M233.3,95.3l-3.2-8.8l-3.3,8.8
+                  H233.3z"/>
+                <path class="st10" d="M244.2,106.1V78.7h5.9c1.2,0,2.1,0,2.8,0.1c0.7,0.1,1.3,0.3,1.9,0.5c1.5,0.6,2.7,1.5,3.5,2.6s1.2,2.5,1.2,4
+                  c0,1.3-0.2,2.4-0.7,3.3c-0.5,0.9-1.2,1.6-2.1,2c1.4,0.4,2.4,1.2,3.2,2.3c0.8,1.1,1.2,2.5,1.2,4.1c0,1.3-0.2,2.5-0.7,3.6
+                  c-0.5,1.1-1.1,2-2,2.8c-0.8,0.7-1.8,1.2-2.8,1.5c-1,0.3-2.5,0.5-4.4,0.5H244.2z M249.3,89.7h0.6c1.5,0,2.6-0.3,3.3-0.8
+                  c0.7-0.5,1.1-1.3,1.1-2.4c0-1-0.3-1.8-1-2.3c-0.7-0.5-1.8-0.7-3.2-0.7h-0.8V89.7z M249.3,101.3h1.6c1.6,0,2.8-0.3,3.6-0.8
+                  c0.8-0.5,1.1-1.4,1.1-2.5c0-1.2-0.4-2.2-1.2-2.8c-0.8-0.6-2-1-3.5-1h-1.6V101.3z"/>
+                <path class="st10" d="M262.6,92.4c0-1.5,0.2-2.9,0.6-4.3s1-2.6,1.8-3.7c1.4-2,3-3.5,5.1-4.6c2-1.1,4.3-1.6,6.7-1.6
+                  c1.8,0,3.6,0.4,5.2,1.1c1.7,0.7,3.2,1.7,4.5,3c1.4,1.4,2.4,2.9,3.1,4.6c0.7,1.7,1.1,3.5,1.1,5.4c0,2-0.3,3.8-1,5.5
+                  c-0.7,1.7-1.7,3.2-3,4.6c-1.3,1.4-2.8,2.5-4.6,3.2c-1.7,0.7-3.6,1.1-5.5,1.1c-2,0-3.9-0.4-5.6-1.1c-1.7-0.7-3.2-1.8-4.6-3.2
+                  c-1.3-1.4-2.2-2.9-2.9-4.6C263,96.1,262.6,94.3,262.6,92.4z M268.3,92.2c0,1.2,0.2,2.3,0.6,3.3s1,1.9,1.7,2.8
+                  c0.8,0.9,1.8,1.6,2.9,2.1s2.2,0.7,3.3,0.7c2.4,0,4.4-0.9,6-2.6c1.6-1.7,2.4-3.8,2.4-6.4c0-2.3-0.8-4.3-2.4-6
+                  c-1.6-1.6-3.6-2.5-5.9-2.5c-2.4,0-4.4,0.8-6.1,2.5C269.1,87.8,268.3,89.8,268.3,92.2z"/>
+                <path class="st10" d="M299.5,106.1h-5.3V78.7h6.5c2.1,0,3.6,0.1,4.6,0.2c1,0.1,1.9,0.4,2.6,0.7c1.6,0.7,2.7,1.7,3.5,3
+                  c0.8,1.3,1.2,2.8,1.2,4.6c0,2.1-0.6,3.9-1.7,5.4s-2.7,2.4-4.7,2.8l6.8,10.6h-6.4l-7.1-12.7V106.1z M299.5,92h1.2
+                  c2.2,0,3.8-0.4,4.9-1.2c1.1-0.8,1.7-1.9,1.7-3.4c0-1.5-0.5-2.5-1.4-3.2c-0.9-0.7-2.4-1-4.4-1h-2V92z"/>
+                <path class="st10" d="M319.9,100.3l-2.1,5.7h-5.5l10.6-27.3h4.6l10.5,27.3h-5.7l-2.2-5.7H319.9z M328.3,95.3l-3.2-8.8l-3.3,8.8
+                  H328.3z"/>
+                <path class="st10" d="M351.1,78.7v4.8H346v22.5h-5.3V83.5h-5.1v-4.8H351.1z"/>
+                <path class="st10" d="M353.7,106.1V78.7h5.3v27.3H353.7z"/>
+                <path class="st10" d="M374.1,106.1h-3.8l-9.8-27.3h5.7l6,18.2l6-18.2h5.7L374.1,106.1z"/>
+                <path class="st10" d="M383.5,92.4c0-1.5,0.2-2.9,0.6-4.3c0.4-1.3,1-2.6,1.8-3.7c1.4-2,3-3.5,5.1-4.6c2-1.1,4.3-1.6,6.7-1.6
+                  c1.8,0,3.6,0.4,5.2,1.1c1.7,0.7,3.2,1.7,4.5,3c1.4,1.4,2.4,2.9,3.1,4.6c0.7,1.7,1.1,3.5,1.1,5.4c0,2-0.3,3.8-1,5.5
+                  c-0.7,1.7-1.7,3.2-3,4.6c-1.3,1.4-2.8,2.5-4.6,3.2c-1.7,0.7-3.6,1.1-5.5,1.1c-2,0-3.9-0.4-5.6-1.1c-1.7-0.7-3.2-1.8-4.6-3.2
+                  c-1.3-1.4-2.2-2.9-2.9-4.6C383.9,96.1,383.5,94.3,383.5,92.4z M389.1,92.2c0,1.2,0.2,2.3,0.6,3.3c0.4,1,1,1.9,1.7,2.8
+                  c0.8,0.9,1.8,1.6,2.9,2.1s2.2,0.7,3.3,0.7c2.4,0,4.4-0.9,6-2.6c1.6-1.7,2.4-3.8,2.4-6.4c0-2.3-0.8-4.3-2.4-6
+                  c-1.6-1.6-3.6-2.5-5.9-2.5c-2.4,0-4.4,0.8-6.1,2.5C390,87.8,389.1,89.8,389.1,92.2z"/>
+              </g>
+              <g>
+                <polygon class="st11" points="79.5,37.2 48.3,37.2 32.7,64.2 48.3,91.3 79.5,91.3 95.1,64.2 	"/>
+              </g>
+            </svg>
+          </div>
+          <div class="col-xs-3" id="ForoName"></div>
+          <div class="col-xs-2" id="pin">PIN: <span id='pinNumber'></span></div>
+          <div class="col-xs-3" id='userName'></div>
+        </div>
+        <div class="col-xs-2">
+            <div class="col-xs-1"></div>
+            <div class="col-xs-1">
+              <button id="logOutBtn" onclick="logOut()" type="button" class="col-xs-1 btn btn-lg">
+                Salir
+              </button>
+              <button id="maximizeBtn" class="btn btn-lg" type="button">
+                <span id="maxIcon" class="glyphicon glyphicon-resize-full"></span>
+              </button>
+            </div>
+        </div>
+    </div>
+
+    <ul class="right-click-remote-menu">
+      <li data-action="editar">Editar</li>
+      <li data-action="copiar">Copiar</li>
+      <li data-action="eliminar">Eliminar</li>
+    </ul>
+
+    <div id="mural">
+      <div id="cursorsWrapper" >
+        <div id="dummyWraper" >
+          <div id="createObjectBtn" class="createObject" type="button">
+            <div class="box-8"></div>
+            <div class="box-9"><span id="plusIcon" class="glyphicon glyphicon-plus" aria-hidden="true"></span></div>
+            <div class="box-10"></div>
+          </div>
+
+          <!-- Start selectMosaicSpace -->
+          <div id="selectMosaicSpace" class="btn-group-lg center-block" >
+            <div class="col-xs-1">
+              <button id="returnButton" type="button" class="btn btn-circle btn-sm backToTrackPadBtn non-floating-back-to-button-arrow">
+                <div id="cancelWrapper">
+                  <span id="cancelIcon" aria-hidden="true">&times;</span>
+                </div>
+              </button>
+            </div>
+            <div id="contentOptionsWrapper" class="col-xs-10">
+              <svg version="1.1" id="addNewObject" class="col-xs-2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                viewBox="0 0 68.53 65.47" style="enable-background:new 0 0 68.53 65.47;" xml:space="preserve">
+              <style type="text/css">
+                .st0{fill:#16679C;}
+                .st1{fill:#FFFFFF;}
+              </style>
+              <g>
+                <g>
+                  <path class="st0" d="M59.55,64.5H9.31c-4.63,0-8.38-3.75-8.38-8.38V9.88c0-4.63,3.75-8.38,8.38-8.38h50.24
+                    c4.63,0,8.38,3.75,8.38,8.38v46.24C67.93,60.75,64.18,64.5,59.55,64.5z"/>
+                </g>
+                <g>
+                  <path class="st1" d="M50.02,15.85l0.41,8.67H49.4c-0.2-1.53-0.47-2.62-0.82-3.27c-0.56-1.05-1.31-1.83-2.25-2.33
+                    c-0.94-0.5-2.17-0.75-3.7-0.75h-5.21v28.25c0,2.28,0.24,3.7,0.73,4.25c0.69,0.76,1.75,1.15,3.19,1.15h1.28v1.01H26.96v-1.01h1.31
+                    c1.56,0,2.67-0.47,3.32-1.42c0.4-0.58,0.61-1.91,0.61-3.99V18.17h-4.45c-1.73,0-2.96,0.13-3.68,0.39
+                    c-0.95,0.35-1.75,1.01-2.42,1.99c-0.67,0.98-1.07,2.31-1.2,3.98H19.4l0.44-8.67H50.02z"/>
+                </g>
+              </g>
+              </svg>
+
+              <svg version="1.1" id="chooseFile" class="col-xs-2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                viewBox="0 0 68 64" style="enable-background:new 0 0 68 64;" xml:space="preserve">
+              <style type="text/css">
+                .st0{fill:#16679C;}
+                .st1{fill:#FFFFFF;}
+              </style>
+              <g>
+                <g>
+                  <g>
+                    <path class="st0" d="M59.15,63.32H8.91c-4.63,0-8.38-3.75-8.38-8.38V8.7c0-4.63,3.75-8.38,8.38-8.38h50.24
+                      c4.63,0,8.38,3.75,8.38,8.38v46.24C67.53,59.57,63.78,63.32,59.15,63.32z"/>
+                  </g>
+                </g>
+                <g>
+                  <g>
+                    <path class="st1" d="M24.86,25.7c-1.05-1.23-2.48-1.05-3.36,0.31c-0.12,0.18-0.22,0.37-0.32,0.57
+                      c-4.1,8.1-8.19,16.21-12.28,24.31c-0.17,0.34-0.31,0.72-0.4,1.09C8.27,53,8.75,53.87,9.76,54.16c0.51,0.14,1.07,0.18,1.6,0.18
+                      c7.44,0.01,14.89,0.01,22.33,0.01c7.49,0,14.97,0,22.46,0c0.91,0,1.91,0.09,2.41-0.9c0.49-0.97-0.16-1.75-0.67-2.49
+                      c-2.46-3.52-4.92-7.04-7.39-10.55c-0.15-0.21-0.3-0.42-0.47-0.62c-1.18-1.4-2.94-1.55-4.3-0.3c-1.08,1-2.08,2.09-3.14,3.12
+                      c-1.17,1.14-2.57,1.44-3.78,0.71c-0.54-0.33-1.01-0.82-1.4-1.32c-3.04-3.93-6.04-7.89-9.06-11.83
+                      C27.19,28.66,26.08,27.13,24.86,25.7z"/>
+                  </g>
+                  <g>
+                    <path class="st1" d="M42.94,24.6c4.02,0.01,7.29-3.24,7.31-7.25c0.01-4.01-3.25-7.3-7.26-7.32c-3.99-0.02-7.3,3.26-7.32,7.26
+                      C35.66,21.29,38.93,24.59,42.94,24.6z"/>
+                  </g>
+                </g>
+              </g>
+              </svg>
+              <svg version="1.1" id="addLink" class="col-xs-2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                viewBox="0 0 68 64" style="enable-background:new 0 0 68 64;" xml:space="preserve">
+              <style type="text/css">
+                .st0{fill:#16679C;}
+                .st1{fill:#FFFFFF;}
+              </style>
+              <g>
+                <g>
+                  <path class="st0" d="M58.91,63.35H8.66c-4.63,0-8.38-3.75-8.38-8.38V8.73c0-4.63,3.75-8.38,8.38-8.38h50.24
+                    c4.63,0,8.38,3.75,8.38,8.38v46.24C67.28,59.6,63.53,63.35,58.91,63.35z"/>
+                </g>
+                <g id="UnJd2o.tif">
+                  <g>
+                    <path class="st1" d="M55.66,21.89c-0.19,0.77-0.33,1.55-0.57,2.3c-0.34,1.07-0.98,1.99-1.72,2.83c-2.9,3.28-5.81,6.56-8.72,9.84
+                      c-1.98,2.23-4.47,3.25-7.45,2.99c-1.13-0.1-2.21-0.45-3.19-1.02c-1.46-0.85-1.96-2.67-1.19-4.24c0.7-1.43,2.55-2.13,4.05-1.56
+                      c0.43,0.16,0.89,0.29,1.34,0.32c0.61,0.04,1.11-0.26,1.51-0.71c2.95-3.33,5.91-6.65,8.85-9.99c0.89-1.01,0.8-2.21-0.19-3.1
+                      c-0.4-0.36-0.8-0.71-1.2-1.07c-1-0.88-2.26-0.81-3.14,0.18c-1.31,1.46-2.6,2.94-3.91,4.41c-0.89,0.99-1.99,1.41-3.26,0.96
+                      c-1.73-0.61-3.1-2.48-2.12-4.49c0.11-0.23,0.26-0.46,0.43-0.65c1.44-1.63,2.83-3.29,4.34-4.85c3.27-3.39,8.33-3.56,11.89-0.46
+                      c1.01,0.88,2.07,1.72,2.82,2.87c0.75,1.15,1.22,2.39,1.37,3.75c0.01,0.08,0.05,0.15,0.07,0.23C55.66,20.9,55.66,21.4,55.66,21.89
+                      z"/>
+                    <path class="st1" d="M22.94,53.54c-0.75-0.16-1.51-0.28-2.24-0.49c-0.96-0.27-1.82-0.76-2.59-1.4c-1.07-0.9-2.2-1.75-3.02-2.91
+                      c-2.29-3.24-2.24-7.39,0.34-10.42c3.1-3.65,6.29-7.23,9.55-10.75c2.52-2.72,6.74-3.3,10.01-1.55c1.32,0.7,1.98,2.21,1.6,3.63
+                      c-0.38,1.4-1.76,2.45-3.23,2.39c-0.48-0.02-0.97-0.15-1.43-0.31c-1.03-0.36-1.85-0.2-2.57,0.61c-2.94,3.31-5.87,6.61-8.8,9.93
+                      c-0.89,1-0.81,2.19,0.18,3.1c0.4,0.37,0.82,0.73,1.23,1.09c0.99,0.86,2.23,0.78,3.11-0.19c1.3-1.45,2.59-2.92,3.88-4.38
+                      c1-1.12,2.43-1.46,3.73-0.79c1.78,0.93,2.5,2.67,1.67,4.32c-0.1,0.21-0.23,0.41-0.39,0.58c-1.46,1.64-2.89,3.31-4.39,4.91
+                      c-1.47,1.57-3.32,2.39-5.46,2.57c-0.09,0.01-0.19,0.04-0.28,0.06C23.54,53.54,23.24,53.54,22.94,53.54z"/>
+                  </g>
+                </g>
+              </g>
+              </svg>
+            </div>
+            <div>
+              <form id="uploadForm" enctype="multipart/form-data"
+                action="/api/photo" method="post" target="targetForm" >
+                <input style="visibility:hidden" onchange="submitForm()"
+                  id="imageSelected" type="file" name="userPhoto"
+                  accept="image/png, image/jpg, image/jpeg, image/gif, image/webp" />
+                <br/>
+                <br/>
+                <br/>
+                <br/>
+                <div id="submitUpload" ></div>
+              </form>
+            </div>
+
+          </div>
+          <div id="workspaceMode" class="content-wrapper">
+            <!-- Start color picker op:20px;left:650px; -->
+            <!-- Start object-creation Area-->
+
+            <div id="text-wrapper">
+              <textarea id="textArea" maxlength="250" placeholder="¡Escribe aquí!" onkeyup="count(this)">
+              </textarea>
+              <span id="count" style="color: white;">250</span>
+            </div>
+
+            <div id="OkCancelButtons">
+              <button id="cancelButton" type="button" class="btn btn-light backToTrackPadBtn non-floating-back-to-button-arrow">Cancelar</button>
+              <button id="okButton" type="button" class="btn btn-light">Aceptar</button>
+            </div>
+            <!-- end object-cretion Area -->
+          </div>
+          <!-- End selectMosaicSpace -->
+        </div>
+      </div>
+      <img id="backgroundImage" class="addMatrixMosaic" ></img>
+    </div>
+
+
+
+
+    <!-- JavaScript -->
+    <script src="/javascripts/common/jquery211min.js"></script>
+    <script src="/javascripts/common/jquery-ui.js"></script>
+    <script src="/javascripts/common/jqueryTouchPunch.js"></script>
+    <script src="/javascripts/common/jquery.finger.js"></script>
+    <script src="/javascripts/common/bootstrap.min.js"></script>
+    <script src="/javascripts/common/sweetalert2.all.min.js"></script>
+    <script src="/javascripts/common/socketIoClient.js"></script>
+    <script src="/javascripts/common/detectMobileBrowser.js"></script>
+    <script src="/javascripts/common/jquery.fullscreen-min.js"></script>
+    <script src="/javascripts/remoteMode/remoteModeJqueryFunctions.js"></script>
+
+  </body>
+</html>
