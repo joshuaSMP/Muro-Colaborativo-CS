@@ -31,7 +31,7 @@
           <img src= "/images/barra_azul.png" class="barra_azul" width="1084" height="60">
         </div>
         <div class= "titulo">
-            <h1>  Foros </h1>
+            <h1>Pizarras</h1>
         </div>
 
         <div class="div-btn-user">    <!-- User button division -->
@@ -44,7 +44,6 @@
                 <div class="dropdown-content" id ="usuarioDropdown" style="right: 0.008vw; top: 0.4vh; background-color: pink; z-index: -90;">
                   <a style="color: black; background-color: white; font-weight: bolder; height: 8.5vh; border-radius: 0px;
                   border: 0px;" id = "adminNameDiv">  </a>
-                  <a style="color: black;" href="#" onclick=""> Editar perfil </a>
                   <a style="color: black;" href="#" id= exitBtn> Cerrar sesion </a>
                 </div>
           </div>
@@ -66,29 +65,6 @@
                     data-target="#addSessionModal"/>
                 </div>
 
-                <div class="col-xs-10"> <!-- search bar -->
-                  <div class="input-group searchIndex">
-                      <input type="search" class="form-control"
-                        placeholder="Buscar" name="searchSession" id="searchSession" style="width: 15.5vw;height: 5.7vh; font-size: 1.1vw;">
-                      <div class="input-group-btn">
-                        <button class="btn btn-default" type="submit" style="width: 2.9vw; height: 5.7vh;">
-                          <i class="glyphicon glyphicon-search" style="width: 1vw; height: 0vh; font-size: 1vw;"></i>
-                        </button>
-                      </div>
-                  </div>
-                </div>
-                <div class="dropdown">
-                      <img id="sort-button" src="/images/hexa_flechas.svg" class="sort-modal-button" onclick='desplegarConClickDropdown("filtroDropdown")'>
-                      <div id ="filtroDropdown" class="dropdown-content" style="right:-1vw; top: 5.5vh;">
-                        <a href="#" onclick="filterSelectionAZ()"> Titulo: A-Z </a>
-                        <a href="#" onclick="filterSelectionZA()"> Titulo: Z-A </a>
-                        <!-- <a href="#"> Grupo </a> -->
-                        <a href="#" onclick="filterSelectionRecentDate()"> Fecha: Más reciente </a>
-                        <a href="#" onclick="filterSelectionOldestDate()"> Fecha: Más antiguo </a>
-                        <a href="#" onclick="filterSelectionActive()"> Estado: Activos </a>
-                        <a href="#" onclick="filterSelectionInactive()"> Estado: Desactivados </a>
-                      </div>
-                </div>
                 <br>
               <!-- division to show all activities -->
                 <div style="margin-top: 2vh; width: 95vw; height: 210vh;">
@@ -126,11 +102,6 @@
                         </div>
                         <div class="form-group">
                           <label for="subject" style="font-size: 1.1vw;">Materia:</label>
-                          <!-- Seccion con la lista de materias
-                          <select name="subjectSelect" id="subjectSelect" class="form-control">
-                          </select>
-                        -->
-                          <br>
                           <input type="text" class="form-control"
                             name="subject" id="subject" placeholder="Ingresa una nueva materia" 
                             style="font-size: 1vw; width: 21.8vw; height: 6vh;"/>
@@ -194,9 +165,6 @@
               </div>
           </div> <!--end workspace division -->
         </div>
-
-
-
       </div>
 
       <div id="myNav" class="overlay">
@@ -215,7 +183,5 @@
     <script src="/javascripts/controlSession/controlSession.js"></script>
     <script src="/javascripts/admin/admin.js"></script>
 
-
-
   </body>
-  </html>
+</html>

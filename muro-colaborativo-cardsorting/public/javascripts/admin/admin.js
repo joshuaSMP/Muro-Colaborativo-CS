@@ -41,7 +41,7 @@ $(document).ready(function () {
 
   $('#addSessionModal').on('shown.bs.modal', function (e) {
     var modal = $(this);
-    var title = editMode ? 'Editar Foro' : 'Crear nuevo foro'; // Simplifica la lógica
+    var title = editMode ? 'Editar Pizarra' : 'Crear nueva pizarra'; // Simplifica la lógica
     modal.find('.modal-title').text(title);
   });
 
