@@ -1,4 +1,4 @@
-#!/Users/joshuamontano/Documents/Muro-Colaborativo-CS/muro-colaborativo-cardsorting/db/scripts/migrators/venv/bin/python3.12
+#!/Users/joshuamontano/Documents/Muro-Colaborativo-CS/muro-colaborativo-cardsorting/doc/scripts/migrators/.venv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys

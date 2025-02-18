@@ -1,40 +1,39 @@
 <!DOCTYPE html>
-<html >
+<html>
   <head>
     <title>Zona pública</title>
     <link rel="stylesheet" href="/stylesheets/common/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/stylesheets/common/sweetalert2.min.css">
     <link rel="stylesheet" type="text/css" href="/stylesheets/publicZone/publicZone.css">
-
     <link href="/stylesheets/common/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/stylesheets/common/sweetalert2.min.css">
     <link href="/stylesheets/common/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/stylesheets/common/sweetalert2.min.css">
     <link href="/stylesheets/privateZone/alumnoPresencialRemotoForo.css" rel="stylesheet">
     <style>
+      /* Estilos existentes */
       #createObjectBtn {
-    margin-top: 0px;
-    }
-      #mural{
-        top:0;
+        margin-top: 0px;
+      }
+      #mural {
+        top: 0;
         border-radius: 0%;
         border-color: #FCFCFC;
       }
       body, html {
         height: 100%;
         margin: 0;
-        overflow: hidden
+        overflow: hidden;
       }
       #headerPublicZone {
-        background-color:#f67a00
+        background-color: #f67a00;
       }
-
       .white-color {
-        color:white
+        color: white;
       }
       .pin {
-        color:#c1ffdb;
-        float:left;
+        color: #c1ffdb;
+        float: left;
         font-size: 2vw;
         margin-top: 2.2vh;
         height: 0vh;
@@ -52,93 +51,92 @@
         border: 3vw;
         border-radius: 22vw;
       }
-      #dropdownMenu{
+      #dropdownMenu {
         border: 3vw;
         border-radius: 22vw;
       }
-
       #backToControlSessionBtnWrapper {
-        display:none
+        display: none;
       }
       #fullScreenPublicZone {
-        margin-right:2vw;
-        margin-top:2.5vh;
+        margin-right: 2vw;
+        margin-top: 2.5vh;
         float: right;
       }
-
-      #exitButton {
+      #logOutBtn {
         margin-right: 2vw;
         margin-top: 2.5vh;
         float: right;
         cursor: pointer;
         color: white;
         font-size: 2.2vw;
+        background: none;
+        border: none;
       }
-
+      #logOutBtn:hover {
+        color: #ffcc00; /* Cambia el color al pasar el mouse */
+      }
       #cursorsWrapper {
-        height:1px;
-        width:1px;
-        z-index:1;
-        position:absolute;
+        height: 1px;
+        width: 1px;
+        z-index: 1;
+        position: absolute;
       }
       #dummyWraper {
-        height:100%;
-        width:100%;
-        position:relative;
-        left:0px;
-        top:0px;
+        height: 100%;
+        width: 100%;
+        position: relative;
+        left: 0px;
+        top: 0px;
       }
       #backgroundImage {
-        width:100%;
-        height:100%;
-        background:white
+        width: 100%;
+        height: 100%;
+        background: white;
       }
       .loader {
-        height:270px;
-        width:270px;
+        height: 270px;
+        width: 270px;
         margin: 0 auto;
         border-radius: 25px;
         border: 2px solid #73AD21;
         background-image: url('/images/loading_colors.gif');
-        background-size: 100%
+        background-size: 100%;
       }
       .session-chooser {
-        height:100%;
-        overflow-y: scroll
+        height: 100%;
+        overflow-y: scroll;
       }
       .invisible-dom {
-        display:none
+        display: none;
       }
       .image-upload-preview {
-        height:270px;
-        width:330px;
+        height: 270px;
+        width: 330px;
         border-radius: 25px;
         border: 2px solid #1abc9c;
       }
       .hidden-dom {
-        visibility: hidden
+        visibility: hidden;
       }
       #dropdownMenu > li > a > h4 > p {
         font-size: 1.4vw;
       }
       #dropdownMenu > li > a {
         text-align: center;
-        background : #fc0051;
+        background: #fc0051;
       }
       #dropdownMenu > li {
         cursor: pointer;
         width: 13vw;
         height: 6vh;
-
         display: inline-block;
         background-color: #fc0051;
       }
-
-      .dropdown-menu{
+      .dropdown-menu {
         height: 0vh;
       }
-
-      #nameSession{
+      #nameSession {
         margin-top: 2.5vh;
         margin-left: 3vw;
         font-size: 3.5vh;
@@ -150,10 +148,9 @@
         font-size: 2vh;
         height: 0vh;
       }
-      #statusAppMessageMenu{
+      #statusAppMessageMenu {
         position: center;
       }
-
       .parent {
         position: relative;
         top: 0;
@@ -171,32 +168,41 @@
         position: absolute;
         top: 1.7vh;
       }
-
     </style>
   </head>
-  <body >
+  <body>
     <!-- Start Nav bar -->
     <div id="headerPublicZone" class="container-fluid">
       <div class="row">
         <div class="col-xs-1 white-color">
           <div class="parent">
-            <img class="image1" src="/images/barra_azul.svg", style="width: 80vw; height: 8vh;" />
-            <img class="image2" src='/images/logotipo_horizontal_cs.svg', style="height: 48px; margin-top: 0px; left: 5px;" />
+            <img class="image1" src="/images/barra_azul.svg" style="width: 80vw; height: 8vh;" />
+            <img class="image2" src='/images/logotipo_horizontal_cs.svg' style="height: 48px; margin-top: 0px; left: 5px;" />
           </div>
         </div>
         <div class="col-xs-4">
           <div class="pull-left" style="word-wrap:break-word">
-            <h4 data-toggle="modal" data-target="#sessionNameModal" id="nameSession" class="white-color" ></h4>
+            <h4 data-toggle="modal" data-target="#sessionNameModal" id="nameSession" class="white-color"></h4>
           </div>
           <div>
-            <h5 id="statusAppMessage" class="white-color" > </h5>
+            <h5 id="statusAppMessage" class="white-color"></h5>
           </div>
         </div>
         <div class="col-xs-4">
-          <h4 class="pin">PIN: <span id="ipAdress" class="white-color"></span> </h4>
+          <h4 class="pin">PIN: <span id="ipAdress" class="white-color"></span></h4>
         </div>
         <div class="col-xs-1">
-          <img id="fullScreenPublicZone" src="/images/fullscreen_white_btn.png" style="width: 2.2vw; height: 4vh;" ></img>
+          <img id="fullScreenPublicZone" src="/images/fullscreen_white_btn.png" style="width: 2.2vw; height: 4vh;">
+        </div>
+        <div class="col-xs-2">
+          <!-- Botón de salir -->
+          <button id="logOutBtn" onclick="logOut()" type="button" class="btn btn-lg">
+            Salir
+          </button>
+          <!-- Botón de maximizar -->
+          <button id="maximizeBtn" class="btn btn-lg" type="button">
+            <span id="maxIcon" class="glyphicon glyphicon-resize-full"></span>
+          </button>
         </div>
       </div>
     </div>
@@ -407,5 +413,11 @@
     <script src="/javascripts/common/jquery.fullscreen-min.js"></script>
     <script src="/javascripts/common/sweetalert2.all.min.js"></script>
     <script src="/javascripts/publicZone/publicJqueryFunctions.js"></script>
+    <script>
+      // Función para manejar el clic en el botón de salir
+      function logOut() {
+        history.back(); // Regresa a la página anterior
+      }
+    </script>
   </body>
 </html>
