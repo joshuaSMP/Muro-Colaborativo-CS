@@ -66,6 +66,15 @@
         float: right;
       }
 
+      #exitButton {
+        margin-right: 2vw;
+        margin-top: 2.5vh;
+        float: right;
+        cursor: pointer;
+        color: white;
+        font-size: 2.2vw;
+      }
+
       #cursorsWrapper {
         height:1px;
         width:1px;
@@ -163,8 +172,6 @@
         top: 1.7vh;
       }
 
-
-
     </style>
   </head>
   <body >
@@ -187,23 +194,6 @@
         </div>
         <div class="col-xs-4">
           <h4 class="pin">PIN: <span id="ipAdress" class="white-color"></span> </h4>
-        </div>
-        <div class="col-xs-2">
-          <div class="dropdown" id="optionsBtn">
-            <button class="btn btn-block btn-danger dropdown-toggle options-button" type="button" data-toggle="dropdown">
-                 Opciones<span class="caret"></span>
-            </button>
-            <ul id="dropdownMenu" style="margin-left:-0.5vw; margin-top:0vh; padding:0vh; width: 13vw; height: 0vh;"  class="dropdown-menu" role="menu" >
-              <li class="optionalSave optionOnlyForLoggedAdmin"><a onclick="saveOnTheFlySession()" href="#FCFCFC">Guardar</a></li>
-              <!--<li class="divider" class="optionOnlyForLoggedAdmin"></li>-->
-              <li><a href="#" data-toggle="modal" data-target="#changeBackgroundImageModal"><H4><p style="color:#FCFCFC";> Cambiar fondo</p></H4></a></li>
-              <li><a onclick=" emptyPublicZone()" href="#"><H4><p style="color:#FCFCFC";> Limpiar</p></H4></a></li>
-              <li><a onclick=" logOutAllUsers()" href="#"><H4><p style="color:#FCFCFC";>Quitar usuarios</p></H4></a></li>
-              <li><a onclick=" logOut()" href="#"><H4><p style="color:#FCFCFC">Salir</p></H4></a></li>
-              <li><H4 style="text-align: center; font-size: 1.4vw;" ><a onclick="toggleStatus()" style="text-decoration:none;color:white;" id="statusAppMessageMenu" class="white-color"  href="#"></H4></a></li>
-              <li><a id="closeMural"><H4><p style="color:#FCFCFC";> Cerrar Mural</p></H4></a></li>
-            </ul>
-          </div>
         </div>
         <div class="col-xs-1">
           <img id="fullScreenPublicZone" src="/images/fullscreen_white_btn.png" style="width: 2.2vw; height: 4vh;" ></img>
