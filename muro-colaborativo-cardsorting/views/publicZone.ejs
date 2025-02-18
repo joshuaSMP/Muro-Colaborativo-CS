@@ -63,16 +63,7 @@
         margin-top: 2.5vh;
         float: right;
       }
-      #logOutBtn {
-        margin-right: 2vw;
-        margin-top: 2.5vh;
-        float: right;
-        cursor: pointer;
-        color: white;
-        font-size: 2.2vw;
-        background: none;
-        border: none;
-      }
+
       #logOutBtn:hover {
         color: #ffcc00; /* Cambia el color al pasar el mouse */
       }
@@ -191,14 +182,15 @@
         <div class="col-xs-4">
           <h4 class="pin">PIN: <span id="ipAdress" class="white-color"></span></h4>
         </div>
-        <div class="col-xs-1">
-          <img id="fullScreenPublicZone" src="/images/fullscreen_white_btn.png" style="width: 2.2vw; height: 4vh;">
-        </div>
         <div class="col-xs-2">
           <!-- Botón de salir -->
-          <button id="logOutBtn" onclick="logOut()" type="button" class="btn btn-lg">
+          <button id="logOutBtn" onclick="logOut()" type="button" class="col-xs-1 btn btn-lg">
             Salir
           </button>
+          <!-- Botón de pantalla completa -->
+          <img id="fullScreenPublicZone" src="/images/fullscreen_white_btn.png" style="width: 2.2vw; height: 4vh;">
+        </div>
+        <div class="col-xs-1">
           <!-- Botón de maximizar -->
           <button id="maximizeBtn" class="btn btn-lg" type="button">
             <span id="maxIcon" class="glyphicon glyphicon-resize-full"></span>

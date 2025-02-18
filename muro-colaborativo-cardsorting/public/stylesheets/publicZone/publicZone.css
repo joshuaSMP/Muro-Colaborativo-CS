@@ -47,6 +47,20 @@ border: 3px;
 border-radius: 22px;
 }
 
+#logOutBtn{
+	background-color: #E62C56;
+	color: #FFFFFF;
+	font-family: AvantGarde;
+	font-size: 14pt;
+	height: 34px;
+	margin-top: 13px;
+  left: 2;
+	padding: 0px 0px 0px 0px;
+	width: 145px;
+	border-radius: 0px;
+	position: absolute;
+}
+
 #backToControlSessionBtnWrapper {
 display:none
 }
