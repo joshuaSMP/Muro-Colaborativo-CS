@@ -101,7 +101,7 @@ function sendPostForm() {
     },
     dataType: 'json',
     success: function (res) {
-      swal.fire("Foro creado exitosamente", "", "success")
+      swal.fire("Pizarra creado exitosamente", "", "success")
         .then((result) => {
           if (result.isConfirmed || result.isDismissed) {
             // Esperar a que se cierre el diálogo de confirmación y luego recargar la página
@@ -386,7 +386,7 @@ function updateDataInSessionList(id) {
 
 function deleteSession(dirtyId) {
   swal.fire({
-    title: "¿Estás seguro que deseas eliminar este foro?",
+    title: "¿Estás seguro que deseas eliminar esta pizarra?",
     text: "Las contribuciones compartidas en el serán eliminados",
     icon: "warning",
     showCancelButton: true,
@@ -406,7 +406,7 @@ function deleteSession(dirtyId) {
         success: function (res) {
           $("#" + cleanId + "listElement").hide();
           swal.fire({
-            title: "El foro ha sido eliminado correctamente",
+            title: "La pizarra ha sido eliminado correctamente",
             text: "",
             icon: "success",
             timer: 1000,
