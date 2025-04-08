@@ -184,7 +184,7 @@ function getAdminSessions() {
           '</div>' +
           '</div>' +
           '<div id="container_image" style="display:flex; justify-content:center;">' +
-          '<img class="image-wrapper" id="imageSession' + foro.id_foro + '" src="/images/Aula.png" width= 20%;' +
+          '<img class="image-wrapper" id="imageSession' + foro.id_foro + '" src="/images/cardSorting.png" width= 50%;' +
           '</div>' +
           '<div id="activity-information" style="position: absolute; top: 45vh; right:9.9vw; font-size: 1vw;">' +
           '<center> <p style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;">PIN: <span>' + foro.pin + '</span></p>' +
