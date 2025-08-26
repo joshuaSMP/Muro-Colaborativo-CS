@@ -218,14 +218,7 @@
             <!-- Botón de tache funcional -->
             <button class="close-button" onclick="closePanel()" title="Cerrar">×</button>
             
-            <div class="col-xs-1">
-              <button id="returnButton" type="button"
-                class="btn btn-circle btn-sm backToTrackPadBtn non-floating-back-to-button-arrow">
-                <div id="cancelWrapper">
-                  <span id="cancelIcon" aria-hidden="true">&times;</span>
-                </div>
-              </button>
-            </div>
+
             <div id="contentOptionsWrapper" class="col-xs-10">
               <svg version="1.1" id="addNewObject" class="col-xs-2" xmlns="http://www.w3.org/2000/svg"
                 xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 68.53 65.47"
@@ -341,7 +334,7 @@
             <center>
               <div id="imagencargada">Sin imagen</div>
             </center>
-            <button id="botonimagenCancelar" type="button" class="btn btn-light backToTrackPadBtn">×</button>
+
             <button id="botonimagenAceptar" type="button" class="btn btn-light"
               onclick="enviarImagenAlServidor()">Aceptar</button>
           </div>
@@ -354,7 +347,6 @@
               <span id="count" style="color: rgb(255, 255, 255);">250</span>
             </div>
             <div id="OkCancelButtons">
-              <button id="cancelButton" type="button" class="btn btn-light backToTrackPadBtn">x</button>
               <button id="botonAceptarTexto" type="button" class="btn btn-light" data-dismiss="modal">Aceptar</button>
             </div>
             <!-- end object-cretion Area -->
@@ -368,7 +360,6 @@
               <textarea id="linkArea" placeholder="Escriba url"></textarea>
             </div>
             <div id="botonesLink">
-              <button id="cancelarLink" type="button" class="btn btn-light backToTrackPadBtn">x</button>
               <button id="okLink" type="button" class="btn btn-light">Aceptar</button>
             </div>
           </div>
@@ -408,7 +399,7 @@
     <script src="/javascripts/common/sweetalert2.all.min.js"></script>
     <script src="/javascripts/publicZone/publicJqueryFunctions.js"></script>
     <script>
-      // Función para manejar el clic en el botón de salir
+            // Función para manejar el clic en el botón de salir
       function logOut() {
         history.back(); // Regresa a la página anterior
       }

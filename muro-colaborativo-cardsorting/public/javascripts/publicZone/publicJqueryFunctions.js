@@ -2573,14 +2573,7 @@ $("#cancelButton").click(function () {
   }
   });
   
-  $("#botonimagenCancelar").click(function () {
-    if(editmode){
-      $("#SubirFoto").hide();
-      $("#createObjectBtn").show();
-    }else{
-    $("#SubirFoto").hide();
-    $("#selectMosaicSpace").show();}
-  });
+
   
   $("#returnButton").click(function () {
     $("#selectMosaicSpace").hide();
@@ -2619,16 +2612,7 @@ $("#cancelButton").click(function () {
     $("#createObjectBtn").show();
   })
   
-  $("#cancelarLink").click(function () {
-    if(editmode){
-      $("#linkMode").hide();
-      $("#createObjectBtn").show();
-      $("#selectMosaicSpace").hide();
-    }else{
-    $("#linkMode").hide();
-    $("#selectMosaicSpace").show();
-    $("#createObjectBtn").show();}
-  });
+
   
   $("#createObjectBtn").click(function () {
   editmode=false;

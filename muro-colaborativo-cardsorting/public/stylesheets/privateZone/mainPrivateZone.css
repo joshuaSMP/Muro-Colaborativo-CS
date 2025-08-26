@@ -64,23 +64,9 @@ body, html {
 	margin-top: 25%;
 }
 
-#cancelButton{
-	background-color: #E62C56;
-	color: #F2F2F2;
-	height:55px;
-	float:left;
-	width:100px;
-}
 
-#cancelWrapper {
-	position: relative;
-}
 
-#cancelIcon{
-	position: absolute; 
-	margin-top: -0.9em; 
-	margin-left: -0.3em;
-}
+
 
 #chooseFile {
 	background-color: #316699;
@@ -563,13 +549,7 @@ body, html {
 	width:700px;
 }
 
-#cancelarLink{
-	background-color: #E62C56;
-	color: #F2F2F2;
-	height:40px;
-	float:left;
-	width:100px;
-}
+
 
 #okLink {
 	background-color: #E62C56;

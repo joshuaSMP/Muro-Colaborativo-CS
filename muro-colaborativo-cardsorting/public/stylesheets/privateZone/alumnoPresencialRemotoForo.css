@@ -134,19 +134,7 @@ body, html {
 	cursor: pointer;
 }
 
-.btn-circle.btn-sm {
-	background-color: #E62C56;
-	border-radius: 5px;
-	font-size: 12px;
-	height: 30px;
-	padding: 0px 20px;
-	text-align: center;
-	width: 30px;
-	position: absolute;
-	left: 400px;
-	bottom: 0px;
-	z-index: 1; 
-}
+
 
 .box-8 {
 	border-bottom: 32px solid transparent;
@@ -176,20 +164,7 @@ border-style: solid;
 border-color:#3f94e4;
 }
 
-#cancelButton{
-	background-color: #E62C56;
-	color: #F2F2F2;
-	height: 30px;
-	border-radius: 5px;
-	width: 40px;
-	position: absolute;
-	font-size: 20px;
-	right: 20px;
-	top: 20px;
-	line-height: 30px;
-	text-align: center;
-	z-index: 1002;
-}
+
 
 #cancelWrapper {
 	position: absolute;
@@ -1259,21 +1234,7 @@ border-color:#3f94e4;
 	margin-left: 2vw;
 }
 
-#cancelarLink{
-	background-color: #E62C56;
-	color: #F2F2F2;
-	height:28px;
-	float:left;
-	border-radius: 5px;
-	width:40px;
-	position: relative;
-	font-size: 30px;
-	left: 610px;
-	top: -212px;
-	line-height: 10px;
-	line-break: 10px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
+
 
 #okButton {
 	background-color: #E62C56;
@@ -1502,21 +1463,7 @@ body.blurred {
 	width: 600px;
 }
 
-#botonimagenCancelar{
-	background-color: #E62C56;
-	color: #F2F2F2;
-	height:30px;
-	float:left;
-	border-radius: 5px;
-	width:48px;
-	position: relative;
-	font-size: 35px;
-	left: 550px;
-	top: -10px;
-	line-height: 10px;
-	line-break: 10px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
+
 #botonimagenAceptar{
 	background-color: #ea713d;
 	color: #F2F2F2;

@@ -198,9 +198,7 @@ $(document).ready(function () {
 	$(".createObject").click(function () {
 		changeMode('selectMosaic');
 	})
-	$(".backToTrackPadBtn").click(function () {
-		changeMode('trackpad');
-	})
+
 
 	$("#okButton").click(function () {
 		if (editModeOn) {

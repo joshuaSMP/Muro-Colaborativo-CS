@@ -237,13 +237,7 @@
           <!-- Botón de tache funcional -->
           <button class="close-button" onclick="closePanel()" title="Cerrar">×</button>
           
-          <div class="col-xs-2">
-            <button id="returnButton" type="button" class="btn btn-circle btn-sm backToTrackPadBtn non-floating-back-to-button-arrow">
-              <div id="cancelWrapper">
-                <span id="cancelIcon" aria-hidden="true">&times;</span>
-              </div>
-            </button>
-          </div>
+
           <div id="contentOptionsWrapper" class="col-xs-8">
             <svg version="1.1" id="addNewObject" class="col-xs-2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
               viewBox="0 0 68.53 65.47" style="enable-background:new 0 0 68.53 65.47;" xml:space="preserve">
@@ -349,10 +343,9 @@
             <span id="count" style="color: white;">250</span>
           </div>
 
-          <div id="OkCancelButtons">
-            <button id="cancelButton" type="button" class="btn btn-light backToTrackPadBtn non-floating-back-to-button-arrow">Cancelar</button>
-            <button id="okButton" type="button" class="btn btn-light">Aceptar</button>
-          </div>
+                      <div id="OkCancelButtons">
+              <button id="okButton" type="button" class="btn btn-light">Aceptar</button>
+            </div>
           <!-- end object-cretion Area -->
         </div>
         <!-- End selectMosaicSpace -->
@@ -363,7 +356,6 @@
             <textarea id="nombreLinkArea" placeholder="Escriba nombre para el url"></textarea>
           </div>
           <div id="botonesLink">
-            <button id="cancelarLink" type="button" class="btn btn-light backToTrackPadBtn non-floating-back-to-button-arrow">Cancelar</button>
             <button id="okLink" type="button" class="btn btn-light">Aceptar</button>
           </div>
         </div>
@@ -438,7 +430,7 @@
         } else {
               $('#count').text(250 - len);
         }
-      }
+            }
       
       // Función para cerrar el panel de opciones
       function closePanel() {

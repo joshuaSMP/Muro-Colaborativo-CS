@@ -62,24 +62,9 @@ border-style: solid;
 border-color:#316699;
 }
 
-#cancelButton{
-	background-color: #E62C56;
-	color: #F2F2F2;
-	height:40px;
-	float:left;
-	margin-top: 5px;
-	width:100px;
-}
 
-#cancelWrapper {
-	position: relative;
-}
 
-#cancelIcon{
-	position: absolute; 
-	margin-top: -0.9em; 
-	margin-left: -0.3em;
-}
+
 
 #chooseFile {
 	background-color: #316699;
