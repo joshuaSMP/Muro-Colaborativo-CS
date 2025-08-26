@@ -104,31 +104,34 @@ body, html {
 #addNewObject {
 	background-color: #6DC8DD;
 	border-radius: 25px;
-	height:100px;
-	float:left;
-	margin-left:0;
-	margin-top:2%;
-	width:100px;
+	height: 80px;
+	margin: 0;
+	width: 80px;
+	float: none;
+	display: block;
+	cursor: pointer;
 }
 
 #chooseFile {
 	background-color: #6DC8DD;
 	border-radius: 25px;
-	height:100px;
-	float:left;
-	margin-left:6%;
-	margin-top:2%;
-	width:100px;
+	height: 80px;
+	margin: 0;
+	width: 80px;
+	float: none;
+	display: block;
+	cursor: pointer;
 }
 
 #addLink{
 	background-color: #6DC8DD;
 	border-radius: 25px;
-	height:100px;
-	float:left;
-	margin-left:6%;
-	margin-top:2%;
-	width:100px;
+	height: 80px;
+	margin: 0;
+	width: 80px;
+	float: none;
+	display: block;
+	cursor: pointer;
 }
 
 .btn-circle.btn-sm {
@@ -176,16 +179,16 @@ border-color:#3f94e4;
 #cancelButton{
 	background-color: #E62C56;
 	color: #F2F2F2;
-	height:28px;
-	float:left;
+	height: 30px;
 	border-radius: 5px;
-	width:40px;
-	position: relative;
-	font-size: 28px;
-	left: 220px;
-	top: -185px;
-	line-height: 10px;
-	line-break: 10px;
+	width: 40px;
+	position: absolute;
+	font-size: 20px;
+	right: 20px;
+	top: 20px;
+	line-height: 30px;
+	text-align: center;
+	z-index: 1002;
 }
 
 #cancelWrapper {
@@ -238,7 +241,12 @@ border-color:#3f94e4;
 }
 
 #contentOptionsWrapper {
-	margin-top: 3em;
+	margin-top: 2em;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 15px;
+	padding: 20px;
 }
 
 #cursorsWrapper {
@@ -1300,12 +1308,28 @@ border-color:#3f94e4;
 }
 
 #returnButton{
-	color:black;
-	font-size: xxx-large;
-	position: fixed;
-	z-index: 1; 
-	left: 960px;
-	top: 280px;
+	color: white !important;
+	font-size: 20px !important;
+	position: absolute !important;
+	z-index: 1002 !important; 
+	right: 50px !important;
+	top: -25px !important;
+	background-color: #E62C56 !important;
+	border-radius: 5px !important;
+	height: 30px !important;
+	width: 40px !important;
+	line-height: 30px !important;
+	text-align: center !important;
+	border: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+/* Sobrescribir las clases de Bootstrap específicamente */
+#selectMosaicSpace .col-xs-1 {
+	position: relative !important;
+	width: auto !important;
+	float: none !important;
 }
 
 .right-click-remote-menu {
@@ -1343,15 +1367,16 @@ body.blurred {
 #selectMosaicSpace {
 	background-color: #2e71af;
 	border-radius: 25px;
-	height: 200px;
-	width: 450px;
-	position: relative;
-	top: 220px;
-	left: 530px;
+	height: 320px;
+	width: 250px;
+	position: relative !important;
+	top: 330px;
+	left: 50px;
 	z-index: 1000;
-	overflow: hidden; /* Asegura que el contenido no desborde */
-	user-select: none; /* Evita la selección de texto dentro del modal */
-	display: none; /* Comienza oculto */
+	overflow: visible;
+	user-select: none;
+	display: none;
+	padding: 20px;
 }
 
 #overlay {
@@ -1513,4 +1538,60 @@ body.blurred {
 	border-radius: 10px;
 	width:100px;
 	font-weight: 700;
+}
+
+#contentOptionsWrapper {
+	margin-top: 1em;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 25px;
+	width: 100%;
+	height: 100%;
+}
+
+#addNewObject, #chooseFile, #addLink {
+	background-color: #6DC8DD;
+	border-radius: 25px;
+	height: 70px;
+	width: 70px;
+	margin: 0;
+	float: none;
+	display: block !important;
+	cursor: pointer;
+	position: relative;
+	z-index: 1001;
+}
+
+/* Sobrescribir las clases de Bootstrap */
+#contentOptionsWrapper .col-xs-2 {
+	width: auto !important;
+	float: none !important;
+	display: block !important;
+	margin: 0 !important;
+}
+
+/* Botón de tache simple y funcional */
+.close-button {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	width: 40px;
+	height: 40px;
+	background-color: #E62C56;
+	color: white;
+	border-radius: 50%;
+	text-align: center;
+	line-height: 40px;
+	font-size: 24px;
+	font-weight: bold;
+	cursor: pointer;
+	z-index: 9999;
+	border: 2px solid white;
+	box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.close-button:hover {
+	background-color: #d63384;
+	transform: scale(1.1);
 }

@@ -80,6 +80,9 @@
           <div class="box-10"></div>
         </div>
         <div id="selectMosaicSpace" class="btn-group-lg center-block">
+          <!-- Botón de tache funcional -->
+          <button class="close-button" onclick="closePanel()" title="Cerrar">×</button>
+          
           <div class="col-xs-1">
             <button id="returnButton" type="button"
               class="btn btn-circle btn-sm backToTrackPadBtn non-floating-back-to-button-arrow">
@@ -265,6 +268,13 @@
   <script src="/javascripts/common/detectMobileBrowser.js"></script>
   <script src="/javascripts/common/jquery.fullscreen-min.js"></script>
   <script src="/javascripts/remoteMode/remoteModeJqueryFunctions.js"></script>
+
+  <script>
+    // Función para cerrar el panel de opciones
+    function closePanel() {
+      document.getElementById('selectMosaicSpace').style.display = 'none';
+    }
+  </script>
 
 </body>
 
