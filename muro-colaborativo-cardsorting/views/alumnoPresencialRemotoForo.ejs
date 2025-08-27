@@ -191,6 +191,7 @@
           <div id="cargarfoto">
             <img src="/images/subir.png" width="30px" height="30px" style="margin: 6px; filter: invert(100%);" >
             <span class="textosubir">Subir Foto</span>
+            <button class="close-button" onclick="closePanel('SubirFoto')" title="Cerrar">×</button>
           </div>
           <input type="file" id="fileInput" style="display: none;" accept="image/*">
           <div id="tomarfoto">
@@ -209,6 +210,7 @@
         <div id="workspaceMode" class="content-wrapper" role="dialog">
           <div id="text-wrapper" action="/crearcontribucion" method="post" target="targetForm">
             <textarea id="texto" maxlength="250" placeholder="¡Escribe aquí!" onkeyup="count(this)"></textarea>
+            <button class="close-button" onclick="closePanel('workspaceMode')" title="Cerrar">×</button>
             <span id="count" style="color: rgb(255, 255, 255);">250</span>
           </div>
                       <div id="OkCancelButtons">
@@ -223,6 +225,7 @@
             <textarea id="nombreLinkArea" placeholder="Escriba nombre para el url"></textarea>
             <p class="titulourl">URL:</p>
             <textarea id="linkArea" placeholder="Escriba url"></textarea>
+            <button class="close-button" onclick="closePanel('linkMode')" title="Cerrar">×</button>
           </div>
                       <div id="botonesLink">
               <button id="okLink" type="button" class="btn btn-light">Aceptar</button>
