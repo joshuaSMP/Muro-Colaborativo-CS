@@ -839,66 +839,6 @@ border-color:#3f94e4;
 	word-wrap: break-word; /* Asegura que el texto largo se ajuste */
 }
 
-.comentario {
-	width: calc(100% - 10px); 
-	margin-bottom: 10px; 
-	background-color: #9ed8f7e8; 
-	padding: 20px;
-	border-radius: 20px;
-	position: relative;
-}
-.comentario:hover{
-	background-color: #9ed8f7cc; 
-}
-
-.hola{
-	background-color: #fff0bde8;
-}
-
-.sub-coment {
-	width: calc(95% - 10px); 
-	height: auto ; 
-	margin-bottom: 10px; 
-	background-color: #c0e5ff; 
-	padding: 20px;
-	border-radius: 0px 20px 20px 50px;
-	position: relative;
-  left: 5%;
-}
-
-.sub-coment3 {
-	width: calc(90% - 10px); 
-	height: auto ; 
-	margin-bottom: 10px; 
-	background-color: #d0ebff; 
-	padding: 20px;
-	border-radius: 0px 20px 20px 50px;
-	position: relative;
-  left: 10%;
-}
-
-.sub-coment4 {
-	width: calc(85% - 10px); 
-	height: auto ; 
-	margin-bottom: 10px; 
-	background-color: #daefff; 
-	padding: 20px;
-	border-radius: 0px 20px 20px 50px;
-	position: relative;
-	left: 15%;
-}
-
-.sub-coment5 {
-	width: calc(80% - 10px); 
-	height: auto ; 
-	margin-bottom: 10px; 
-	background-color: #e6f4ff; 
-	padding: 20px;
-	border-radius: 0px 20px 20px 50px;
-	position: relative;
-	left: 20%;
-}
-
 .coment-cuerpo {
 	padding: -10% 10px;
 }
@@ -1114,9 +1054,12 @@ border-color:#3f94e4;
 }
 
 #contributions_list{
+	display: flex;
+	flex-wrap: wrap; /* Permite que los elementos se ajusten a la siguiente línea */
+	gap: 25px; /* Espacio entre los post-its */
+	padding: 20px;
+	align-items: flex-start;
 	list-style-type: none; 
-	padding: 0;
-	margin: 0; 
 }
 
 #SubirFoto {
@@ -1614,3 +1557,65 @@ li:nth-child(5n) > .sub-coment5 {
   padding: 20px;
   align-items: flex-start;
 }
+
+#contributions_list > li {
+  flex-shrink: 0; /* Evita que los post-its se encojan en el layout flex */
+  margin-bottom: 20px; /* Espacio para las respuestas anidadas */
+}
+
+/* --- Estilos de Post-it --- */
+
+.comentario, .sub-coment, .sub-coment2, .sub-coment3, .sub-coment4, .sub-coment5 {
+  background: #ffc; /* Amarillo pálido de post-it */
+  padding: 20px;
+  font-family: 'Kalam', cursive; /* Fuente estilo manuscrito */
+  box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+  transition: transform .15s linear;
+  border-radius: 0; /* Los post-its son cuadrados */
+  border: 1px solid #f9f977;
+  color: #333; /* Aseguramos que el texto sea legible */
+  text-align: left;
+  width: 250px; /* Ancho fijo para el post-it */
+  height: 250px; /* Alto fijo para el post-it */
+  overflow-y: auto; /* Scroll si el contenido es muy largo */
+  position: relative; /* Necesario para posicionar elementos hijos */
+}
+
+.comentario:hover, .sub-coment:hover, .sub-coment2:hover, .sub-coment3:hover, .sub-coment4:hover, .sub-coment5:hover {
+  transform: scale(1.05) rotate(0deg) !important; /* Usar !important para sobreescribir la rotación base */
+  box-shadow: 10px 10px 15px rgba(33,33,33,.7);
+  z-index: 10;
+  position: relative;
+}
+
+/*
+  Añadimos variedad en la rotación para un look más natural.
+  Usamos :nth-child en el elemento <li> padre para alternar la rotación.
+*/
+li:nth-child(even) > .comentario,
+li:nth-child(even) > .sub-coment,
+li:nth-child(even) > .sub-coment2,
+li:nth-child(even) > .sub-coment3,
+li:nth-child(even) > .sub-coment4,
+li:nth-child(even) > .sub-coment5 {
+  transform: rotate(2deg);
+}
+
+li:nth-child(3n) > .comentario,
+li:nth-child(3n) > .sub-coment,
+li:nth-child(3n) > .sub-coment2,
+li:nth-child(3n) > .sub-coment3,
+li:nth-child(3n) > .sub-coment4,
+li:nth-child(3n) > .sub-coment5 {
+  transform: rotate(-1.5deg);
+}
+
+li:nth-child(5n) > .comentario,
+li:nth-child(5n) > .sub-coment,
+li:nth-child(5n) > .sub-coment2,
+li:nth-child(5n) > .sub-coment3,
+li:nth-child(5n) > .sub-coment4,
+li:nth-child(5n) > .sub-coment5 {
+    transform: rotate(3.5deg);
+}
+/* --- Fin de Estilos de Post-it --- */
