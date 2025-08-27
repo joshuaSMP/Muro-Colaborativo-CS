@@ -81,7 +81,7 @@
         </div>
         <div id="selectMosaicSpace" class="btn-group-lg center-block">
           <!-- Botón de tache funcional -->
-          <button class="close-button" onclick="closePanel()" title="Cerrar">×</button>
+          <button class="close-button" onclick="closePanel('selectMosaicSpace')" title="Cerrar">×</button>
           
 
           <div id="contentOptionsWrapper" class="col-xs-10">
@@ -262,8 +262,8 @@
 
   <script>
     // Función para cerrar el panel de opciones
-    function closePanel() {
-      document.getElementById('selectMosaicSpace').style.display = 'none';
+    function closePanel(panelId) {
+      document.getElementById(panelId).style.display = 'none';
     }
   </script>
 
