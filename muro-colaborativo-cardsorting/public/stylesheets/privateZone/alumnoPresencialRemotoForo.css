@@ -831,11 +831,12 @@ border-color:#3f94e4;
 	margin-top: 10px;
 	font-family:'Trebuchet MS';
 	font-weight: 539;
-	font-size: 20px;
-	margin-bottom: 80px;
-	width: 950px auto;
+	font-size: 16px; /* Reducimos la fuente para el post-it */
+	margin-bottom: 50px; /* Ajustamos el margen para los botones */
+	width: auto; /* Corregimos el valor de width */
 	text-align: justify;
 	margin-right: 10px;
+	word-wrap: break-word; /* Asegura que el texto largo se ajuste */
 }
 
 .comentario {
@@ -1538,7 +1539,78 @@ body.blurred {
 	box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
+#contributions_list > li {
+  flex-shrink: 0; /* Evita que los post-its se encojan en el layout flex */
+  margin-bottom: 20px; /* Espacio para las respuestas anidadas */
+}
+
 .close-button:hover {
 	background-color: #d63384;
 	transform: scale(1.1);
+}
+
+/* --- Estilos de Post-it --- */
+
+.comentario, .sub-coment, .sub-coment2, .sub-coment3, .sub-coment4, .sub-coment5 {
+  background: #ffc; /* Amarillo pálido de post-it */
+  padding: 20px;
+  font-family: 'Kalam', cursive; /* Fuente estilo manuscrito */
+  box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+  transition: transform .15s linear;
+  border-radius: 0; /* Los post-its son cuadrados */
+  border: 1px solid #f9f977;
+  color: #333; /* Aseguramos que el texto sea legible */
+  text-align: left;
+  width: 250px; /* Ancho fijo para el post-it */
+  height: 250px; /* Alto fijo para el post-it */
+  overflow-y: auto; /* Scroll si el contenido es muy largo */
+  position: relative; /* Necesario para posicionar elementos hijos */
+}
+
+.comentario:hover, .sub-coment:hover, .sub-coment2:hover, .sub-coment3:hover, .sub-coment4:hover, .sub-coment5:hover {
+  transform: scale(1.05) rotate(0deg) !important; /* Usar !important para sobreescribir la rotación base */
+  box-shadow: 10px 10px 15px rgba(33,33,33,.7);
+  z-index: 10;
+  position: relative;
+}
+
+/*
+  Añadimos variedad en la rotación para un look más natural.
+  Usamos :nth-child en el elemento <li> padre para alternar la rotación.
+*/
+li:nth-child(even) > .comentario,
+li:nth-child(even) > .sub-coment,
+li:nth-child(even) > .sub-coment2,
+li:nth-child(even) > .sub-coment3,
+li:nth-child(even) > .sub-coment4,
+li:nth-child(even) > .sub-coment5 {
+  transform: rotate(2deg);
+}
+
+li:nth-child(3n) > .comentario,
+li:nth-child(3n) > .sub-coment,
+li:nth-child(3n) > .sub-coment2,
+li:nth-child(3n) > .sub-coment3,
+li:nth-child(3n) > .sub-coment4,
+li:nth-child(3n) > .sub-coment5 {
+  transform: rotate(-1.5deg);
+}
+
+li:nth-child(5n) > .comentario,
+li:nth-child(5n) > .sub-coment,
+li:nth-child(5n) > .sub-coment2,
+li:nth-child(5n) > .sub-coment3,
+li:nth-child(5n) > .sub-coment4,
+li:nth-child(5n) > .sub-coment5 {
+    transform: rotate(3.5deg);
+}
+/* --- Fin de Estilos de Post-it --- */
+
+/* Hacemos que la lista de contribuciones sea un contenedor flex */
+#contributions_list {
+  display: flex;
+  flex-wrap: wrap; /* Permite que los elementos se ajusten a la siguiente línea */
+  gap: 25px; /* Espacio entre los post-its */
+  padding: 20px;
+  align-items: flex-start;
 }
