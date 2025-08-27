@@ -336,11 +336,10 @@
         <div id="workspaceMode" class="content-wrapper">
           <!-- Start color picker op:20px;left:650px; -->
           <!-- Start object-creation Area-->
-
+          <button class="close-button" onclick="closePanel('workspaceMode')" title="Cerrar">×</button>
           <div id="text-wrapper">
             <textarea id="textArea" maxlength="250" placeholder="¡Escribe aquí!" onkeyup="count(this)">
             </textarea>
-            <button class="close-button" onclick="closePanel('workspaceMode')" title="Cerrar">×</button>
             <span id="count" style="color: white;">250</span>
           </div>
 
@@ -350,12 +349,11 @@
           <!-- end object-cretion Area -->
         </div>
         <!-- End selectMosaicSpace -->
-
         <div id="linkMode" class="content-wrapper">
+          <button class="close-button" onclick="closePanel('linkMode')" title="Cerrar">×</button>
           <div id="link-text-wrapper">
             <textarea id="linkArea" placeholder="Escriba url"></textarea>
             <textarea id="nombreLinkArea" placeholder="Escriba nombre para el url"></textarea>
-            <button class="close-button" onclick="closePanel('linkMode')" title="Cerrar">×</button>
           </div>
           <div id="botonesLink">
             <button id="okLink" type="button" class="btn btn-light">Aceptar</button>
