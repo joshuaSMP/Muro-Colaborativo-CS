@@ -23,6 +23,13 @@ var foro_id = localStorage.getItem('idForo');
 // Starts socket io connection
 var socket = io.connect('/mcv4');
 
+socket.on('connect', function () {
+  // connection done
+  // joining room
+  // create and join to specific room
+  socket.emit('join_room', PIN);
+});
+
 let ramacontribucion = 0;
 let ContributionId = null;
 let textoedicion= "";
@@ -44,6 +51,42 @@ $(document).ready(function() {
   } else {
     console.error('PIN no encontrado en la URL');
     window.pin_priv = null;
+  }
+});
+
+socket.on('nueva_contribucion', function(contribution) {
+  // Nos aseguramos de no duplicar la contribución para el usuario que la creó.
+  // El servidor emite a todos, pero el creador ya la renderiza en el success del AJAX.
+  // Una mejor implementación sería que el servidor no emita al remitente.
+  // Por ahora, esta validación del lado del cliente es suficiente.
+
+  // Comprobamos si el elemento ya existe para evitar duplicados
+  if ($(`#${contribution.id_contribucion}listElement`).length === 0) {
+    if (contribution.rama === 1) {
+      generarrama1(contribution);
+    } else if (contribution.rama === 2) {
+      generarrama2(contribution);
+    } else if (contribution.rama === 3) {
+      generarrama3(contribution);
+    } else if (contribution.rama === 4) {
+      generarrama4(contribution);
+    } else if (contribution.rama === 5) {
+      generarrama5(contribution);
+    }
+  }
+});
+
+socket.on('contribucion_eliminada', function(data) {
+  const { id_contribucion, rama, id_contribucioncompartida } = data;
+  const elementToRemove = $(`#${id_contribucion}listElement`);
+
+  if (elementToRemove.length > 0) {
+    elementToRemove.remove();
+    // Update comment count on parent if it's a reply
+    if (rama > 1 && id_contribucioncompartida) {
+      // The parent ID is the id_contribucioncompartida
+      updateCommentCount(rama, id_contribucioncompartida, -1);
+    }
   }
 });
 
@@ -1389,8 +1432,8 @@ function deleteContribucion(dirtyId, rama, idcomentariocuenta) {
         type: 'DELETE',
         url: '/api/foro/contribuciones/' + cleanId,
         dataType: 'json',
-        success: function (res) {
-          $("#" + cleanId + "listElement").hide();
+        success: function () {
+          // The UI update is now handled by the 'contribucion_eliminada' socket event
           swal.fire({
             title: "La contribución ha sido eliminada correctamente",
             text: "",
@@ -1398,9 +1441,6 @@ function deleteContribucion(dirtyId, rama, idcomentariocuenta) {
             timer: 1000,
             showConfirmButton: false
           });
-
-          // Actualizar contador de comentarios
-          updateCommentCount(rama, idcomentariocuenta, -1);
         },
         error: function (xhr, status, error) {
           console.error("Error al eliminar la contribución:", error);
@@ -1636,22 +1676,8 @@ function crearContribucion(contenido, tipo, rama, propietario, idForo, idAlumno,
 
           $(tablaAccionesEdicionId).hide();
         }
-        swal.fire("Contribución creada exitosamente", "¡Gracias por tu contribución!", "success")
-          .then((result) => {
-            if (result.isConfirmed || result.isDismissed) {
-              if (rama == 1) {
-                generarrama1(response);
-              } else if (rama == 2) {
-                generarrama2(response);
-              } else if (rama == 3) {
-                generarrama3(response);
-              } else if (rama == 4) {
-                generarrama4(response);
-              } else if (rama == 5) {
-                generarrama5(response);
-              }
-            }
-          });
+        // The UI update is now handled by the 'nueva_contribucion' socket event for all clients.
+        swal.fire("Contribución creada exitosamente", "¡Gracias por tu contribución!", "success");
         console.log('Contribución creada:', response);
         document.getElementById('texto').value = '';
       },

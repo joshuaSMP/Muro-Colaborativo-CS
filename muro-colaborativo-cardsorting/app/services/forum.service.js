@@ -268,6 +268,21 @@ async function updateContribution(contributionId, tipo, contenido) {
   }
 }
 
+async function getContributionDetailsForSocket(contributionId) {
+  const client = await pool.connect();
+  try {
+    const queryText = 'SELECT id_foro, rama, id_contribucioncompartida FROM public.contribucion_compartida WHERE id_contribucion = $1';
+    const params = [contributionId];
+    const result = await client.query(queryText, params);
+    return result.rows[0];
+  } catch (error) {
+    console.error(`Error al obtener detalles de la contribución: ${error.message}`);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function copyContribution(contributionId, userId, nombreAlumno) {
   const client = await pool.connect();
   try {
@@ -374,6 +389,20 @@ async function updateReaction(id_reaccion, emoji) {
   }
 }
 
+async function getPinByIdForo(idForo) {
+  const client = await pool.connect();
+  try {
+    const queryText = 'SELECT pin FROM public.foro WHERE id_foro = $1';
+    const params = [idForo];
+    const result = await client.query(queryText, params);
+    return result.rows[0];
+  } catch (error) {
+    console.error(`Error al obtener el PIN del foro: ${error.message}`);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
 module.exports = {
   insertForum: insertForum,
@@ -393,5 +422,7 @@ module.exports = {
   deleteReaction: deleteReaction,
   updateReaction: updateReaction,
   updateForumStatus: updateForumStatus,
-  getContribucionesPorId:getContribucionesPorId
+  getContribucionesPorId:getContribucionesPorId,
+  getPinByIdForo: getPinByIdForo,
+  getContributionDetailsForSocket: getContributionDetailsForSocket
 }

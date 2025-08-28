@@ -112,7 +112,21 @@ module.exports = {
   createContribution: async (req, res) => {
     try {
       const { id_foro, id_alumno, id_profesor, id_contribucioncompartida, rama, tipo, contenido, propietario } = req.body;
+      const io = req.app.get('socketio');
+
       const newContribution = await forumService.insertSharedContribution(id_foro, id_alumno, id_profesor, id_contribucioncompartida, rama, tipo, contenido, propietario);
+
+      // Después de crear, obtenemos la contribución completa con los nombres
+      const fullContribution = await forumService.getContribucionesPorId(newContribution.id_contribucion, newContribution.rama);
+
+      // Obtenemos el PIN para saber a qué sala emitir
+      const forum = await forumService.getPinByIdForo(id_foro);
+
+      if (forum && forum.pin) {
+        // Emitimos el evento a todos en la sala del namespace /mcv4
+        io.of('/mcv4').to(forum.pin.toString()).emit('nueva_contribucion', fullContribution[0]);
+      }
+
       res.status(201).json(newContribution);
     } catch (error) {
       console.error(error);
@@ -205,8 +219,31 @@ getContribucionesPorId : async (req, res) => {
   
   deleteContribution: async (req, res) => {
     try {  
-      const contributionId = req.params.contribucionId;
+      const contributionId = parseInt(req.params.contribucionId, 10);
+      const io = req.app.get('socketio');
+
+      // Get details needed for socket event before deleting
+      const contributionDetails = await forumService.getContributionDetailsForSocket(contributionId);
+
+      if (!contributionDetails) {
+        // Contribution already deleted or does not exist
+        return res.status(200).json({ message: 'Contribución ya eliminada o no encontrada.' });
+      }
+
       await forumService.deleteContribution(contributionId);
+
+      // Get PIN for the room
+      const forum = await forumService.getPinByIdForo(contributionDetails.id_foro);
+
+      if (forum && forum.pin) {
+        const payload = {
+          id_contribucion: contributionId,
+          rama: contributionDetails.rama,
+          id_contribucioncompartida: contributionDetails.id_contribucioncompartida
+        };
+        io.of('/mcv4').to(forum.pin.toString()).emit('contribucion_eliminada', payload);
+      }
+
       res.status(200).json({ message: 'Contribución eliminada correctamente' });
     } catch (error) {
       console.error(error);
