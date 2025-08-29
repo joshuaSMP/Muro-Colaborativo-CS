@@ -219,7 +219,7 @@ getContribucionesPorId : async (req, res) => {
   
   deleteContribution: async (req, res) => {
     try {  
-      const contributionId = parseInt(req.params.contribucionId, 10);
+      const contributionId = req.params.contribucionId;
       const io = req.app.get('socketio');
 
       // Get details needed for socket event before deleting

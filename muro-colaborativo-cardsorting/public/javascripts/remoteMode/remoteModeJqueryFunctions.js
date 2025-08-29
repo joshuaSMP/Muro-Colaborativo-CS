@@ -1676,7 +1676,7 @@ async function copiarContribucion(contributionId, userId, nombre_alumno) {
 
 
 
-function deleteContribucion(dirtyId, rama, idcomentariocuenta) {
+function deleteContribucion(contributionId, rama, idcomentariocuenta) {
   console.log("Eliminando");
   swal.fire({
     title: "¿Estás seguro que deseas eliminar tu contribución?",
@@ -1690,10 +1690,9 @@ function deleteContribucion(dirtyId, rama, idcomentariocuenta) {
     allowEscapeKey: false
   }).then((result) => {
     if (result.isConfirmed) {
-      var cleanId = dirtyId.replace("iconoeliminar", "");
       $.ajax({
         type: 'DELETE',
-        url: '/api/foro/contribuciones/' + cleanId,
+        url: '/api/foro/contribuciones/' + contributionId,
         dataType: 'json',
         success: function () {
           // The UI update is now handled by the 'contribucion_eliminada' socket event
@@ -1956,6 +1955,14 @@ async function generarrama1(response) {
   const contributionsList = document.getElementById('contributions_list');
   try {
     const idContribucion = response.id_contribucion;
+
+        // Configurar la contribución como arrastrable
+        $(`#comentario${response.id_contribucion}`).draggable({
+          containment: "parent",  // O "#mural" si quieres que no se salgan del mural
+          cursor: "move",
+          stack: ".comentario" // Asegura que la contribución arrastrada se coloque al frente
+        });
+
     const rama = response.rama;
 
     const nombresResponse = await $.ajax({
