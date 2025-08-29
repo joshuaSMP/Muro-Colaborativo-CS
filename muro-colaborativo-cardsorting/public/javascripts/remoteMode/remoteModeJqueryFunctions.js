@@ -1158,9 +1158,12 @@ async function getContributionslist() {
 function makeContributionDraggable(contributionId) {
   const selector = `#${contributionId}listElement`;
   $(selector).draggable({
-    containment: "parent",
+    containment: "#Discusion",
     cursor: "move",
-    stack: "#contributions_list > li"
+    stack: "#contributions_list > li",
+    scroll: true,
+    scrollSensitivity: 50,
+    scrollSpeed: 15
   });
 }
 
