@@ -437,6 +437,7 @@ async function getContributionslist() {
               <div class="sub-comentario" id="comment${contribucion.id_contribucion}Subcomments" style="display: none"></div>
           </li>`;
         $('#contributions_list').prepend(element);
+        makeContributionDraggable(contribucion.id_contribucion);
 
         $(`#emojiIcon${contribucion.id_contribucion}`).click(function () {
           var id_contribucion = $(this).attr("id").substring(9);
@@ -890,6 +891,15 @@ initializeReactionHandlers();
     console.error("Error in getContributions:", error);
   }
 };
+
+function makeContributionDraggable(contributionId) {
+  const selector = `#${contributionId}listElement`;
+  $(selector).draggable({
+    containment: "parent",
+    cursor: "move",
+    stack: "#contributions_list > li"
+  });
+}
 
 function verificarYMostrarRama2(idContribucion, rama, nombreAlumno) {
   const currentUserId = localStorage.getItem("userId"); // Obtener el userId del localStorage
@@ -1696,13 +1706,7 @@ async function generarrama1(response) {
   try {
     const idContribucion = response.id_contribucion;
 
-        // Configurar la contribución como arrastrable
-        $(`#comentario${response.id_contribucion}`).draggable({
-          containment: "parent",  // O "#mural" si quieres que no se salgan del mural
-          cursor: "move",
-          stack: ".comentario" // Asegura que la contribución arrastrada se coloque al frente
-        });
-
+    
     const rama = response.rama;
 
     const nombresResponse = await $.ajax({
@@ -1793,6 +1797,9 @@ async function generarrama1(response) {
 
       // Añadir la nueva contribución al principio de contributions_list
       contributionsList.insertAdjacentHTML('afterbegin', contenidoHtml);
+
+      // Hacer la nueva contribución arrastrable
+      makeContributionDraggable(response.id_contribucion);
 
       // Event listener para mostrar/ocultar emojis
       $(`#emojiIcon${response.id_contribucion}`).click(function () {
