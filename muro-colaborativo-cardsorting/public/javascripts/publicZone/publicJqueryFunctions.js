@@ -110,6 +110,20 @@ socket.on('contribucion_eliminada', function(data) {
   }
 });
 
+socket.on('contribucion_movida', function(data) {
+  const elementToMove = $(`#${data.id}listElement`);
+  if (elementToMove.length) {
+    elementToMove.css({ top: data.top, left: data.left });
+  }
+});
+
+socket.on('contribucion_movida', function(data) {
+  const elementToMove = $(`#${data.id}listElement`);
+  if (elementToMove.length) {
+    elementToMove.css({ top: data.top, left: data.left });
+  }
+});
+
 document.getElementById('Discusion').addEventListener('scroll', function() {
   scrollFunction();
 });
@@ -920,7 +934,15 @@ function makeContributionDraggable(contributionId) {
     stack: "#contributions_list > li",
     scroll: true,
     scrollSensitivity: 50,
-    scrollSpeed: 15
+    scrollSpeed: 15,
+    stop: function(event, ui) {
+      // Cuando el usuario suelta el elemento, emitimos su nueva posición
+      const contributionId = $(this).attr('id').replace('listElement', '');
+      const position = ui.position; // { top, left }
+      const pin = localStorage.getItem("pin");
+      
+      socket.emit('mover_contribucion', { id: contributionId, top: position.top, left: position.left, pin: pin });
+    }
   });
 }
 

@@ -11,6 +11,14 @@ module.exports = function (io) {
     socket.on('join_room', function (room) {
       socket.join(room)
     })
+
+    socket.on('mover_contribucion', function (data) {
+      // Retransmitimos el evento a todos los demás en la sala (PIN)
+      // 'socket.to(data.pin).emit(...)' envía a todos en la sala excepto al emisor original.
+      if (data.pin) {
+        socket.to(data.pin.toString()).emit('contribucion_movida', data)
+      }
+    })
     // TODO remove issue #25
     socket.on('prueba', function () {
       console.log('executing socket test')
