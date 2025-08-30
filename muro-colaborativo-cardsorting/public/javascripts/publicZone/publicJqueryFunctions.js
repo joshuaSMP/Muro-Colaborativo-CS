@@ -76,6 +76,26 @@ socket.on('nueva_contribucion', function(contribution) {
   }
 });
 
+socket.on('contribucion_actualizada', function(contribution) {
+  const contributionId = contribution.id_contribucion;
+  const elementToUpdate = $(`#comentario${contributionId} .coment-cuerpo, #comment${contributionId} .coment-cuerpo`);
+
+  if (elementToUpdate.length > 0) {
+    let newContent;
+    if (contribution.tipo === 2) {
+      newContent = `<center><img class="imageWrapper" src="/uploads/${contribution.contenido}" style="width:50%;height:30%;margin-left:100px" /></center>`;
+    } else if (contribution.tipo === 3) {
+      const [url, linkText] = contribution.contenido.split(',');
+      newContent = `<a href="${url}" target="_blank">${linkText || url}</a>`;
+    } else {
+      newContent = contribution.contenido;
+    }
+    // Se asume que el contenido copiado no se puede editar, por lo que no se reprocesa aquí.
+    // Si se pudiera, se necesitaría una lógica más compleja para manejar la referencia.
+    elementToUpdate.html(newContent);
+  }
+});
+
 socket.on('contribucion_eliminada', function(data) {
   const { id_contribucion, rama, id_contribucioncompartida } = data;
   const elementToRemove = $(`#${id_contribucion}listElement`);
@@ -1642,20 +1662,8 @@ function crearContribucion(contenido, tipo, rama, propietario, idForo, idAlumno,
         swal.fire("Contribución actualizada exitosamente", "", "success")
           .then((result) => {
             if (result.isConfirmed || result.isDismissed) {
-              let newContent;
-              if (tipo === 2) {
-                newContent = `<center><img class="imageWrapper" src="/uploads/${contenido}" style="width:50%;height:30%;margin-left:100px" /></center>`;
-              } else if (tipo === 3) {
-                const [url, linkText] = contenido.split(',');
-                newContent = `<a href="${url}" target="_blank">${linkText || url}</a>`;
-              } else {
-                newContent = contenido;
-              }
-              if ($(`#comentario${ContributionId} .coment-cuerpo`).length) {
-                $(`#comentario${ContributionId} .coment-cuerpo`).html(newContent);
-              } else if ($(`#comment${ContributionId} .coment-cuerpo`).length) {
-                $(`#comment${ContributionId} .coment-cuerpo`).html(newContent);
-              }
+              // La actualización del DOM ahora es manejada por el evento de socket 'contribucion_actualizada'
+              // para mantener la consistencia en todos los clientes.
               console.log('Contribución actualizada:', response);
               editmode = false;
               $("#textArea").val("");

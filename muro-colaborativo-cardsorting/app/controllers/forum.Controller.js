@@ -255,10 +255,21 @@ getContribucionesPorId : async (req, res) => {
     try {
       const contributionId = req.params.contribucionId;
       const { tipo, contenido } = req.body;
+      const io = req.app.get('socketio');
       
       const updatedContribution = await forumService.updateContribution(contributionId, tipo, contenido);
-            
-      res.status(200).json({ message: 'Contribución actualizada correctamente', updatedContribution });
+
+      // Después de actualizar, obtenemos la contribución completa con los nombres
+      const fullContribution = await forumService.getContribucionesPorId(updatedContribution.id_contribucion, updatedContribution.rama);
+
+      // Obtenemos el PIN para saber a qué sala emitir
+      const forum = await forumService.getPinByIdForo(updatedContribution.id_foro);
+
+      if (forum && forum.pin && fullContribution.length > 0) {
+        io.of('/mcv4').to(forum.pin.toString()).emit('contribucion_actualizada', fullContribution[0]);
+      }
+
+      res.status(200).json({ message: 'Contribución actualizada correctamente', updatedContribution: fullContribution[0] });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Error al actualizar la contribución' });
@@ -324,4 +335,4 @@ getContribucionesPorId : async (req, res) => {
     }
   }
 
-}  
+}
