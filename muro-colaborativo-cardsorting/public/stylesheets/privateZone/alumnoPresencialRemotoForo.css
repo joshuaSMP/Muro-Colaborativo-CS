@@ -1066,11 +1066,13 @@ border-color:#3f94e4;
 	background-color: #2e71af;
 	border-radius: 25px;
 	height: 350px;
-	margin-left: 450px;
-	margin-top: 100px;
-	position:absolute;
 	width: 580px;
 	display: none;
+	position: fixed !important;
+	z-index: 20001 !important;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 .textosubir {
@@ -1274,10 +1276,10 @@ body.blurred {
 	border-radius: 25px;
 	height: 320px;
 	width: 250px;
-	position: relative !important;
+	position: fixed !important;
 	top: 330px;
 	left: 50px;
-	z-index: 1000;
+	z-index: 20000 !important;
 	overflow: visible;
 	user-select: none;
 	display: none;
@@ -1348,22 +1350,26 @@ body.blurred {
 	background-color: #2e71af;
 	border-radius: 25px;
 	height: 215px;
-	margin-left: 420px;
-	margin-top: 230px;
-	position:absolute;
 	width: 650px;
 	display: none;
+	position: fixed !important;
+	z-index: 20001 !important;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 #linkMode {
 	background-color: #2e71af;
 	border-radius: 25px;
 	height: 230px;
-	margin-left: 438px;
-	margin-top: 225px;
-	position:absolute;
 	width: 650px;
 	display: none;
+	position: fixed !important;
+	z-index: 20001 !important;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 .titulolink{
