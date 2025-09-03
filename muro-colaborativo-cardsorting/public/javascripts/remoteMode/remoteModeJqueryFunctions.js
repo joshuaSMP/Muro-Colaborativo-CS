@@ -417,14 +417,14 @@ function toggleReaccionTable(id_contribucion) {
 function addOrUpdateReaccion(id_contribucion, emoji) {
   var id_reaccion = $('#emojiIcon' + id_contribucion).data('reaction-id');
   var userId = localStorage.getItem("userId");
-  var idProfesor = localStorage.getItem("idProfesor");
-  var propietario = 1; // Establecemos propietario en 1 por defecto
+  var idProfesor = localStorage.getItem("idProfesor"); // Obtener el ID del profesor guardado
+  var propietario = 1; // 1 para alumno, correcto
 
   var datos = {
     id_contribucion: id_contribucion,
     emoji: emoji,
     id_alumno: userId,
-    id_profesor: idProfesor,
+    id_profesor: idProfesor, // Ahora enviamos el ID del profesor
     propietario: propietario
   };
 
@@ -465,6 +465,24 @@ function addOrUpdateReaccion(id_contribucion, emoji) {
     });
   }
 }
+
+async function getProfesorIdFromPin(pin) {
+  try {
+    const response = await $.ajax({
+      type: 'GET',
+      url: `/api/foro/pin/${pin}`,
+      dataType: 'json'
+    });
+    if (response.data && response.data.id_profesor) {
+      return response.data.id_profesor;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error al obtener el ID del profesor:', error);
+    return null;
+  }
+}
+
 
 function removeReaccion(id_reaccion, id_contribucion) {
   $.ajax({
@@ -622,7 +640,6 @@ async function getReaccionCountAndSetEmoji(id_contribucion) {
 
 async function getContributionslist() {
   $('#contributions_list').empty();
-  $('#contributions_list').empty();
   const currentUserId = localStorage.getItem("userId");
   try {
     const res = await $.ajax({
@@ -713,9 +730,6 @@ async function getContributionslist() {
         updateReactionCount(contribucion.id_contribucion);
         verificarYMostrarRama2(contribucion.id_contribucion, 2, nombrePropietario);
       }
-      verificarYMostrarRama2(contribucion.id_contribucion, 3, contribucion.nombre_alumno);
-      verificarYMostrarRama2(contribucion.id_contribucion, 4, contribucion.nombre_alumno);
-      verificarYMostrarRama2(contribucion.id_contribucion, 5, contribucion.nombre_alumno);
     }
 
     $(document).on("click", ".responder2", function () {
@@ -1316,7 +1330,6 @@ function verificarYMostrarRama2(idContribucion, rama, nombreAlumno) {
 
           // Verificar y mostrar ramas 3 y 4
           verificarYMostrarRama3(contribucionRama2.id_contribucion, 3, nombrePropietario);
-          verificarYMostrarRama3(contribucionRama2.id_contribucion, 4, nombrePropietario);
         });
       }
     } 
@@ -1829,7 +1842,7 @@ $('#fileInput').change(function () {
 });
 
 //CONTRIBUCION POR TEXTO
-document.getElementById('botonAceptarTexto').addEventListener('click', function () {
+document.getElementById('botonAceptarTexto').addEventListener('click', async function () {
   var contenido = document.getElementById('texto').value;
   var tipo = 1;
   var rama = ramacontribucion;
@@ -1838,9 +1851,9 @@ document.getElementById('botonAceptarTexto').addEventListener('click', function 
     alert('Por favor, escribe algo antes de crear la contribución.');
     return;
   }
+  const idProfesor = await getProfesorIdFromPin(pin_priv);
   var idForo = localStorage.getItem('idForo');
   var idAlumno = localStorage.getItem("id")
-  var idProfesor = localStorage.getItem('idProfesor');
   var id_contribucion = ContributionId;
 
   crearContribucion(contenido, tipo, rama, propietario, idForo, idAlumno, idProfesor, id_contribucion);
@@ -1848,7 +1861,7 @@ document.getElementById('botonAceptarTexto').addEventListener('click', function 
 
 
 //CONTRIBUCION POR ENLACE
-document.getElementById('okLink').addEventListener('click', function () {
+document.getElementById('okLink').addEventListener('click', async function () {
   var link = document.getElementById('linkArea').value;
   var nombreLink = document.getElementById('nombreLinkArea').value;
   var contenido = link + "," + nombreLink;
@@ -1861,21 +1874,21 @@ document.getElementById('okLink').addEventListener('click', function () {
   var tipo = 3;
   var rama = ramacontribucion;
   var propietario = 1;
+  const idProfesor = await getProfesorIdFromPin(pin_priv);
   var idForo = localStorage.getItem('idForo');
   var idAlumno = localStorage.getItem("id");
-  var idProfesor = localStorage.getItem('idProfesor');
   var id_contribucion = ContributionId;
 
   crearContribucion(contenido, tipo, rama, propietario, idForo, idAlumno, idProfesor, id_contribucion);
 });
 //CONTRIBUCION POR IMAGEN
-function enviarImagenAlServidor() {
+async function enviarImagenAlServidor() {
   var tipo = 2;
   var rama = ramacontribucion;
   var propietario = 1;
   var idForo = localStorage.getItem('idForo');
-  var idAlumno = localStorage.getItem("id")
-  var idProfesor = localStorage.getItem('idProfesor');
+  var idAlumno = localStorage.getItem("id");
+  const idProfesor = await getProfesorIdFromPin(pin_priv);
   var id_contribucion = ContributionId;
 
   // Obtener la imagen mostrada en 'imagencargada'
@@ -3285,7 +3298,8 @@ function renderActivityData(data) {
 
   localStorage.setItem('idForo', data.id_foro);
   localStorage.setItem('idAlumno', data.id_alumno);
-  localStorage.setItem('idProfesor', data.id_profesor);
+  // Guardamos el id_profesor para usarlo después en las reacciones
+  localStorage.setItem('idProfesor', data.id_profesor); 
 }
 
 function getAllSessions() {

@@ -187,9 +187,8 @@ function toggleReaccionTable(id_contribucion) {
 
 function addOrUpdateReaccion(id_contribucion, emoji) {
   var id_reaccion = $('#emojiIcon' + id_contribucion).data('reaction-id');
-  var userId = localStorage.getItem("userId");
-  var idProfesor = localStorage.getItem("idProfesor");
-  var propietario = 2; // Establecemos propietario en 2 por defecto
+  var idProfesor = localStorage.getItem("userId");
+  var propietario = 2; // 2 para profesor, correcto
 
   var datos = {
     id_contribucion: id_contribucion,
@@ -486,9 +485,6 @@ async function getContributionslist() {
         updateReactionCount(contribucion.id_contribucion);
         verificarYMostrarRama2(contribucion.id_contribucion, 2, nombrePropietario);
       }
-      verificarYMostrarRama2(contribucion.id_contribucion, 3, contribucion.nombre_alumno);
-      verificarYMostrarRama2(contribucion.id_contribucion, 4, contribucion.nombre_alumno);
-      verificarYMostrarRama2(contribucion.id_contribucion, 5, contribucion.nombre_alumno);
     }
 
     $(document).on("click", ".responder2", function () {
@@ -1053,7 +1049,6 @@ function verificarYMostrarRama2(idContribucion, rama, nombreAlumno) {
 
           // Verificar y mostrar ramas 3 y 4
           verificarYMostrarRama3(contribucionRama2.id_contribucion, 3, nombrePropietario);
-          verificarYMostrarRama3(contribucionRama2.id_contribucion, 4, nombrePropietario);
         });
       }
     } 
