@@ -42,6 +42,11 @@ $("#fullScreenPublicZone").click(function () {
 })
 
 $(document).ready(function() {
+  // Move modals to be direct children of `body` to escape any
+  // stacking contexts that could limit their z-index. This is a robust
+  // way to ensure they always appear on top of other page content.
+  $("#selectMosaicSpace, #workspaceMode, #SubirFoto, #linkMode").appendTo("body");
+
   getContributionslist();
   $('.toggle-icon').click();
   getActivityData();
