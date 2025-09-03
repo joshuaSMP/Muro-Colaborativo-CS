@@ -115,30 +115,6 @@ socket.on('contribucion_movida', function(data) {
   }
 });
 
-document.getElementById('Discusion').addEventListener('scroll', function() {
-  scrollFunction();
-});
-
-function scrollFunction() {
-  const scrollToTopBtn = document.getElementById("scrollToTopBtn");
-  const discusion = document.getElementById("Discusion");
-
-  // Verificar si el usuario está haciendo scroll hacia arriba
-  if (discusion.scrollTop === 0) {
-    scrollToTopBtn.classList.add("visible");
-  } else {
-    scrollToTopBtn.classList.remove("visible");
-  }
-}
-
-// Función para desplazar la página hacia arriba y recargarla
-function scrollToTop() {
-  scrollToTopBtn.classList.remove("visible");
-  document.body.scrollTop = 0; // Para Safari
-  document.documentElement.scrollTop = 0; // Para Chrome, Firefox, IE y Opera
-  location.reload();
-}
-
 function ValidarStatus() {
   $.ajax({
     type: 'GET',

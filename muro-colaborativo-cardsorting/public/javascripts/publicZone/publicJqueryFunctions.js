@@ -147,10 +147,9 @@ function scrollFunction() {
 
 // Función para desplazar la página hacia arriba y recargarla
 function scrollToTop() {
-  scrollToTopBtn.classList.remove("visible");
-  document.body.scrollTop = 0; // Para Safari
-  document.documentElement.scrollTop = 0; // Para Chrome, Firefox, IE y Opera
-  location.reload();
+  // Desplaza suavemente el contenedor de discusión hacia arriba
+  const discusion = document.getElementById("Discusion");
+  discusion.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 

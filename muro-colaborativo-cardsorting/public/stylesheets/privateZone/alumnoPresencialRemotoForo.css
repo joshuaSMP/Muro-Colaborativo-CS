@@ -975,33 +975,6 @@ border-color:#3f94e4;
 	font-family:'Franklin Gothic Medium'; 
 }
 
-#scrollToTopBtn {
-  display: none;   
-}
-
-#scrollToTopBtn.visible:hover {
-  background-color: #2f608e;
-}
-
-#scrollToTopBtn.visible {
-  display: block;
-  position: fixed;
-  bottom: 20px;
-  left: 350px;
-  color: #ffffff;
-  width: 40px;
-  height: 40px;
-  line-height: 40px;
-  text-align: center;
-  font-size: 36px;
-  cursor: pointer;
-  z-index: 999;
-	font-family: monospace;
-	border-radius: 50%;
-	background-color: #276daa;
-	border-color: white;
-}
-
 
 #cerrarTabla {
   font-style: initial;
