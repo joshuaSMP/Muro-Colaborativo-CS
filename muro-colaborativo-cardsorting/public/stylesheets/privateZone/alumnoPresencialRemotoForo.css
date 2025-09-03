@@ -731,17 +731,8 @@ border-color:#3f94e4;
   transform: scale(1.2);
 }
 
-
-
 .toggle-icon {
-	margin-top: -130px;
-	margin-left: 350px;
-  font-size: 32px;
-  color: #316699; 
-  cursor: pointer;
-  position:fixed;
-  left: 8px; 
-  top: 205px; 
+  display: none;
 }
 
 #Respondiendoa{
