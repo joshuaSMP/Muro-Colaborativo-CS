@@ -349,8 +349,8 @@ border-color:#3f94e4;
 	font-family:'Franklin Gothic Medium';
   font-size: 18px;
 	position: absolute;
-	bottom: -10px;
-	left: 70px;
+	bottom: -8px;
+	left: 85px;
 	opacity: 1;
 }
 
@@ -378,8 +378,8 @@ border-color:#3f94e4;
 
 #emojisTable {
 	position: absolute;
-	bottom: 40px;
-	left: -30px; 
+	bottom: 45px;
+	left: -15px; 
 	background-color: #2e71af; 
 	border: none; 
 	border-radius: 15px; 
@@ -882,7 +882,7 @@ border-color:#3f94e4;
 .reacciones {
 	position: absolute; 
 	bottom: -13px;
-	left: 0%;
+	left: 25px;
 	font-size: 43px;
 	height: auto; 
 	cursor: pointer; 

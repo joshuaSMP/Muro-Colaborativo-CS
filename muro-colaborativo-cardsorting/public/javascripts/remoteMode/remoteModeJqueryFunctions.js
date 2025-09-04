@@ -511,11 +511,7 @@ function getReaccionCount(id_contribucion) {
       let counts = {
         '👍': 0,
         '👎': 0,
-        '❤️': 0,
-        '😂': 0,
-        '😯': 0,
-        '😡': 0,
-        '😢': 0
+        '❤️': 0
       };
 
       response.forEach(reaction => {
@@ -539,11 +535,7 @@ function getReaccionCount(id_contribucion) {
 
       $(`#gusta${id_contribucion}`).text(counts['👍']);
       $(`#disgusta${id_contribucion}`).text(counts['👎']);
-      $(`#corazon${id_contribucion}`).text(counts['❤️']);
-      $(`#risa${id_contribucion}`).text(counts['😂']);
-      $(`#asombro${id_contribucion}`).text(counts['😯']);
-      $(`#enojo${id_contribucion}`).text(counts['😡']);
-      $(`#tristeza${id_contribucion}`).text(counts['😢']);
+      $(`#corazon${id_contribucion}`).text(counts['❤️']);      
 
       $(`#numReacciones${id_contribucion}`).show();
     },
@@ -567,11 +559,7 @@ async function getReaccionCountAndSetEmoji(id_contribucion) {
       let counts = {
         '👍': 0,
         '👎': 0,
-        '❤️': 0,
-        '😂': 0,
-        '😯': 0,
-        '😡': 0,
-        '😢': 0
+        '❤️': 0
       };
 
       response.forEach(reaction => {
@@ -678,11 +666,7 @@ async function getContributionslist() {
                               <tr>
                                   <td><span class="emoji">👍</span></td>
                                   <td><span class="emoji">👎</span></td>
-                                  <td><span class="emoji">❤️</span></td>
-                                  <td><span class="emoji">😂</span></td>
-                                  <td><span class="emoji">😯</span></td>
-                                  <td><span class="emoji">😡</span></td>
-                                  <td><span class="emoji">😢</span></td>
+                                  <td><span class="emoji">❤️</span></td>                                  
                               </tr>
                           </table>
                       </div>                 
@@ -1275,10 +1259,6 @@ function verificarYMostrarRama2(idContribucion, rama, nombreAlumno) {
                         <td><span class="emoji">👍</span></td>
                         <td><span class="emoji">👎</span></td>
                         <td><span class="emoji">❤️</span></td>
-                        <td><span class="emoji">😂</span></td>
-                        <td><span class="emoji">😯</span></td>
-                        <td><span class="emoji">😡</span></td>
-                        <td><span class="emoji">😢</span></td>
                       </tr>
                     </table>
                   </div>
@@ -1386,11 +1366,7 @@ function verificarYMostrarRama3(idContribucion, rama, nombreAlumno) {
                     <tr>
                       <td><span class="emoji">👍</span></td>
                       <td><span class="emoji">👎</span></td>
-                      <td><span class="emoji">❤️</span></td>
-                      <td><span class="emoji">😂</span></td>
-                      <td><span class="emoji">😯</span></td>
-                      <td><span class="emoji">😡</span></td>
-                      <td><span class="emoji">😢</span></td>
+                      <td><span class="emoji">❤️</span></td>                      
                     </tr>
                   </table>
                 </div>
@@ -1505,11 +1481,7 @@ function verificarYMostrarRama4(idContribucion, rama, nombreAlumno) {
                       <tr>
                         <td><span class="emoji">👍</span></td>
                         <td><span class="emoji">👎</span></td>
-                        <td><span class="emoji">❤️</span></td>
-                        <td><span class="emoji">😂</span></td>
-                        <td><span class="emoji">😯</span></td>
-                        <td><span class="emoji">😡</span></td>
-                        <td><span class="emoji">😢</span></td>
+                        <td><span class="emoji">❤️</span></td>                        
                       </tr>
                     </table>
                   </div>                 
@@ -1629,11 +1601,7 @@ function verificarYMostrarRama5(idContribucion, rama, nombreAlumno) {
                       <tr>
                         <td><span class="emoji">👍</span></td>
                         <td><span class="emoji">👎</span></td>
-                        <td><span class="emoji">❤️</span></td>
-                        <td><span class="emoji">😂</span></td>
-                        <td><span class="emoji">😯</span></td>
-                        <td><span class="emoji">😡</span></td>
-                        <td><span class="emoji">😢</span></td>
+                        <td><span class="emoji">❤️</span></td>                        
                       </tr>
                     </table>
                   </div>                 
@@ -2062,10 +2030,6 @@ async function generarrama1(response) {
                     <td><span class="emoji">👍</span></td>
                     <td><span class="emoji">👎</span></td>
                     <td><span class="emoji">❤️</span></td>
-                    <td><span class="emoji">😂</span></td>
-                    <td><span class="emoji">😯</span></td>
-                    <td><span class="emoji">😡</span></td>
-                    <td><span class="emoji">😢</span></td>
                   </tr>
                 </table>
               </div>
@@ -2217,10 +2181,6 @@ async function generarrama2(response) {
                   <td><span class="emoji">👍</span></td>
                   <td><span class="emoji">👎</span></td>
                   <td><span class="emoji">❤️</span></td>
-                  <td><span class="emoji">😂</span></td>
-                  <td><span class="emoji">😯</span></td>
-                  <td><span class="emoji">😡</span></td>
-                  <td><span class="emoji">😢</span></td>
                 </tr>
               </table>
             </div>
@@ -2393,10 +2353,6 @@ async function generarrama3(response) {
                   <td><span class="emoji">👍</span></td>
                   <td><span class="emoji">👎</span></td>
                   <td><span class="emoji">❤️</span></td>
-                  <td><span class="emoji">😂</span></td>
-                  <td><span class="emoji">😯</span></td>
-                  <td><span class="emoji">😡</span></td>
-                  <td><span class="emoji">😢</span></td>
                 </tr>
               </table>
             </div>
@@ -2567,10 +2523,6 @@ async function generarrama4(response) {
                   <td><span class="emoji">👍</span></td>
                   <td><span class="emoji">👎</span></td>
                   <td><span class="emoji">❤️</span></td>
-                  <td><span class="emoji">😂</span></td>
-                  <td><span class="emoji">😯</span></td>
-                  <td><span class="emoji">😡</span></td>
-                  <td><span class="emoji">😢</span></td>
                 </tr>
               </table>
             </div>
@@ -2740,10 +2692,6 @@ async function generarrama5(response) {
                   <td><span class="emoji">👍</span></td>
                   <td><span class="emoji">👎</span></td>
                   <td><span class="emoji">❤️</span></td>
-                  <td><span class="emoji">😂</span></td>
-                  <td><span class="emoji">😯</span></td>
-                  <td><span class="emoji">😡</span></td>
-                  <td><span class="emoji">😢</span></td>
                 </tr>
               </table>
             </div>
