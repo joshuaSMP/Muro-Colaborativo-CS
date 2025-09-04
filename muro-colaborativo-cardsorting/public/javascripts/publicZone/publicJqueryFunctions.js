@@ -122,6 +122,13 @@ socket.on('contribucion_movida', function(data) {
   }
 });
 
+socket.on('reaccion_actualizada', function(data) {
+  const { id_contribucion } = data;
+  if ($(`#${id_contribucion}listElement`).length > 0) {
+    getReaccionCountAndSetEmoji(id_contribucion);
+  }
+});
+
 socket.on('contribucion_movida', function(data) {
   const elementToMove = $(`#${data.id}listElement`);
   if (elementToMove.length) {

@@ -293,13 +293,23 @@ getContribucionesPorId : async (req, res) => {
   createReaction: async (req, res) => {
     try {
       const { id_contribucion, emoji, id_alumno, id_profesor, propietario } = req.body;
+      const io = req.app.get('socketio');
       const newReaction = await forumService.insertReaction(id_contribucion, emoji, id_alumno, id_profesor, propietario);
+
+      const contributionDetails = await forumService.getContributionDetailsForSocket(id_contribucion);
+      if (contributionDetails && contributionDetails.id_foro) {
+        const forum = await forumService.getPinByIdForo(contributionDetails.id_foro);
+        if (forum && forum.pin) {
+          io.of('/mcv4').to(forum.pin.toString()).emit('reaccion_actualizada', { id_contribucion: id_contribucion });
+        }
+      }
+
       res.status(201).json(newReaction);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Error al añadir reacción' });
     }
-  },  
+  },
 
   getReaction: async (req, res) => {
     try {
@@ -310,24 +320,46 @@ getContribucionesPorId : async (req, res) => {
       console.error(error);
       res.status(500).json({ message: 'Error al obtener las reacciones' });
     }
-  },  
+  },
 
   deleteReaction: async (req, res) => {
     try {
       const id_reaccion = req.params.id_reaccion;
+      const io = req.app.get('socketio');
       const deletedReaction = await forumService.deleteReaction(id_reaccion);
+
+      if (deletedReaction && deletedReaction.id_contribucion) {
+        const contributionDetails = await forumService.getContributionDetailsForSocket(deletedReaction.id_contribucion);
+        if (contributionDetails && contributionDetails.id_foro) {
+          const forum = await forumService.getPinByIdForo(contributionDetails.id_foro);
+          if (forum && forum.pin) {
+            io.of('/mcv4').to(forum.pin.toString()).emit('reaccion_actualizada', { id_contribucion: deletedReaction.id_contribucion });
+          }
+        }
+      }
+
       res.status(200).json({ message: 'Reacción eliminada correctamente', deletedReaction });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Error al eliminar la reacción' });
     }
-  },  
+  },
 
   updateReaction: async (req, res) => {
     try {
       const id_reaccion = req.params.id_reaccion;
       const { emoji } = req.body;
+      const io = req.app.get('socketio');
       const updatedReaction = await forumService.updateReaction(id_reaccion, emoji);
+
+      const contributionDetails = await forumService.getContributionDetailsForSocket(updatedReaction.id_contribucion);
+      if (contributionDetails && contributionDetails.id_foro) {
+        const forum = await forumService.getPinByIdForo(contributionDetails.id_foro);
+        if (forum && forum.pin) {
+          io.of('/mcv4').to(forum.pin.toString()).emit('reaccion_actualizada', { id_contribucion: updatedReaction.id_contribucion });
+        }
+      }
+
       res.status(200).json({ message: 'Reacción actualizada correctamente', updatedReaction });
     } catch (error) {
       console.error(error);
