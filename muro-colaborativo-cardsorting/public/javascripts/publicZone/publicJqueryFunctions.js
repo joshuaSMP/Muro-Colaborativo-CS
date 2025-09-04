@@ -186,7 +186,7 @@ function toggleReaccionTable(id_contribucion) {
 
 function addOrUpdateReaccion(id_contribucion, emoji) {
   var id_reaccion = $('#emojiIcon' + id_contribucion).data('reaction-id');
-  var idProfesor = localStorage.getItem("userId");
+  var idProfesor = localStorage.getItem("idProfesor") || localStorage.getItem("userId"); // Usar idProfesor si existe, si no, userId como fallback
   var propietario = 2; // 2 para profesor, correcto
 
   var datos = {

@@ -328,7 +328,13 @@ async function insertReaction(id_contribucion, emoji, id_alumno, id_profesor, pr
       (id_contribucion, emoji, id_alumno, id_profesor, propietario)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *`;
-    const params = [id_contribucion, emoji, id_alumno, id_profesor, propietario];
+    // Si id_alumno es null o undefined, lo convertimos a un NULL explícito para SQL.
+    // Lo mismo para id_profesor, aunque en el flujo actual siempre tiene valor.
+    const params = [
+      id_contribucion, emoji, 
+      id_alumno || null, 
+      id_profesor || null, 
+      propietario];
     const result = await client.query(queryText, params);
     return result.rows[0];
   } finally {
