@@ -223,10 +223,8 @@ function toggleSession(forumId, newStatus) {
     data: JSON.stringify({ esta_activa: newStatus }),
     success: function (res) {
       console.log("Estado del foro actualizado:", res);
-      // Actualiza el botón y el estado del foro en la UI
-      $('#' + forumId + 'loadSessionBtn').text(newStatus ? "Cerrar" : "Abrir");
-      $('#' + forumId + 'loadSessionBtn').attr("onclick", "toggleSession('" + forumId + "', " + !newStatus + ")");
-      $('#' + forumId + 'listElement').find('p[name="activityState"]').text(newStatus ? 'Abierto' : 'Cerrado');
+      // Vuelve a cargar las sesiones para reflejar el cambio de estado en toda la UI
+      getAdminSessions();
     },
     error: function (xhr, status, error) {
       console.error("Error al actualizar el estado del foro:", error);
