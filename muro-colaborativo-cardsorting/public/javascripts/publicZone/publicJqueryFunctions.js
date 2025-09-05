@@ -46,6 +46,7 @@ $(document).ready(function() {
   // stacking contexts that could limit their z-index. This is a robust
   // way to ensure they always appear on top of other page content.
   $("#selectMosaicSpace, #workspaceMode, #SubirFoto, #linkMode").appendTo("body");
+  ValidarStatus();
 
   getContributionslist();
   $('.toggle-icon').click();
@@ -135,6 +136,37 @@ socket.on('contribucion_movida', function(data) {
     elementToMove.css({ top: data.top, left: data.left });
   }
 });
+
+socket.on('foro_estado_actualizado', function(data) {
+  console.log('Nuevo estado del foro recibido (profesor):', data.esta_activa);
+  if (data.esta_activa) {
+    // El foro se ha activado
+    $('#createObjectBtn').show();
+  } else {
+    // El foro se ha desactivado
+    $('#createObjectBtn').hide();
+  }
+});
+
+function ValidarStatus() {
+  $.ajax({
+    type: 'GET',
+    url: '/api/foro/obtener/' + pin_priv,
+    dataType: 'json',
+    success: function (res) {
+      if (res.esta_activa) {
+        $('#createObjectBtn').show();
+        console.log('El foro está abierto (profesor):', res);
+      } else {
+        $('#createObjectBtn').hide();
+        console.log('El foro está cerrado (profesor):', res);
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error('Error en la solicitud AJAX:', error);
+    }
+  });
+}
 
 document.getElementById('Discusion').addEventListener('scroll', function() {
   scrollFunction();

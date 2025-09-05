@@ -119,12 +119,11 @@ socket.on('foro_estado_actualizado', function(data) {
   console.log('Nuevo estado del foro recibido:', data.esta_activa);
   if (data.esta_activa) {
     // El profesor ha reactivado el foro
+    $('#createObjectBtn').show();
     descongelarInterfaz();
   } else {
     // El profesor ha desactivado el foro
-    congelarInterfaz();
-    mostrarSimboloDePausa();
-    mostrarMensajeDesactivado();
+    $('#createObjectBtn').hide();
   }
 });
 
@@ -143,31 +142,16 @@ function ValidarStatus() {
     dataType: 'json',
     success: function (res) {
       if (res.esta_activa) {
-        console.log('El foro está activo:', res);
+        $('#createObjectBtn').show();
+        console.log('El foro está abierto:', res);
       } else {
-        console.log('El foro no está activo:', res);
-        congelarInterfaz();
-        mostrarSimboloDePausa();
-        mostrarMensajeDesactivado();
+        console.log('El foro está cerrado:', res);
+        $('#createObjectBtn').hide();
       }
     },
     error: function (xhr, status, error) {
       console.error('Error en la solicitud AJAX:', error);
     }
-  });
-}
-function congelarInterfaz() {
-  $(':input').prop('disabled', true);
-  $('a').on('click', function (e) { e.preventDefault(); });
-  $('body').append('<div id="overlay"></div>');
-  $('#overlay').css({
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 9999
   });
 }
 
@@ -176,39 +160,6 @@ function descongelarInterfaz() {
   $(':input').prop('disabled', false);
   // Permite que los enlaces funcionen de nuevo
   $('a').off('click');
-  // Elimina la capa de superposición, el símbolo y el mensaje
-  $('#overlay').remove();
-  $('#pauseSymbol').remove();
-  $('#message').remove();
-}
-
-function mostrarSimboloDePausa() {
-  $('body').append('<div id="pauseSymbol">&#10074;&#10074;</div>');
-  $('#pauseSymbol').css({
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    fontSize: '5em',
-    color: 'white',
-    zIndex: 10000
-  });
-}
-
-function mostrarMensajeDesactivado() {
-  $('body').append('<div id="message">El profesor desactivó el Foro de discusión</div>');
-  $('#message').css({
-    position: 'fixed',
-    top: '60%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    fontSize: '2em',
-    color: 'white',
-    textAlign: 'center',
-    padding: '1em',
-    borderRadius: '10px',
-    zIndex: 10001
-  });
 }
 
 $("#selectMosaicSpace").hide();

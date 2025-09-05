@@ -165,7 +165,7 @@ function getAdminSessions() {
         var foro = res.forums[i];
         var fechaCreacion = new Date(foro.fecha_creacion);
         var fechaFormateada = fechaCreacion.toLocaleDateString("es-ES", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        var textoBoton = foro.esta_activa ? "Desactivar" : "Activar"; // Define el texto del botón según el estado de foro.esta_activa
+        var textoBoton = foro.esta_activa ? "Cerrar" : "Abrir"; // Define el texto del botón según el estado de foro.esta_activa
         var element = '<li id="' + foro.id_foro + 'listElement">' +
           '<div class="activitycontainer">' +
           '<div style="text-align:center; padding:5px; font: 1.5vw;">' +
@@ -188,7 +188,7 @@ function getAdminSessions() {
           '</div>' +
           '<div id="activity-information" style="position: absolute; top: 45vh; right:9.9vw; font-size: 1vw;">' +
           '<center> <p style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;">PIN: <span>' + foro.pin + '</span></p>' +
-          '<p name = "activityState" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;">' + (foro.esta_activa ? 'Activo' : 'Desactivado') + '</p>' +
+          '<p name = "activityState" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;">' + (foro.esta_activa ? 'Abierto' : 'Cerrado') + '</p>' +
           '<p name ="subjectActivity" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;"> <span id="materia_' + foro.id_foro + '">' + '</span> </p>' +
           '<p class ="creationDateActivity" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;"> Creada: ' + fechaFormateada + '</p> </center>' +
           '</div>' +
@@ -224,9 +224,9 @@ function toggleSession(forumId, newStatus) {
     success: function (res) {
       console.log("Estado del foro actualizado:", res);
       // Actualiza el botón y el estado del foro en la UI
-      $('#' + forumId + 'loadSessionBtn').text(newStatus ? "Desactivar" : "Activar");
+      $('#' + forumId + 'loadSessionBtn').text(newStatus ? "Cerrar" : "Abrir");
       $('#' + forumId + 'loadSessionBtn').attr("onclick", "toggleSession('" + forumId + "', " + !newStatus + ")");
-      $('#' + forumId + 'listElement').find('p[name="activityState"]').text(newStatus ? 'Activo' : 'Desactivado');
+      $('#' + forumId + 'listElement').find('p[name="activityState"]').text(newStatus ? 'Abierto' : 'Cerrado');
     },
     error: function (xhr, status, error) {
       console.error("Error al actualizar el estado del foro:", error);
@@ -311,7 +311,7 @@ function toggleSessionBackground(id, isActive) {
     $("#" + id + 'listElement').find('.activitycontainer').find('.dotsMenu').find('.dropdown').find('button').css("background-color", "#99CCFF")
   }
   $("#" + id + 'listElement').css("background-color", "")
-  $("#" + id + 'loadSessionBtn').text(isActive ? "Desactivar" : "Activar")
+  $("#" + id + 'loadSessionBtn').text(isActive ? "Cerrar" : "Abrir")
 }
 
 function prepareStartSession(id) {
