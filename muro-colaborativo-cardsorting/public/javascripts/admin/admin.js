@@ -188,8 +188,7 @@ function getAdminSessions() {
           '</div>' +
           '<div id="activity-information" style="position: absolute; top: 45vh; right:9.9vw; font-size: 1vw;">' +
           '<center> <p style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;">PIN: <span>' + foro.pin + '</span></p>' +
-          '<p name = "activityState" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;">' + (foro.esta_activa ? 'Abierto' : 'Cerrado') + '</p>' +
-          '<p name ="subjectActivity" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;"> <span id="materia_' + foro.id_foro + '">' + '</span> </p>' +
+          '<p name = "activityState" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;">Card Sorting ' + (foro.esta_activa ? 'Abierto' : 'Cerrado') + '</p>' +
           '<p class ="creationDateActivity" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;"> Creada: ' + fechaFormateada + '</p> </center>' +
           '</div>' +
           '</div>' +
