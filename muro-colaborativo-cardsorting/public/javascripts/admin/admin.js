@@ -164,8 +164,8 @@ function getAdminSessions() {
       for (var i = 0; i < res.forums.length; i++) {
         var foro = res.forums[i];
         var fechaCreacion = new Date(foro.fecha_creacion);
-        var fechaFormateada = fechaCreacion.toLocaleDateString("es-ES", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        var textoBoton = foro.esta_activa ? "Cerrar" : "Abrir"; // Define el texto del botón según el estado de foro.esta_activa
+        var fechaFormateada = fechaCreacion.toLocaleDateString("es-ES", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });        
+        var textoBoton = foro.esta_activa ? "Card Sorting Cerrado" : "Card Sorting Abierto"; // Define el texto del botón según el estado de foro.esta_activa
         var element = '<li id="' + foro.id_foro + 'listElement">' +
           '<div class="activitycontainer">' +
           '<div style="text-align:center; padding:5px; font: 1.5vw;">' +
