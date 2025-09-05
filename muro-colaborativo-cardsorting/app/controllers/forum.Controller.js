@@ -90,7 +90,17 @@ module.exports = {
     try {
       const forumId = req.params.forumId;
       const { esta_activa } = req.body;
+      const io = req.app.get('socketio');
+
       const updatedForum = await forumService.updateForumStatus(forumId, esta_activa);
+
+      // Obtener el PIN para saber a qué sala emitir
+      const forum = await forumService.getPinByIdForo(forumId);
+      if (forum && forum.pin) {
+        // Emitir el cambio de estado a todos en la sala
+        io.of('/mcv4').to(forum.pin.toString()).emit('foro_estado_actualizado', { esta_activa: esta_activa });
+      }
+
       res.status(200).json({ message: 'Estado del foro actualizado correctamente', updatedForum });
     } catch (error) {
       console.error(error);

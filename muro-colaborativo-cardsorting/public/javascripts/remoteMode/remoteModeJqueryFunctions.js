@@ -115,6 +115,20 @@ socket.on('reaccion_actualizada', function(data) {
   }
 });
 
+socket.on('foro_estado_actualizado', function(data) {
+  console.log('Nuevo estado del foro recibido:', data.esta_activa);
+  if (data.esta_activa) {
+    // El profesor ha reactivado el foro
+    descongelarInterfaz();
+  } else {
+    // El profesor ha desactivado el foro
+    congelarInterfaz();
+    mostrarSimboloDePausa();
+    mostrarMensajeDesactivado();
+  }
+});
+
+
 socket.on('contribucion_movida', function(data) {
   const elementToMove = $(`#${data.id}listElement`);
   if (elementToMove.length) {
@@ -155,6 +169,17 @@ function congelarInterfaz() {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     zIndex: 9999
   });
+}
+
+function descongelarInterfaz() {
+  // Habilita todos los inputs
+  $(':input').prop('disabled', false);
+  // Permite que los enlaces funcionen de nuevo
+  $('a').off('click');
+  // Elimina la capa de superposición, el símbolo y el mensaje
+  $('#overlay').remove();
+  $('#pauseSymbol').remove();
+  $('#message').remove();
 }
 
 function mostrarSimboloDePausa() {
