@@ -1056,20 +1056,24 @@ border-color:#3f94e4;
 }
 
 #cargarfoto{
-	
 	font-size: 20px;
 	background-color: #6DC8DD;
 	border-radius: 10px;
-	color: #000000;
+	color: #ffffff;
 	height: 42px;
-	float:left;
 	width: 180px;
 	cursor: pointer;
 	position: absolute;
 	top: 100px;
 	left: 30px;
-	font-weight: 600;
-	border-radius: 5px;
+	font-weight: 700;
+	text-align: center;
+	line-height: 42px; /* Para centrar verticalmente el texto */
+}
+
+/* Estilo para el input de archivo oculto pero funcional */
+#fileInput {
+	display: none;
 }
 
 #tomarfoto{
@@ -1379,15 +1383,17 @@ body.blurred {
 
 
 #botonimagenAceptar{
-	background-color: #ea713d;
-	color: #F2F2F2;
-	height:40px;
-	margin-left: 402px;
-  margin-top: 334px;
-	border-radius: 10px;
-	width:100px;
-	font-weight: 700;
-	position: absolute;
+  background-color: #ea713d;
+  color: #F2F2F2;
+  height: 40px;
+  border-radius: 10px;
+  width: 120px;
+  font-weight: 700;
+  position: absolute;
+  bottom: 15px; /* Posicionar en la parte inferior */
+  right: 15px; /* Posicionar a la derecha */
+  cursor: pointer;
+  border: none;
 }
 
 #okLink {

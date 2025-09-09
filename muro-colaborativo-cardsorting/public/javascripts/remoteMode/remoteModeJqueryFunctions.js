@@ -45,6 +45,21 @@ $(document).ready(function () {
   $('#userName2').text(localStorage.getItem("userName"));
 });
 
+// Manejador de eventos para la subida de archivos.
+// Se usa la delegación de eventos de jQuery para asegurar que funcione
+// incluso si los elementos se manipulan dinámicamente.
+$(document).on('change', '#fileInput', function(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const previewContainer = $('#imagencargada');
+      previewContainer.html(`<img src="${e.target.result}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`);
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
 socket.on('nueva_contribucion', function(contribution) {
   // Nos aseguramos de no duplicar la contribución para el usuario que la creó.
   // El servidor emite a todos, pero el creador ya la renderiza en el success del AJAX.
@@ -282,6 +297,11 @@ $("#chooseFile").click(function () {
   $("#selectMosaicSpace").hide();
   $("#SubirFoto").show();
 })
+
+// Simula el clic en el input de archivo cuando se presiona el botón visible.
+$("#cargarfoto").click(function () {
+  $("#fileInput").click();
+});
 
 
 document.getElementById('tomarfoto').addEventListener('click', function () {
@@ -1754,18 +1774,9 @@ function updateCommentCount(rama, idcomentariocuenta, incremento) {
 }
 
 
-
-$('#cargarfoto').click(function () {
-  $('#fileInput').click();
-});
-
-$('#fileInput').change(function () {
-  var file = this.files[0];
-  var reader = new FileReader();
-  reader.onload = function (event) {
-    $('#imagencargada').html('<img src="' + event.target.result + '" style="max-width: 100%; max-height: 100%;">');
-  };
-  reader.readAsDataURL(file);
+// Manejador para el botón de aceptar la imagen subida
+document.getElementById('botonimagenAceptar').addEventListener('click', async function () {
+  await enviarImagenAlServidor();
 });
 
 //CONTRIBUCION POR TEXTO
