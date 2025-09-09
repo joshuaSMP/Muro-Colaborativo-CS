@@ -638,106 +638,104 @@ function getMobileOperatingSystem() {
  * Sends the resulting's track pad event position to server
  */
 function sendingCoordinatesAsATrackPad(event) {
-	var sendCoordinatesEachThisNumber = 5;
-	var displacementX = 0;
-	var displacementY = 0;
-	var changesInPixelsInTrackPad = 5;
-	if (!("undefined" === typeof event.originalEvent)) {
-		if (sendCoordinatesEachThisNumber < counterInSendingTrackPadCoordinates) {
-			counterInSendingTrackPadCoordinates = 0;
-			displacementY = event.originalEvent.pageY - positionStartCursorY;
-			displacementX = event.originalEvent.pageX - positionStartCursorX;
-			var dataToSend = {
-				room: pin_priv,
-				message: "trackPadCoordinates",
-				type: 'userMessage',
-				user: $("#userDisplay").text(),
-				x: displacementX * changesInPixelsInTrackPad,
-				y: displacementY * changesInPixelsInTrackPad,
-				userId: userId
-			};
-			socket.emit('move_cursor', dataToSend);
-		}
-		counterInSendingTrackPadCoordinates++;
-		positionStartCursorX = event.originalEvent.pageX;
-		positionStartCursorY = event.originalEvent.pageY
-	}
+  var sendCoordinatesEachThisNumber = 5;
+  var displacementX = 0;
+  var displacementY = 0;
+  var changesInPixelsInTrackPad = 5;
+  if (!("undefined" === typeof event.originalEvent)) {
+    if (sendCoordinatesEachThisNumber < counterInSendingTrackPadCoordinates) {
+      counterInSendingTrackPadCoordinates = 0;
+      displacementY = event.originalEvent.pageY - positionStartCursorY;
+      displacementX = event.originalEvent.pageX - positionStartCursorX;
+      var dataToSend = {
+        room: pin_priv,
+        message: "trackPadCoordinates",
+        type: 'userMessage',
+        user: $("#userDisplay").text(),
+        x: displacementX * changesInPixelsInTrackPad,
+        y: displacementY * changesInPixelsInTrackPad,
+        userId: userId
+      };
+      socket.emit('move_cursor', dataToSend);
+    }
+    counterInSendingTrackPadCoordinates++;
+    positionStartCursorX = event.originalEvent.pageX;
+    positionStartCursorY = event.originalEvent.pageY
+  }
 }
 
 // function to sumbit form automatically
 function submitForm() {
-	console.log("submitForm");
-	if (editModeOn) {
-		console.log("submitForm editModeOn true 1");
-	}
-	$("#uploadForm").submit();
-	if (editModeOn) {
-		console.log("submitForm editModeOn true 2");
-	}
-	submitUpload();
+  var formData = new FormData(document.getElementById('uploadForm'));
+  $.ajax({
+    url: '/api/photo',
+    type: 'POST',
+    data: formData,
+    processData: false,
+    contentType: false,
+    success: function (data) {
+      // The response from /api/photo is a script. We need to extract the filename.
+      var match = data.match(/localStorage\.setItem\("serverFileName","([^"]+)"\)/);
+      if (match && match[1]) {
+        serverFileName = match[1];
+        uploaded = true;
+        if (editModeOn) {
+          loadImageOnClient(newId_image, "", objectSelectedId);
+        } else {
+          kindOfObjectToSend = "image";
+          saveNewObject();
+          changeMode('trackpad');
+        }
+      } else {
+        console.error("Could not extract filename from response.");
+      }
+    },
+    error: function (jqXHR, textStatus, errorThrown) {
+      console.error('File upload failed: ' + textStatus, errorThrown);
+    }
+  });
 }
-
-function submitUpload() {
-	console.log("submitUpload");
-	if (editModeOn) {
-		loadImageOnClient(newId_image, "", objectSelectedId);
-	} else {
-		kindOfObjectToSend = "image"
-		saveNewObject();
-		changeMode('trackpad');
-	}
-}
-
 function chooseFile() {
 	$("#imageSelected").click();
 }
 
 function loadImageOnClient(newId, originalName, privateId) {
-	console.log("loadImageOnClient -> " + serverFileName);
-	console.log("newId: " + newId + " | originalName: " + originalName + " | privateId: " + privateId);
-	if (uploaded) {
-		console.log("loadImageOnClient -> uploaded");
-		var element =
-			'<div class="activitycontainer"' +
-			'<div style="text-align:center; padding:5px; margin-bottom:20px;">' +
-			'<div class="dotsMenu">' +
-			'<div class="dropdown" onmouseover="showDropdownContent(this);" onmouseout="hideDropdownContent(this);">' +
-			'<button style="position: relative; width:3rem; height:3rem; left:150px; top:50px; background-color: #99CCFF; border: none;">' +
-			'<img src= "/images/puntos_blancos.svg">' +
-			'</button>' +
-			'<div class="dropdown-content" style="position:absolute; left: 175px; top: 25px; display: none;">' +
-			'<div style="background-color: #E62C56; height: 120px; width: 200px; display: flex; flex-direction: column; border-radius: 15px; padding: 20px;">' +
-			'<a id="' + newId + 'editObjectBtnA" onclick="editObject(this.id);" onmouseover="highlightElement(this);" onmouseout="removeHighlight(this);"  style="margin-bottom: 8px; margin-top: -8px; color: white;" data-toggle="modal">Editar</a>' +
-			'<a id="' + newId + 'moveObjectBtnA" onclick="moveObject(this.id);" onmouseover="highlightElement(this);" onmouseout="removeHighlight(this);"  style="margin-bottom: 8px; margin-top: 8px; color: white;">Mover </a>' +
-			'<a id="' + newId + 'deleteObjectBtnA" onclick="deleteObject(this.id);" onmouseover="highlightElement(this);" onmouseout="removeHighlight(this);"  style="margin-bottom: 8px; margin-top: 8px; color: white;">Eliminar </a>' +
-			'</div>' +
-			'</div>' +
-			'</div>' +
-			'</div>' +
-			'</div>' +
-			'</div>'
-		$("#mosaicToSend").html("<img class='mosaicToSendSize' src='/uploads/" + serverFileName + "' ></img>" + element);
-		$("#selectMosaicWorkspace").append("<img id=" + privateId + "  class='divImageSelect' src='/uploads/" + serverFileName + "' style='border: 3px solid; border-color:" + arrayColors[assignedCursor - 1] + "'  ></img> ")
-		uploaded = false;
-		objectsCreatedJson[privateId] = {
-			"privateId": privateId,
-			"kindOfObjectToSend": "image",
-			"owners": [userId],
-			"image_path": serverFileName
-		}
-		localStorage.setItem("objectsCreatedJson", JSON.stringify(objectsCreatedJson));
-		$("#" + privateId).click(function () {
-			$("#selectEditOrDeletObjectModal").modal("show");
-			objectSelectedId = privateId;
-		})
-		if (editModeOn) {
-			editModeOn = false;
-		}
-	} else {
-		setTimeout(function () {
-			loadImageOnClient();
-		}, 2000)
-	}
+  var element =
+    '<div class="activitycontainer"' +
+    '<div style="text-align:center; padding:5px; margin-bottom:20px;">' +
+    '<div class="dotsMenu">' +
+    '<div class="dropdown" onmouseover="showDropdownContent(this);" onmouseout="hideDropdownContent(this);">' +
+    '<button style="position: relative; width:3rem; height:3rem; left:150px; top:50px; background-color: #99CCFF; border: none;">' +
+    '<img src= "/images/puntos_blancos.svg">' +
+    '</button>' +
+    '<div class="dropdown-content" style="position:absolute; left: 175px; top: 25px; display: none;">' +
+    '<div style="background-color: #E62C56; height: 120px; width: 200px; display: flex; flex-direction: column; border-radius: 15px; padding: 20px;">' +
+    '<a id="' + newId + 'editObjectBtnA" onclick="editObject(this.id);" onmouseover="highlightElement(this);" onmouseout="removeHighlight(this);"  style="margin-bottom: 8px; margin-top: -8px; color: white;" data-toggle="modal">Editar</a>' +
+    '<a id="' + newId + 'moveObjectBtnA" onclick="moveObject(this.id);" onmouseover="highlightElement(this);" onmouseout="removeHighlight(this);"  style="margin-bottom: 8px; margin-top: 8px; color: white;">Mover </a>' +
+    '<a id="' + newId + 'deleteObjectBtnA" onclick="deleteObject(this.id);" onmouseover="highlightElement(this);" onmouseout="removeHighlight(this);"  style="margin-bottom: 8px; margin-top: 8px; color: white;">Eliminar </a>' +
+    '</div>' +
+    '</div>' +
+    '</div>' +
+    '</div>' +
+    '</div>' +
+    '</div>'
+  $("#mosaicToSend").html("<img class='mosaicToSendSize' src='/uploads/" + serverFileName + "' ></img>" + element);
+  $("#selectMosaicWorkspace").append("<img id=" + privateId + "  class='divImageSelect' src='/uploads/" + serverFileName + "' style='border: 3px solid; border-color:" + arrayColors[assignedCursor - 1] + "'  ></img> ")
+  uploaded = false;
+  objectsCreatedJson[privateId] = {
+    "privateId": privateId,
+    "kindOfObjectToSend": "image",
+    "owners": [userId],
+    "image_path": serverFileName
+  }
+  localStorage.setItem("objectsCreatedJson", JSON.stringify(objectsCreatedJson));
+  $("#" + privateId).click(function () {
+    $("#selectEditOrDeletObjectModal").modal("show");
+    objectSelectedId = privateId;
+  })
+  if (editModeOn) {
+    editModeOn = false;
+  }
 }
 
 function getSessionData() {

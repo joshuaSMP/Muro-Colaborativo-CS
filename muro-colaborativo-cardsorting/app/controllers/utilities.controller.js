@@ -17,14 +17,8 @@ module.exports = {
       file.path = fullPath + finalName
     })
     form.on('file', function () {
-      res.end(`
-        <script>
-          parent.uploaded=true;
-          localStorage.setItem("serverFileName","${String(finalName)}");
-          localStorage.setItem("uploaded","true");
-          parent.serverFileName="${String(finalName)}";
-        </script>
-      `)
+      // Return a clean JSON response with the filename
+      res.status(200).json({ filename: finalName });
     })
   },
 

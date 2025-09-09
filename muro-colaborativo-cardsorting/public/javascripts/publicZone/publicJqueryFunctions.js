@@ -1569,8 +1569,8 @@ function updateCommentCount(rama, idcomentariocuenta, incremento) {
 }
 
 // Manejador para el botón de aceptar la imagen subida
-document.getElementById('botonimagenAceptar').addEventListener('click', function () {
-  enviarImagenAlServidor();
+document.getElementById('botonimagenAceptar').addEventListener('click', function() {
+    enviarImagenAlServidor();
 });
 
 //CONTRIBUCION POR TEXTO
@@ -1650,8 +1650,8 @@ function enviarImagenAlServidor() {
       processData: false,
       contentType: false,
       success: function (data) {
-        var imagencargada = data.match(/localStorage\.setItem\("serverFileName","([^"]+)"\)/)[1];
-        crearContribucion(imagencargada, tipo, rama, propietario, idForo, idAlumno, idProfesor,id_contribucion);
+        // The server now returns a clean JSON response
+        crearContribucion(data.filename, tipo, rama, propietario, idForo, idAlumno, idProfesor,id_contribucion);
       },
       error: function (jqXHR, textStatus, errorThrown) {
         console.error('File upload failed: ' + textStatus, errorThrown);
@@ -1661,15 +1661,14 @@ function enviarImagenAlServidor() {
 }
 
 function crearContribucion(contenido, tipo, rama, propietario, idForo, idAlumno, idProfesor, id_contribucion) {
-  console.log("Datos a enviar:", datos); // Agrega esta línea
   var Id = ContributionId; 
   var datos = {
     contenido: contenido,
     rama: rama,
     tipo: tipo,
     propietario: propietario,
-    id_foro: idForo,
-    id_alumno: null,
+    id_foro: idForo, // Corregido para usar el parámetro
+    id_alumno: idAlumno, // Corregido para usar el parámetro
     id_profesor: idProfesor,
     id_contribucioncompartida: Id,
   };
@@ -1715,23 +1714,15 @@ function crearContribucion(contenido, tipo, rama, propietario, idForo, idAlumno,
       contentType: 'application/json',
       success: function (response) {
         if (tipo == 1) {
-          $("#selectMosaicSpace").hide();
           $("#workspaceMode").hide();
-          $("#createObjectBtn").show();
-          $(tablaAccionesEdicionId).hide();
         } else if (tipo == 2) {
-          $("#selectMosaicSpace").hide();
           $("#SubirFoto").hide();
-          $("#createObjectBtn").show();
-          $(tablaAccionesEdicionId).hide();
         } else if (tipo == 3) {
-          $("#selectMosaicSpace").hide();
           $("#linkMode").hide();
-          $("#createObjectBtn").show();
-
-          $(tablaAccionesEdicionId).hide();
         }
-        // The UI update is now handled by the 'nueva_contribucion' socket event for all clients.
+        $("#selectMosaicSpace").hide();
+        $("#createObjectBtn").show();
+        $(tablaAccionesEdicionId).hide();
         swal.fire("Contribución creada exitosamente", "¡Gracias por tu contribución!", "success");
         console.log('Contribución creada:', response);
         document.getElementById('texto').value = '';
