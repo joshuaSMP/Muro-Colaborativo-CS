@@ -1569,9 +1569,9 @@ function updateCommentCount(rama, idcomentariocuenta, incremento) {
 }
 
 // Manejador para el botón de aceptar la imagen subida
-document.getElementById('botonimagenAceptar').addEventListener('click', function() {
-    enviarImagenAlServidor();
-});
+document.getElementById('botonimagenAceptar').onclick = function() {
+  enviarImagenAlServidor();
+};
 
 //CONTRIBUCION POR TEXTO
 document.getElementById('botonAceptarTexto').addEventListener('click', function () {
@@ -1616,6 +1616,9 @@ document.getElementById('okLink').addEventListener('click', function () {
 //CONTRIBUCION POR IMAGEN
 function enviarImagenAlServidor() {
   var tipo = 2;
+  var botonAceptar = document.getElementById('botonimagenAceptar');
+  botonAceptar.disabled = true; // Deshabilitar el botón para evitar múltiples envíos
+
   var rama = ramacontribucion;
   var propietario = 2;
   var idForo = localStorage.getItem('idForo');
@@ -1652,9 +1655,11 @@ function enviarImagenAlServidor() {
       success: function (data) {
         // The server now returns a clean JSON response
         crearContribucion(data.filename, tipo, rama, propietario, idForo, idAlumno, idProfesor,id_contribucion);
+        botonAceptar.disabled = false; // Re-habilitar el botón en caso de éxito
       },
       error: function (jqXHR, textStatus, errorThrown) {
         console.error('File upload failed: ' + textStatus, errorThrown);
+        botonAceptar.disabled = false; // Re-habilitar el botón en caso de error
       }
     });
   }, 'image/jpeg');

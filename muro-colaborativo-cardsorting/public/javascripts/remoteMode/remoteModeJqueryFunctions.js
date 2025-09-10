@@ -1815,8 +1815,17 @@ document.getElementById('okLink').addEventListener('click', async function () {
   crearContribucion(contenido, tipo, rama, propietario, idForo, idAlumno, idProfesor, id_contribucion);
 });
 //CONTRIBUCION POR IMAGEN
+
+// Manejador para el botón de aceptar la imagen subida
+document.getElementById('botonimagenAceptar').onclick = function() {
+  enviarImagenAlServidor();
+};
+
 async function enviarImagenAlServidor() {
   var tipo = 2;
+  var botonAceptar = document.getElementById('botonimagenAceptar');
+  botonAceptar.disabled = true; // Deshabilitar el botón para evitar múltiples envíos
+
   var rama = ramacontribucion;
   var propietario = 1;
   var idForo = localStorage.getItem('idForo');
@@ -1853,9 +1862,11 @@ async function enviarImagenAlServidor() {
       success: function (data) {
         // The server now returns a clean JSON response
         crearContribucion(data.filename, tipo, rama, propietario, idForo, idAlumno, idProfesor, id_contribucion);
+        botonAceptar.disabled = false; // Re-habilitar el botón en caso de éxito
       },
       error: function (jqXHR, textStatus, errorThrown) {
         console.error('File upload failed: ' + textStatus, errorThrown);
+        botonAceptar.disabled = false; // Re-habilitar el botón en caso de error
       }
     });
   }, 'image/jpeg');

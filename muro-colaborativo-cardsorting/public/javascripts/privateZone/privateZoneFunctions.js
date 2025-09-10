@@ -673,21 +673,16 @@ function submitForm() {
     data: formData,
     processData: false,
     contentType: false,
-    success: function (data) {
-      // The response from /api/photo is a script. We need to extract the filename.
-      var match = data.match(/localStorage\.setItem\("serverFileName","([^"]+)"\)/);
-      if (match && match[1]) {
-        serverFileName = match[1];
-        uploaded = true;
-        if (editModeOn) {
-          loadImageOnClient(newId_image, "", objectSelectedId);
-        } else {
-          kindOfObjectToSend = "image";
-          saveNewObject();
-          changeMode('trackpad');
-        }
+    dataType: 'json', // Especificamos que esperamos una respuesta JSON
+    success: function (response) {
+      serverFileName = response.filename;
+      uploaded = true;
+      if (editModeOn) {
+        loadImageOnClient(newId_image, "", objectSelectedId);
       } else {
-        console.error("Could not extract filename from response.");
+        kindOfObjectToSend = "image";
+        saveNewObject();
+        changeMode('trackpad');
       }
     },
     error: function (jqXHR, textStatus, errorThrown) {
