@@ -1966,7 +1966,7 @@ async function generarrama1(response) {
       const nombreProfesor = nombresResponse[0].nombre_profesor;
 
       // Obtener la fecha de creación formateada
-      const fechaCreacion = new Date(response.fecha_creacion);
+      const fechaCreacion = new Date(response.fecha);
       const fechaFormateada = fechaCreacion.toLocaleDateString("es-ES", { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'});
 
       const nombrePropietario = response.propietario === 2 ? `Profesor ${nombreProfesor}` : nombreAlumno;
@@ -2116,7 +2116,7 @@ async function generarrama2(response) {
       console.log('ID Contribución Compartida en respuesta:', id_contribucion_compartida);
 
       // Formatear la fecha de creación
-      const fechaCreacion = new Date(response.fecha_creacion);
+      const fechaCreacion = new Date(response.fecha);
       const fechaFormateada = fechaCreacion.toLocaleDateString("es-ES", { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'});
 
       // Determinar el propietario y el estilo de fondo
@@ -2288,7 +2288,7 @@ async function generarrama3(response) {
       console.log('ID Contribución Compartida en respuesta:', id_contribucion_compartida);
 
       // Formatear la fecha de creación
-      const fechaCreacion = new Date(response.fecha_creacion);
+      const fechaCreacion = new Date(response.fecha);
       const fechaFormateada = fechaCreacion.toLocaleDateString("es-ES", { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'});
 
       // Determinar el propietario y el estilo de fondo
@@ -2457,7 +2457,7 @@ async function generarrama4(response) {
       console.log('ID Contribución Compartida en respuesta:', id_contribucion_compartida);
 
       // Formatear la fecha de creación
-      const fechaCreacion = new Date(response.fecha_creacion);
+      const fechaCreacion = new Date(response.fecha);
       const fechaFormateada = fechaCreacion.toLocaleDateString("es-ES", { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'});
 
       // Determinar el propietario y el estilo de fondo
@@ -2627,7 +2627,7 @@ async function generarrama5(response) {
       console.log('ID Contribución Compartida en respuesta:', id_contribucion_compartida);
 
       // Formatear la fecha de creación
-      const fechaCreacion = new Date(response.fecha_creacion);
+      const fechaCreacion = new Date(response.fecha);
       const fechaFormateada = fechaCreacion.toLocaleDateString("es-ES", { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'});
 
       // Determinar el propietario y el estilo de fondo
