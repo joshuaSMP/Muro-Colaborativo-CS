@@ -1019,14 +1019,11 @@ border-color:#3f94e4;
 
 #contributions_list{
 	display: flex;
-	flex-wrap: nowrap; /* Evita que los elementos se ajusten a la siguiente línea */
-	overflow-x: auto;  /* Permite el desplazamiento horizontal */
+	flex-wrap: wrap; /* Permite que los elementos se ajusten a la siguiente línea */
 	gap: 25px; /* Espacio entre los post-its */
 	padding: 20px;
 	align-items: flex-start;
-	list-style-type: none;
-	width: max-content; /* El ancho se ajusta al contenido */
-  min-width: 100%; /* Asegura que ocupe al menos el ancho completo del padre */
+	list-style-type: none; 
 }
 
 #SubirFoto {
