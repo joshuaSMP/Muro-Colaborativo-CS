@@ -14,6 +14,25 @@
    .load-hover:hover{
         opacity: 0.8;
     }
+    .modal-header .close {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 40px;
+      height: 40px;
+      background-color: #E62C56;
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 35px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 9999;
+      border: 2px solid white;
+      opacity: 1;
+      padding: 0;
+    }
   </style>
 
   <body class="bg-transparent">
@@ -59,7 +78,7 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title w-100 text-center" id="creditsModalLabel">Créditos</h5>
+            <h5 class="modal-title w-100 text-center" id="creditsModalLabel" style="padding-right: 20px;">Créditos</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -81,9 +100,6 @@
             <p class="text-center">Rodrigo ..</p>
             <hr>
 
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal" style="background-color: #003366; border-color: #003366;">Cerrar</button>
           </div>
         </div>
       </div>
