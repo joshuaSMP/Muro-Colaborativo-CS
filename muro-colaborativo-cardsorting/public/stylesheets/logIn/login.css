@@ -102,13 +102,13 @@ html .login-wrap:after {
 .btn {
   color: #ffffff;
   font-size: 2vw;
-  width: 36%;
-  height: 15.5%;
+  width: 45%;
+  height: 10%;
   font-family: AvGardD;
-  border-radius: 15px;
+  border-radius: 0;
   position: absolute;
   left: 50%;
-  border-color: #FF3366;
+  border-color: #ffffff;
   border-width: 7px;
 }
 
@@ -140,7 +140,7 @@ html .login-wrap:after {
 }
 
 .btn:hover {
-    border-color: #FF3366;
+    border-color: #ffffff;
     border-width: 7px;
     color: #ffffff;
 }
