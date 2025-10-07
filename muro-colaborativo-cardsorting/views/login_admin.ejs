@@ -25,13 +25,17 @@
     }
  </style>
   <body class="bg-transparent">
-    <div class="container float-right pr-0" style="position: relative; width: 30%; z-index: 9999;">
+    <div class="container float-right pr-0" style="position: relative; width: 30%; z-index: 9999; height: 100vh;">
       <button id="inicio">
         <img src="/imagesv5/boton_tache_rosa.svg" style="position: absolute; width: 11%; left: 81.5%; top: 30%; z-index: 9999;"/>
       </button>
-      <button class="formulario"></button>
-      <div class="login-page">
-        <div class="form" style="position: absolute; top: 1200%; left: 42%; width: 13vw;">
+      <svg class="min-vh-100" style="position: fixed; top: -25%; right: -40vw; width: auto; height: 140%; z-index: -1;" viewBox="0 0 100 115.47" preserveAspectRatio="xMidYMid meet">
+        <polygon points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87" fill="#ffffff"/>
+      </svg>
+      <svg class="min-vh-100" style="position: fixed; top: -28%; right: -41vw; width: auto; height: 145%; z-index: -2;" viewBox="0 0 100 115.47" preserveAspectRatio="xMidYMid meet">
+        <polygon points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87" fill="#003366"/>
+      </svg>
+        <div class="form" style="position: absolute; top: 25%; left: 42%; width: 13vw;">
           <h2 style="font-size: 2.3vw; border: 0; margin: 0;">Profesor</h2>
           <span id="errorformulario" style="font-size: 0.8vw; color: #ff3366;"></span><br>
           <label style="font-size: 0.8vw">Correo electrónico</label>
@@ -49,14 +53,7 @@
             <a data-toggle="modal" data-target="#resetPasswordModal" href="#" style="text-decoration: underline" >Recupérala aquí.</a>
           </p>
         </div>
-      </div>
     </div>
-    <svg class="min-vh-100" style="position: fixed; top: -25%; right: -40vw; width: auto; height: 140%; z-index: -1;" viewBox="0 0 100 115.47" preserveAspectRatio="xMidYMid meet">
-      <polygon points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87" fill="#ffffff"/>
-    </svg>
-        <svg class="min-vh-100" style="position: fixed; top: -28%; right: -41vw; width: auto; height: 145%; z-index: -2;" viewBox="0 0 100 115.47" preserveAspectRatio="xMidYMid meet">
-      <polygon points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87" fill="#003366"/>
-    </svg>
     <div class="float-start ml-5 pl-5n pt-5">
       <img
         src="/imagesv5/logotipo_cs.png"
