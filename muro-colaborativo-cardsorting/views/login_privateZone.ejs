@@ -29,53 +29,29 @@
     }
   </style>
   <body class="bg-transparent">
-    <div class="container float-right pr-0" style="position: relative; width: 30%; z-index: 9999">
-      <div class="formulario" ></div>
-      <!-- Este es el hexagono azul grande de la derecha -->
-      <img src='/images/hexagono_azul.svg' class="min-vh-100" style="width: auto; height: auto; float: right;"/>
-      <div class="login-page">
-        <div class="form" style="width:13vw;">
-          <div class="cierrre_x">
-            <a href=http://localhost:3000><img border="0" src='/images/boton_tache_rosa.svg' ></a>
-          </div>
-          <br>
-            <h2 style="font-family: AvGardD; text-align: center;"> Alumno</h2>
-            <span id="erroralumno" style="color: #ff3366;"></span>
-            <p style="font-size: 90%; font-family: AvGardD; width: fit-content; margin: 0;">
-            Nombre del equipo o usuario</p>
-            <input id="userName" type="text" placeholder="Nombre" />
-            <p style="font-size: 90%; font-family: AvGardD; width: fit-content; margin: 0;">PIN de la sesión</p>
-            <input id="pin" type="text" placeholder="PIN" />
-          <br/>
-          
-          <!--
-          <p style="font-size: 90%; font-family: AvGardD; width: fit-content">
-            Modalidad</p>
-          <div class="buttons">
-            <div class="button1">
-            <button type="button" class="btn_choose_sent bg_btn_chose_1 btn-hover">
-              <input  type="checkbox" class="Seleccion" id="miElementoCheckbox" name="creditCheck" value="1" checked />
-            </button>
-            <p class="titulo">PRESENCIAL</p>
-            </div>
-          <br/>
-          <br/>
-          <div class="button2">
-            <button type="button" class="btn_choose_sent bg_btn_chose_2 btn-hover">
-              <input type="checkbox" class="Seleccion" id="miElementoCheckbox" name="creditCheck" value="2" />
-            </button>
-            <p class="titulo">REMOTO</p>
-          </div>
-          </div>
-          -->
-
-          <button id="login-btn" class="btn-hover" type="button">
-            <img src='/images/boton_entrar_azul.svg' height="60" width="80" alt="Login Button"/>
-            <input type="checkbox" class="Seleccion" id="miElementoCheckbox" name="creditCheck" value="1" checked style="display: none;" /> 
-          </button>
-
-
+    <div class="container float-right pr-0" style="position: relative; width: 30%; z-index: 9999; height: 100vh;">
+      <svg class="min-vh-100" style="position: fixed; top: -25%; right: -40vw; width: auto; height: 140%; z-index: -1;" viewBox="0 0 100 115.47" preserveAspectRatio="xMidYMid meet">
+        <polygon points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87" fill="#ffffff"/>
+      </svg>
+      <svg class="min-vh-100" style="position: fixed; top: -28%; right: -41vw; width: auto; height: 145%; z-index: -2;" viewBox="0 0 100 115.47" preserveAspectRatio="xMidYMid meet">
+        <polygon points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87" fill="#003366"/>
+      </svg>
+      <div class="form" style="position: absolute; top: 25%; left: 45%; width: 13vw;">
+        <div class="cierrre_x">
+          <a href=http://localhost:3000><img border="0" src='/images/boton_tache_rosa.svg' ></a>
         </div>
+        <br>
+          <h2 style="font-family: AvGardD; text-align: center;"> Alumno</h2>
+          <span id="erroralumno" style="color: #ff3366;"></span>
+          <p style="font-size: 90%; font-family: AvGardD; width: fit-content; margin: 0;">
+          Nombre del equipo o usuario</p>
+          <input id="userName" type="text" placeholder="Nombre" />
+          <p style="font-size: 90%; font-family: AvGardD; width: fit-content; margin: 0;">PIN de la sesión</p>
+          <input id="pin" type="text" placeholder="PIN" />
+        <br/>
+        
+        <button id="login-btn" class="btn-hover" type="button" style="background-color: #003366; border-color: #003366; color: white; width: 100%; margin-top: 15px; padding: 5px; border-radius: 5px; font-size: 1vw;">Entrar</button>
+        <input type="checkbox" class="Seleccion" id="miElementoCheckbox" name="creditCheck" value="1" checked style="display: none;" />
       </div>
     </div>
     <div class="float-start ml-5 pl-5n pt-5">
@@ -133,4 +109,3 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
 </html>
-

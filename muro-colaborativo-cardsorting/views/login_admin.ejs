@@ -26,13 +26,12 @@
  </style>
   <body class="bg-transparent">
     <div class="container float-right pr-0" style="position: relative; width: 30%; z-index: 9999;">
-      <img src="/imagesv5/hexagono_anaranjado.svg" class="min-vh-100" style="width: auto; float: right; height: 100%;"/>
       <button id="inicio">
         <img src="/imagesv5/boton_tache_rosa.svg" style="position: absolute; width: 11%; left: 81.5%; top: 30%; z-index: 9999;"/>
       </button>
       <button class="formulario"></button>
       <div class="login-page">
-        <div class="form" style="width: 13vw;">
+        <div class="form" style="position: absolute; top: 1200%; left: 42%; width: 13vw;">
           <h2 style="font-size: 2.3vw; border: 0; margin: 0;">Profesor</h2>
           <span id="errorformulario" style="font-size: 0.8vw; color: #ff3366;"></span><br>
           <label style="font-size: 0.8vw">Correo electrónico</label>
@@ -41,9 +40,7 @@
 
           <input style="height: 2vw; font-size: 0.8vw" id="passwordLogin" class="form-control" type="password" placeholder="**********"/>
 
-          <button id="login-btn" class="btn-hover">
-            <img src="/imagesv5/boton_entrar_anaranjado.svg" style="position: absolute; width: 3.5vw; left: 36%; top: 13vw" />
-          </button>
+          <button id="login-btn" class="btn-hover" style="background-color: #e68115; border-color: #e68115; color: white; width: 100%; margin-top: 15px; padding: 5px; border-radius: 5px; font-size: 1vw;">Entrar</button>
 
           <p id="createAccount" style=" position: absolute; top: 16.5vw; left: 5%; text-align: center; font-size: 0.66vw;"> ¿No tienes una cuenta?
             <a data-toggle="modal" data-target="#createAccountModal" href="#" style="text-decoration: underline" >Crea una aquí.</a>
@@ -54,6 +51,12 @@
         </div>
       </div>
     </div>
+    <svg class="min-vh-100" style="position: fixed; top: -25%; right: -40vw; width: auto; height: 140%; z-index: -1;" viewBox="0 0 100 115.47" preserveAspectRatio="xMidYMid meet">
+      <polygon points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87" fill="#ffffff"/>
+    </svg>
+        <svg class="min-vh-100" style="position: fixed; top: -28%; right: -41vw; width: auto; height: 145%; z-index: -2;" viewBox="0 0 100 115.47" preserveAspectRatio="xMidYMid meet">
+      <polygon points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87" fill="#003366"/>
+    </svg>
     <div class="float-start ml-5 pl-5n pt-5">
       <img
         src="/imagesv5/logotipo_cs.png"
