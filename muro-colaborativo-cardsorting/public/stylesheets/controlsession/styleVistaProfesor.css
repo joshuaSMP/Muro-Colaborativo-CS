@@ -153,6 +153,10 @@ h1 {
   height:89vh;
   overflow: scroll;
   width: 95vw;
+  left: 5vw;
+  top: 9vh;
+  width: 96vw;
+  height: 95vh;
 }
 
 .div-header{
