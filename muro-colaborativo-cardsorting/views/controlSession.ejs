@@ -16,6 +16,34 @@
         window.location = "/auth/admin/";
       }
     </script>
+        <style>
+      .add-board-button {
+        width: 4vw; /* Define el ancho del botón */
+        height: 4vw; /* Define la altura del botón para que sea cuadrado */
+        background-color: #7f00b2; /* Color de fondo del botón (un tono de azul) */
+        border: none; /* Elimina el borde por defecto del botón */
+        border-radius: 50%; /* Bordes redondeados para hacerlo circular */
+        display: flex; /* Usa flexbox para centrar el contenido */
+        align-items: center; /* Centra verticalmente el contenido */
+        justify-content: center; /* Centra horizontalmente el contenido */
+        cursor: pointer; /* Cambia el cursor a una mano al pasar por encima */
+        margin-top: 0vh; /* Ajusta el margen superior según sea necesario */
+        position: absolute; /* Posicionamiento absoluto para colocarlo en el header */
+        right: 9vw; /* Para moverlo MÁS A LA IZQUIERDA, aumenta este valor (ej. 12vw) */
+        top: 2vh; /* Para moverlo MÁS ARRIBA, disminuye este valor (ej. 2.5vh) */
+        z-index: 3; /* Asegura que esté por encima de otros elementos del header */
+        margin-left: 1vw; /* Ajusta el margen izquierdo según sea necesario */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Sombra sutil para darle profundidad */
+      }
+      .add-board-button:hover {
+        opacity: 0.8; /* Efecto de opacidad al pasar el ratón */
+      }
+      .plus-sign {
+        color: white; /* Color blanco para el signo de más */
+        font-size: 2vw; /* Tamaño del signo de más, escalable con el viewport */
+        font-weight: bold; /* Hace el signo de más más grueso */
+      }
+    </style>
   </head>
 
   <body>
@@ -37,6 +65,14 @@
         <div class= "titulo">
             <h1>Pizarras</h1>
         </div>
+
+        <!-- Botón para añadir movido al header -->
+        <button type="button"
+          onclick='cleanAddSessionModal()'
+          class="add-board-button" data-toggle="modal"
+          data-target="#addSessionModal">
+          <span class="plus-sign">+</span>
+        </button>
 
         <div class="div-btn-user">    <!-- User button division -->
           <div class="dropdown">
@@ -61,14 +97,7 @@
       <div class="max-scrollable-height">
         <div id="workspace"> <!--Star workspace division -->
             <div id="adminSessionsWorkspace" class="workspace">
-              <div class="container-fluid" >
-                <div class="col-xs-1" , style="cursor: pointer;" > <!-- add activity button division -->
-                  <img src="/images/hexa_mas.svg"
-                    onclick='cleanAddSessionModal()'
-                    class="add-modal-button" data-toggle="modal"
-                    data-target="#addSessionModal"/>
-                </div>
-
+              <div class="container-fluid">                
                 <br>
               <!-- division to show all activities -->
                 <div style="margin-top: 2vh; width: 95vw; height: 210vh;">
