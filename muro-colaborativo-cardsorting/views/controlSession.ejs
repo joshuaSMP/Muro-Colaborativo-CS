@@ -141,14 +141,14 @@
                     <div class="modal-body">
                       <form id="form_data_session" action="/CrearForo" method="post" target="targetForm" >
                         <div class="form-group">
-                          <label for="titulo" style="font-size: 1.1vw;">Tema a discutir:</label>
+                          <label for="titulo" style="font-size: 1vw; font-weight: normal;">Tema a discutir:</label>
                           <input type="text" class="form-control" name="tema_foro" id="tema_foro" style="font-size: 1vw; width: 21.8vw; height: 6vh;" required>
                         </div>
                       </form>
                     </div>
                     <div class="modal-footer">
+                      <button type="button" class="btn btn-danger pull-left" onclick="cleanAddSessionModal()" data-dismiss="modal">Cancelar</button>
                       <button id="submitDataSession" type="button" class="btn btn-success" data-dismiss="modal">Crear pizarra</button>
-                      <button type="button" class="btn btn-danger" onclick="cleanAddSessionModal()" data-dismiss="modal">Cancelar</button>
                     </div>
                   </div>
                 </div>

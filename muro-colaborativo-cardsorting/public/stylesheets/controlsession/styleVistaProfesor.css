@@ -223,6 +223,7 @@ h1 {
   margin-left: 0vw;
   margin-bottom: -6vh;
   font-size: 2vw;
+  font-weight: normal;
 }
 
 .modal-body {
@@ -271,7 +272,7 @@ button.close{
   background-color: #E68115;
   border-color: #E68115;
   font-size: 1.02vw;
-  width: 5.6vw;
+  min-width: 5.6vw;
   height: 6vh;
 }
 .btn-info {
