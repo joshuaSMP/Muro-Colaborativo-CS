@@ -33,9 +33,6 @@
         <polygon points="50,0 100,28.87 100,86.6 50,115.47 0,86.6 0,28.87" fill="#003366"/>
       </svg>
         <div class="form" style="position: absolute; top: 25%; left: 42%; width: 13vw;">
-          <button id="inicio" style="background: none; border: none; position: absolute; right: -20px; top: -40px; width: 3vw;">
-            <img src="/imagesv5/izq_flecha.svg" style="width: 100%;"/>
-          </button>
           <h2 style="font-size: 2.5vw; border: 0; margin: 0;">Profesor</h2>
           <span id="errorformulario" style="font-size: 1vw; color: #ff3366;"></span><br>
           <label style="font-size: 1vw">Correo electrónico</label>
@@ -45,6 +42,7 @@
           <input style="height: 2vw; font-size: 0.8vw; margin-bottom: 1.5vw;" id="passwordLogin" class="form-control" type="password" placeholder="**********"/>
 
           <button id="login-btn" class="btn-hover" style="background-color: #e68115; border-color: #e68115; color: white; width: 100%; margin-top: 30px; padding: 5px; border-radius: 5px; font-size: 1vw;">Entrar</button>
+          <a href="/" style="position: absolute; top: 21vw; left: -2vw; width: 3vw;"><img border="0" src='/imagesv5/izq_flecha.svg' style="width: 100%;"></a>
 
           <p id="createAccount" style=" position: absolute; top: 14.5vw; left: 5%; text-align: center; font-size: 0.66vw;"> ¿No tienes una cuenta?
             <a data-toggle="modal" data-target="#createAccountModal" href="#" style="text-decoration: underline" >Crea una aquí.</a>
@@ -304,10 +302,4 @@
     <script src="/javascripts/common/socketIoClient.js"></script>
     <script src="/javascripts/login_admin/login_admin.js"></script>
   </body>
-
-  <script>
-    $("#inicio").click(function () {
-      window.location = "/";
-    });
-  </script>
 </html>
