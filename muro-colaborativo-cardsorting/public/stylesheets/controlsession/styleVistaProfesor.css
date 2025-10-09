@@ -102,7 +102,7 @@ h1 {
 }
 
 .dropdown-content {
-  transform: translate(20%, -90%);  
+  transform: translate(0, 0);
   display: none;
   position: absolute;
   border-radius: 1vw;

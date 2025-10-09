@@ -50,6 +50,16 @@
         font-size: 2vw; /* Tamaño del signo de más, escalable con el viewport */
         font-weight: bold; /* Hace el signo de más más grueso */
       }
+      /* Anula el efecto hover naranja en el menú de usuario */
+      .dropdown-content a:hover {
+        background-color: inherit !important;
+        border: none !important;
+      }
+      /* Mantiene el color de fondo del botón de cerrar sesión en hover */
+      #exitBtn:hover {
+        background-color: red !important;
+        opacity: 0.9; /* Pequeño efecto visual al pasar el mouse */
+      }
     </style>
   </head>
 
@@ -85,14 +95,13 @@
           <div class="dropdown">
             <button class="btn btn-secondary dropdown-toggle" onclick='desplegarConClickDropdown("usuarioDropdown")' 
               type="button" data-toggle="dropdown" id="adminNameDiv2" 
-              style="background: white; border-color: transparent; color: black;
+              style="background: white; border-color: transparent; color: #007bff;
               border-radius: 10vw; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
               font-weight: bold; width: 4vw; height: 8.5vh; margin-top: 0.4vh;">
             </button>
-                <div class="dropdown-content" id ="usuarioDropdown" style="right: 5.008vw; top: 18.9vh; background-color: pink; z-index: -90;">
-                  <a style="color: black; background-color: white; font-weight: bolder; height: 8.5vh; border-radius: 0px;
-                  border: 0px;" id = "adminNameDiv">  </a>
-                  <a style="color: black;" href="#" id= exitBtn> Cerrar sesion </a>
+                <div class="dropdown-content" id ="usuarioDropdown" style="right: -1vw; top: 11vh; background-color: white; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                  <a style="color: #023e73; font-weight: bolder; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 5px;" id = "adminNameDiv">  </a>
+                  <a style="background-color: red; color: white; text-align: center; border-radius: 8px; margin: 5px;" href="#" id= exitBtn> Cerrar sesion </a>
                 </div>
           </div>
         </div>
