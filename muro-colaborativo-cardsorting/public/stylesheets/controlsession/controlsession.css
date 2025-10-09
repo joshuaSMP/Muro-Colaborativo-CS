@@ -223,9 +223,9 @@ input:checked + .slider:before {
 .activitycontainer{
   position: relative;
   width: 37vw;
-  height: 61vh;
+  height: auto;
   background-color: #c4e1ff;
-  border-radius: 11vh;
+  border-radius: 1.5vw;
   padding: 50px;
 }
 
@@ -237,13 +237,17 @@ input:checked + .slider:before {
 }
 
 h3 {
-  color: rgb(0, 0, 0);
+  color: #003366;
   text-align: center;
   font-family: AvantGardeFont;
   font-size: 4vh;
   display: inline-block;
   font-weight: bold;
   margin-top: 0vh;
+}
+
+.activitycontainer #activity-information p {
+  color: #003366;
 }
 
 h5 {

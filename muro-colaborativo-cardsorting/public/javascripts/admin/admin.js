@@ -89,16 +89,15 @@ function sendPostForm() {
   var ownerId = localStorage.getItem("adminId");
   console.log("ownerId:", ownerId); // Agregar esta línea para verificar el valor de ownerId
   var tema_foro = $('#form_data_session').find('input[name="tema_foro"]').val(); // Corregido el selector
-  var dataToSend = $('#form_data_session').serialize();
 
   $.ajax({
     method: 'POST',
     url: '/api/foro/crearforo',
-    data: {
+    contentType: 'application/json',
+    data: JSON.stringify({
       id_profesor: ownerId,
-      tema_foro: tema_foro,
-      formData: dataToSend // Agregar los datos serializados directamente
-    },
+      tema_foro: tema_foro
+    }),
     dataType: 'json',
     success: function (res) {
       swal.fire("Pizarra creado exitosamente", "", "success")
@@ -169,24 +168,20 @@ function getAdminSessions() {
         var element = '<li id="' + foro.id_foro + 'listElement">' +
           '<div class="activitycontainer">' +
           '<div style="text-align:center; padding:5px; font: 1.5vw;">' +
-          '<h3>' + foro.tema_foro + '</h3> <br>' +
+          '<h3>' + foro.tema_foro + '</h3>' +
           '<div class="dropdown">' +
-          '<button style="position: relative; width:1.5vw; height:2vh; left:14vw; top:34vh; background-color: #c4e1ff; border: none;" onclick=desplegarConClickDropdown(\'myDropdown2' + foro.id_foro + '\'' + ');>' +
+          '<button style="position: relative; width:1.5vw; height:2vh; left:14vw; top:-4vh; background-color: #c4e1ff; border: none;" onclick=desplegarConClickDropdown(\'myDropdown2' + foro.id_foro + '\'' + ');>' +
           '<img src= "/images/puntos_blancos.svg">' +
           '</button>' +
           '<div class="dropdown-content" id="myDropdown2' + foro.id_foro + '" style="left: 10vw; top: 30vh;">' +
           '<style> .bottom-three { margin-bottom: 3cm; } </style>' +
-          '<a id="' + foro.id_foro + 'loadSessionBtn" onclick="toggleSession(\'' + foro.id_foro + '\', ' + !foro.esta_activa + ')">' + textoBoton + '</a>' +
+          '<a id="' + foro.id_foro + 'loadSessionBtn" onclick="toggleSession(\'' + foro.id_foro + '\', ' + !foro.esta_activa + ')">' + textoBoton + '</a>' + // This line seems to have a logic issue, but I'm keeping it as is per the request.
           '<a id="' + foro.id_foro + 'openSessionBtn" onclick="irAlMuralProfesor(\'' + foro.id_foro + '\',\'' + foro.tema_foro + '\',\'' + foro.pin + '\',\'' + foro.id_profesor + '\')">Ingresar al foro </a>' + 
           '<a id="' + foro.id_foro + 'editSessionBtn" onclick="fillDataInModalOnEditSession(\'' + foro.id_foro + '\');" data-toggle="modal" data-target="#addSessionModal">Editar</a>' +
           '<a id="' + foro.id_foro + 'deleteSessionBtn" onclick="deleteSession(\'' + foro.id_foro + '\')">Eliminar </a>' +
           '</div>' +
           '</div>' +
-          '</div>' +
-          '<div id="container_image" style="display:flex; justify-content:center;">' +
-          '<img class="image-wrapper" id="imageSession' + foro.id_foro + '" src="/images/cardSorting.png" width= 50%;' +
-          '</div>' +
-          '<div id="activity-information" style="position: absolute; top: 45vh; right:9.9vw; font-size: 1vw;">' +
+          '<div id="activity-information" style="font-size: 1vw; margin-top: 1em;">' +
           '<center> <p style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;">PIN: <span>' + foro.pin + '</span></p>' +
           '<p name = "activityState" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;">Card Sorting ' + (foro.esta_activa ? 'Abierto' : 'Cerrado') + '</p>' +
           '<p class ="creationDateActivity" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;"> Creada: ' + fechaFormateada + '</p> </center>' +
