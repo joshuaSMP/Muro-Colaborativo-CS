@@ -16,6 +16,13 @@
         window.location = "/auth/admin/";
       }
     </script>
+    <style>
+      .logo {
+        height: 85px; /* Aumenta la altura para hacerla más grande */
+        margin-top: -.50vw; /* Ajusta el margen superior si es necesario */
+        left: -1vw; /* Mueve la imagen hacia la derecha */
+      }
+    </style>
         <style>
       .add-board-button {
         width: 4vw; /* Define el ancho del botón */
@@ -79,8 +86,9 @@
             <button class="btn btn-secondary dropdown-toggle" onclick='desplegarConClickDropdown("usuarioDropdown")' 
               type="button" data-toggle="dropdown" id="adminNameDiv2" 
               style="background: white; border-color: transparent; color: black;
-              border-radius: 10vw; display: flex; align-items: center; justify-content: center;
-              font-weight: bold; width: 4vw; height: 8.5vh; margin-top: 0.4vh;"> </button>
+              border-radius: 10vw; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              font-weight: bold; width: 4vw; height: 8.5vh; margin-top: 0.4vh;">
+            </button>
                 <div class="dropdown-content" id ="usuarioDropdown" style="right: 5.008vw; top: 18.9vh; background-color: pink; z-index: -90;">
                   <a style="color: black; background-color: white; font-weight: bolder; height: 8.5vh; border-radius: 0px;
                   border: 0px;" id = "adminNameDiv">  </a>
