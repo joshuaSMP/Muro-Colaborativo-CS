@@ -123,6 +123,11 @@ a:hover {
   cursor: pointer;
 }
 
+.modal-header {
+  background-color: #003366;
+  font-family: AvGardD;
+}
+
 
 /* Funcionalidad  de los botones de acceso */
 .btn_choose_sent input {
