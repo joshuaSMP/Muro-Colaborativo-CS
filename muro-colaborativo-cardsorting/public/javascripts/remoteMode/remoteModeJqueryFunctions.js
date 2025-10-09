@@ -45,6 +45,10 @@ $(document).ready(function () {
   $('#userName2').text(localStorage.getItem("userName"));
 });
 
+$("#maximizeBtn").click(function () {
+  $(document).toggleFullScreen();
+});
+
 // Manejador de eventos para la subida de archivos.
 // Se usa la delegación de eventos de jQuery para asegurar que funcione
 // incluso si los elementos se manipulan dinámicamente.

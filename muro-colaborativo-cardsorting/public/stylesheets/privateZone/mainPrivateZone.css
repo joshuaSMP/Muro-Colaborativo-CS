@@ -184,15 +184,12 @@ body, html {
 }
 
 #maximizeBtn{
-	background-color: #C0F6FF;
-	color: #333366;
-	font-size: large;
-	height: 41px;
-	margin-top: 10px;
-	padding: 0px 0px 0px 0px;
-	position: absolute;
-	right: -1.5vw;
-	width: 41px;
+	position: fixed !important;
+	bottom: 20px !important;
+	right: 20px !important;
+	z-index: 1051 !important;
+	background-color: rgba(255, 255, 255, 0.7);
+	box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 #mosaicsCreatedWrapper {
