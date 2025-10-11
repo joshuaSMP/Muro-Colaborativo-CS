@@ -158,11 +158,10 @@ function getAdminSessions() {
     url: '/api/foro/' + localStorage.getItem('adminId'),
     dataType: 'json',
     success: function (res) {
-      console.log("getAdminSessions successful:", res);
       $('#sessions_list').empty(); // Limpia la lista antes de agregar nuevos elementos
       for (var i = 0; i < res.forums.length; i++) {
         var foro = res.forums[i];
-        var fechaCreacion = new Date(foro.fecha_creacion);
+        var fechaCreacion = new Date(foro.fecha_creacion); // Asegúrate que el backend envíe esto
         var fechaFormateada = fechaCreacion.toLocaleDateString("es-ES", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });        
         var textoBoton = foro.esta_activa ? "Card Sorting Cerrado" : "Card Sorting Abierto"; // Define el texto del botón según el estado de foro.esta_activa
         var element = '<li id="' + foro.id_foro + 'listElement">' +
@@ -188,8 +187,7 @@ function getAdminSessions() {
           '<p class ="creationDateActivity" style= "font-family: AvantGardeFont; margin-bottom: 0.09cm;"> Creada: ' + fechaFormateada + '</p> </center>' +
           '</div>' +
           '</div>' +
-          '</div>' +
-          '</li>';
+          '</li>'
         $('#sessions_list').prepend(element);
       }
     },
@@ -397,14 +395,15 @@ function deleteSession(dirtyId) {
         },
         dataType: 'json',
         success: function (res) {
-          $("#" + cleanId + "listElement").hide();
           swal.fire({
             title: "La pizarra ha sido eliminado correctamente",
             text: "",
             icon: "success",
             timer: 1000,
             showConfirmButton: false
-          })
+          }).then(() => {
+            getAdminSessions(); // ¡Solución! Recargamos la lista de pizarras.
+          });
         }
       })
     }
