@@ -110,7 +110,9 @@ h1 {
   min-width: 15vw;
   z-index: 4;
   cursor: pointer;
-  top: 20px;
+  /* Ajustes para posicionar el dropdown relativo al botón */
+  left: 10vw; /* Mueve el menú hacia la izquierda */
+  top: 3vh; /* Mueve el menú un poco hacia abajo desde el botón */
 }
 
 .dropdown-content a{

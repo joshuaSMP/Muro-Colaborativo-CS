@@ -173,7 +173,7 @@ function getAdminSessions() {
           '<button style="position: relative; width:1.5vw; height:2vh; left:14vw; top:-4vh; background-color: #c4e1ff; border: none;" onclick=desplegarConClickDropdown(\'myDropdown2' + foro.id_foro + '\'' + ');>' +
           '<img src= "/images/puntos_blancos.svg">' +
           '</button>' +
-          '<div class="dropdown-content" id="myDropdown2' + foro.id_foro + '" style="left: 10vw; top: 30vh;">' +
+          '<div class="dropdown-content" id="myDropdown2' + foro.id_foro + '">' +
           '<style> .bottom-three { margin-bottom: 3cm; } </style>' +
           '<a id="' + foro.id_foro + 'loadSessionBtn" onclick="toggleSession(\'' + foro.id_foro + '\', ' + !foro.esta_activa + ')">' + textoBoton + '</a>' + // This line seems to have a logic issue, but I'm keeping it as is per the request.
           '<a id="' + foro.id_foro + 'openSessionBtn" onclick="irAlMuralProfesor(\'' + foro.id_foro + '\',\'' + foro.tema_foro + '\',\'' + foro.pin + '\',\'' + foro.id_profesor + '\')">Ingresar al foro </a>' + 
