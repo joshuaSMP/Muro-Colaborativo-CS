@@ -65,6 +65,11 @@ $(document).ready(function () {
     $("#usersBtn").css("background-color", "white");
   })
 
+  $("#adminNameDiv, #adminNameDiv2").click(
+    function () {
+      onAdminExit();
+    })
+
   $("#exitBtn").click(
     function () {
       onAdminExit();
@@ -142,17 +147,17 @@ function onAdminExit() {
     closeOnConfirm: false,
   }).then(result => {
     if(result.value) {
+      socket.emit('adminLogOut', {
+        'accountId': localStorage.getItem("adminId"),
+        "email": localStorage.getItem("adminEmail")
+      });
+
       localStorage.removeItem("logged");
       localStorage.removeItem("adminName")
       localStorage.removeItem("adminId")
       localStorage.removeItem("adminEmail")
       localStorage.removeItem("currentOptionShown")
       localStorage.removeItem("subjects");
-
-      socket.emit('adminLogOut', {
-        'accountId': localStorage.getItem("adminId"),
-        "email": localStorage.getItem("adminEmail")
-      });
 
       window.location = "/auth/admin/"
 
