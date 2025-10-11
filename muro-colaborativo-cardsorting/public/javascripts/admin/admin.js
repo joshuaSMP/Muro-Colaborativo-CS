@@ -168,7 +168,8 @@ function getAdminSessions() {
         var element = '<li id="' + foro.id_foro + 'listElement">' +
           '<div class="activitycontainer">' +
           '<div style="text-align:center; padding:5px; font: 1.5vw;">' +
-          '<h3>' + foro.tema_foro + '</h3>' +
+          // Ajusta el tamaño de la fuente del título si es muy largo
+          '<h3 style="' + (foro.tema_foro.length > 6 ? 'font-size: 1.2vw;' : '') + '">' + foro.tema_foro + '</h3>' +
           '<div class="dropdown">' +
           '<button style="position: relative; width:1.5vw; height:2vh; left:14vw; top:-4vh; background-color: #c4e1ff; border: none;" onclick=desplegarConClickDropdown(\'myDropdown2' + foro.id_foro + '\'' + ');>' +
           '<img src= "/images/puntos_blancos.svg">' +
