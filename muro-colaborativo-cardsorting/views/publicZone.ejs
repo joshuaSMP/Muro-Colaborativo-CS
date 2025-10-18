@@ -26,16 +26,17 @@
         overflow: hidden;
       }
       #headerPublicZone {
-        background-color: #ab49cc;       ;
+        background-color: #ffffff; /* Nuevo color de fondo gris oscuro */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
       }
       .white-color {
-        color: white;
+        color: #035aa6; /* Nuevo color de texto gris claro */
       }
       .pin {
-        color: #c1ffdb;
+        color: #035aa6;
         float: left;
         font-size: 2vw;
-        margin-top: 2.2vh;
+        margin-top: 1vh;
         height: 0vh;
       }
       .options-button {
@@ -59,9 +60,15 @@
         display: none;
       }
       #fullScreenPublicZone {
-        margin-right: 2vw;
-        margin-top: 2.5vh;
-        float: right;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        z-index: 1051;
+        cursor: pointer;
+        border-radius: 8px; /* Ajustado para un aspecto más cuadrado */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
       }
 
       #logOutBtn:hover {
@@ -167,7 +174,7 @@
       <div class="row">
         <div class="col-xs-1 white-color">
           <div class="parent">
-            <img class="image2" src='/images/logotipo_horizontal_CardSorting.svg' style="height: 48px; margin-top: 0px; left: 5px;" />
+            <img class="image2" src='/images/logotipo_horizontal_CardSorting.svg' style="height: 80px; margin-top: -28px; left: 5px;" />
           </div>
         </div>
         <div class="col-xs-4">
@@ -186,8 +193,6 @@
           <button id="logOutBtn" onclick="logOut()" type="button" class="col-xs-1 btn btn-lg">
             Salir
           </button>
-          <!-- Botón de pantalla completa -->
-          <img id="fullScreenPublicZone" src="/images/fullscreen_white_btn.png" style="width: 2.2vw; height: 4vh;">
         </div>
         <div class="col-xs-1">
           <!-- Botón de maximizar -->
@@ -391,6 +396,8 @@
       </div>
     </div>
     <button id="scrollToTopBtn" onclick="scrollToTop()">↑</button>
+    <!-- Botón de pantalla completa -->
+    <img id="fullScreenPublicZone" src="/images/fullscreen_white_btn.png">
 
   
     <!-- JavaScript -->
