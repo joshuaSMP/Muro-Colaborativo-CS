@@ -166,6 +166,14 @@
         position: absolute;
         top: 1.7vh;
       }
+      #logOutContainer {
+        position: relative;
+      }
+      #logOutBtn {
+        position: absolute;
+        top: -8px; /* Mover más hacia arriba */
+        right: -80px; /* Mover más hacia la derecha */
+      }
     </style>
   </head>
   <body>
@@ -174,7 +182,7 @@
       <div class="row">
         <div class="col-xs-1 white-color">
           <div class="parent">
-            <img class="image2" src='/images/logotipo_horizontal_CardSorting.svg' style="height: 80px; margin-top: -28px; left: 5px;" />
+            <img class="image2" src='/images/logotipo_horizontal_CardSorting.svg' style="height: 70px; margin-top: -24px; left: 5px;" />
           </div>
         </div>
         <div class="col-xs-4">
@@ -188,7 +196,7 @@
         <div class="col-xs-4">
           <h4 class="pin">PIN: <span id="ipAdress" class="white-color"></span></h4>
         </div>
-        <div class="col-xs-2">
+        <div id="logOutContainer" class="col-xs-2">
           <!-- Botón de salir -->
           <button id="logOutBtn" onclick="logOut()" type="button" class="col-xs-1 btn btn-lg">
             Salir
