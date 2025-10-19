@@ -206,11 +206,6 @@ border-color:#316699;
     margin-left: 20%;
 }
 
-#returnButton{
-	color:black;
-	font-size: xxx-large;
-}
-
 .right-click-remote-menu {
     display: none;
     z-index: 1000;
