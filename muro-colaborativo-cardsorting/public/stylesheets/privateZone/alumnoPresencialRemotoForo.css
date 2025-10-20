@@ -30,9 +30,9 @@ body, html {
 .logo{
   position:absolute;
   z-index: 3;
-	height: 35px;
-	margin-top: 1vw;
-	left: 1.5vw;
+	height: 70px; /* Aumentamos la altura para hacerlo más grande */
+	margin-top: -6px; /* Reducimos el margen superior para moverlo hacia arriba */
+	left: 15px; /* Aumentamos el valor para moverlo más a la derecha */
 }
 
 .orange-box{
