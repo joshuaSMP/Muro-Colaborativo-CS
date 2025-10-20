@@ -135,29 +135,6 @@ body, html {
 	cursor: pointer;
 }
 
-
-
-.box-8 {
-	border-bottom: 32px solid transparent;
-	border-right: 17px solid #ea713d;
-	border-top: 32px solid transparent;
-	float: left;
-}
-.box-10 {
-	border-bottom: 32px solid transparent;
-	border-left: 17px solid #ea713d;
-	border-top: 32px solid transparent;
-	float: left;
-}
-
-.box-9 {
-	background-color: #ea713d;
-	float: left;
-	height: 65px;
-	width: 38px;
-	cursor: pointer;
-}
-
 .contenedor1{
 margin: 10;
 padding: 1000;
@@ -186,15 +163,21 @@ border-color:#3f94e4;
 }
 
 #createObjectBtn {
-	position: absolute;
-	height:50px;
-	width:75px;
-	left: 300px;
-	top: 280px;
+	background-color: #ea713d; /* Naranja */
+	width: 60px;
+	height: 60px;
+	border-radius: 5px; /* Ligeramente redondeado para un look más suave */
+	cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+	transition: all 0.2s ease-in-out;
 }
 
 #createObjectBtn:hover{
-	opacity: 10px;
+	transform: scale(1.05);
+	box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
 
 #createObjectBtn::after {
@@ -1181,9 +1164,9 @@ border-color:#3f94e4;
 
 #plusIcon {
     color: white;
-    font-size:40px;
-    margin-top: 30%;
-    margin-left: 4%;
+    font-size: 30px;
+    /* El centrado ahora se maneja con flexbox en #createObjectBtn */
+    margin: 0;
 }
 
 #returnButton{

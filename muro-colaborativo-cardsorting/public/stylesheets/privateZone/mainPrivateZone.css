@@ -39,31 +39,6 @@ body, html {
 	right: 10%;
 }
 
-.box-8 {
-	border-bottom: 37px solid transparent;
-	border-right: 20px solid #E62C56;
-	border-top: 37px solid transparent;
-	float: left;
-	position: relative;
-	margin-top: 25%;
-}
-.box-10 {
-	border-bottom: 37px solid transparent;
-	border-left: 20px solid #E62C56;
-	border-top: 37px solid transparent;
-	float: left;
-	position: relative;
-	margin-top: 25%;
-}
-.box-9 {
-	background-color: #E62C56;
-	float: left;
-	height: 74px;
-	width: 40px;
-	position: relative;
-	margin-top: 25%;
-}
-
 
 
 
@@ -85,9 +60,23 @@ body, html {
 }
 
 #createObjectBtn {
-	height:74px;
-	margin-left: 133.5px;
-	width:80px;
+	background-color: #ea713d; /* Naranja */
+	width: 60px;
+	height: 60px;
+	border-radius: 5px; /* Ligeramente redondeado */
+	cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+	transition: all 0.2s ease-in-out;
+	/* Se eliminan márgenes que ya no son necesarios */
+	margin: 0;
+}
+
+#createObjectBtn:hover{
+	transform: scale(1.05);
+	box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
 
 #contentOptionsWrapper {
@@ -263,9 +252,9 @@ body, html {
 
 #plusIcon {
 	color:white;
-	font-size: xx-large;
-	margin-top: 50%;
-	margin-left: 15%;
+	font-size: 30px;
+	/* El centrado ahora se maneja con flexbox en #createObjectBtn */
+	margin: 0;
 }
 
 .remoteButton {
