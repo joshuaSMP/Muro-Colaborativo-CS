@@ -272,15 +272,18 @@ border-color:#3f94e4;
 }
 
 #maximizeBtn{
-	background-color: #C0F6FF;
+	background-color: #ffffff;
 	color: #333366;
 	font-size: large;
-	height: 41px;
-	position: absolute;
-	right: -13vw;
-	margin-top: 10px;
+	height: 50px;
+	width: 50px;
+	position: fixed; /* Cambiado a fixed para posicionarlo respecto a la ventana */
+	right: 20px; /* Distancia desde la derecha */
+	bottom: 20px; /* Distancia desde abajo */
+	margin-top: 0;
 	padding: 0px 0px 0px 0px;
-	width: 41px;
+	z-index: 1000; /* Asegura que esté sobre otros elementos */
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra suave */
 }
   
 #DiscuionName #tema {
