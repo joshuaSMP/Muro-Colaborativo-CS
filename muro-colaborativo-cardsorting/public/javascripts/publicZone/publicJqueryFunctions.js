@@ -491,18 +491,20 @@ async function getContributionslist() {
                       ${contenido}
                   </div>
                   <div class="coment-pie">
-                  <span id="userEmojis${contribucion.id_contribucion}" class="userEmojis"></span>
-                      <div id="emojiIcon${contribucion.id_contribucion}" class="reacciones" data-reaction-id="${contribucion.id_reaccion || ''}">${emoji}</div>
-                      <div id="tablaEmojis${contribucion.id_contribucion}" class="emojiTable" style="display: none;">
-                          <table id="emojisTable" onclick="seleccionarEmoji(event)">
-                              <tr>
-                                  <td><span class="emoji">👍</span></td>
-                                  <td><span class="emoji">👎</span></td>
-                                  <td><span class="emoji">❤️</span></td>                                  
-                              </tr>
-                          </table>
-                      </div>                 
-                    <span id="numComentarios${contribucion.id_contribucion}" class="ncoment" onclick="toggleSubcomments('comment${contribucion.id_contribucion}')"></span>
+                      <div class="reacciones-comentarios-wrapper">
+                          <span id="userEmojis${contribucion.id_contribucion}" class="userEmojis"></span>
+                          <div id="emojiIcon${contribucion.id_contribucion}" class="reacciones" data-reaction-id="${contribucion.id_reaccion || ''}">${emoji}</div>
+                          <div id="tablaEmojis${contribucion.id_contribucion}" class="emojiTable" style="display: none;">
+                              <table id="emojisTable" onclick="seleccionarEmoji(event)">
+                                  <tr>
+                                      <td><span class="emoji">👍</span></td>
+                                      <td><span class="emoji">👎</span></td>
+                                      <td><span class="emoji">❤️</span></td>
+                                  </tr>
+                              </table>
+                          </div>
+                          <span id="numComentarios${contribucion.id_contribucion}" class="ncoment" onclick="toggleSubcomments('comment${contribucion.id_contribucion}')"></span>
+                      </div>
                       <div class="contenedor">
                           <img src="/images/responder.png" alt="Botón" class="responder">
                           <div class="mensaje" id="mensaje">Responder a ${nombrePropietario}</div>

@@ -334,11 +334,11 @@ border-color:#3f94e4;
 
 .userEmojis {
 	font-family:'Franklin Gothic Medium';
-  font-size: 18px;
-	position: absolute;
-	bottom: -8px;
-	left: 85px;
-	opacity: 1;
+    font-size: 14px; /* Reducimos el tamaño de la fuente */
+    opacity: 1;
+    /* Se eliminan las propiedades de posicionamiento absoluto */
+    /* para que Flexbox pueda controlarlo. */
+    align-self: center; /* Centra verticalmente dentro del contenedor flex */
 }
 
 .copiado{
@@ -765,7 +765,12 @@ border-color:#3f94e4;
  }
 
 .coment-pie {
-	position: relative;
+	position: absolute;
+	bottom: 5px; /* Acercamos un poco más al borde inferior */
+	left: 15px; /* Espacio desde el borde izquierdo */
+	right: 15px; /* Espacio desde el borde derecho */
+	display: flex;
+	justify-content: space-between; /* Alinea los elementos a los extremos */
 }
 
 .mensaje {
@@ -810,12 +815,13 @@ border-color:#3f94e4;
 	font-family:'Trebuchet MS';
 	font-weight: 539;
 	font-size: 16px; /* Reducimos la fuente para el post-it */
-	margin-bottom: 50px; /* Ajustamos el margen para los botones */
+	padding-bottom: 50px; /* Aumentamos el padding para que el texto no se oculte tras los botones */
 	width: auto; /* Corregimos el valor de width */
 	text-align: justify;
 	margin-right: 10px;
 	word-wrap: break-word; /* Asegura que el texto largo se ajuste */
 }
+
 
 .coment-cuerpo {
 	padding: -10% 10px;
@@ -867,14 +873,13 @@ border-color:#3f94e4;
 }
 
 .reacciones {
-	position: absolute; 
-	bottom: -50px;
-	left: 25px;
-	font-size: 43px;
+	position: relative;
+	font-size: 32px; /* Reducimos el tamaño del icono de reacción */
 	height: auto; 
 	cursor: pointer; 
-	font-family:cursive;
+	font-family: cursive;
 	letter-spacing: -0.11em;
+	margin-left: 10px; /* Añade espacio a la izquierda del botón de reacción */
 }
 
 #contador{
@@ -887,38 +892,36 @@ border-color:#3f94e4;
 }
 
 .contenedor {
-	position: absolute;
-	right: 0%;
-	bottom: 0px;
+	/* Ya no necesita posicionamiento absoluto, Flexbox en .coment-pie lo maneja */
 }
 
 .responder {
-	width: 40px;
+	width: 20px; /* Reducimos el tamaño del icono */
 	height: auto;
 	cursor: pointer;
 	margin-bottom: -5px;
 }
 
 .responder2 {
-	width: 40px;
+	width: 20px; /* Reducimos el tamaño del icono */
 	height: auto;
 	cursor: pointer;
 	margin-bottom: -5px;
 }
 .responder3 {
-	width: 40px;
+	width: 20px; /* Reducimos el tamaño del icono */
 	height: auto;
 	cursor: pointer;
 	margin-bottom: -5px;
 }
 .responder4 {
-	width: 40px;
+	width: 20px; /* Reducimos el tamaño del icono */
 	height: auto;
 	cursor: pointer;
 	margin-bottom: -5px;
 }
 .responder5 {
-	width: 40px;
+	width: 20px; /* Reducimos el tamaño del icono */
 	height: auto;
 	cursor: pointer;
 	margin-bottom: -5px;
@@ -934,14 +937,18 @@ border-color:#3f94e4;
 }
 
 .ncoment{
-	position: absolute;
-	margin-top: 10px;
-	right: 60px;
-	bottom: 30%; 
-	font-size: 15px;
+	position: relative;
+	font-size: 13px; /* Reducimos el tamaño de la fuente */
 	height: auto; 
 	cursor: pointer;
 	font-family:'Franklin Gothic Medium'; 
+}
+
+.reacciones-comentarios-wrapper {
+    /* Ya no necesita posicionamiento absoluto, Flexbox en .coment-pie lo maneja */
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Reducimos el espacio entre elementos */
 }
 
 .nreaccion{
