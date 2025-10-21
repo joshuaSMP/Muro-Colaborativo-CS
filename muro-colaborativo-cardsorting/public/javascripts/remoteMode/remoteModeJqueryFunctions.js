@@ -600,18 +600,19 @@ async function getReaccionCountAndSetEmoji(id_contribucion) {
       $(`#userEmojis${id_contribucion}`).html(emojisHTML);
       $(`#numReacciones${id_contribucion}`).text(response.length);
 
-      const userId = localStorage.getItem("userId").trim();
-      console.log(`El userId es: ${userId}`);
-      response.forEach(reaction => {
-        console.log(`El reaction.id_alumno es: ${reaction.id_alumno.trim()}`);
-      });
-      const userReaction = response.find(reaction => reaction.id_alumno.trim() === userId);
+      // Para la vista del alumno, buscamos por id_alumno
+      const userId = localStorage.getItem("userId");
+      const userReaction = response.find(reaction => reaction.propietario === 1 && reaction.id_alumno && reaction.id_alumno.trim() === userId.trim());
+
       if (userReaction) {
         console.log(`El usuario ${userId} ha reaccionado a la contribución ${id_contribucion} con ${userReaction.emoji}.`);
         $(`#emojiIcon${id_contribucion}`).html(userReaction.emoji).data('reaction-id', userReaction.id_reaccion);
+      } else {
+        // Si no hay reacción del usuario, asegurarse de que el ícono esté en su estado por defecto.
+        $(`#emojiIcon${id_contribucion}`).html('☺+').removeData('reaction-id');
       }
     } else {
-      console.log(`La contribución ${id_contribucion} no tiene emojis.`);
+      console.log(`La contribución ${id_contribucion} no tiene reacciones.`);
       $(`#userEmojis${id_contribucion}`).empty();
       $(`#numReacciones${id_contribucion}`).text('0');
     }
