@@ -891,10 +891,6 @@ border-color:#3f94e4;
 	font-family:'Franklin Gothic Medium'; 
 }
 
-.contenedor {
-	/* Ya no necesita posicionamiento absoluto, Flexbox en .coment-pie lo maneja */
-}
-
 .responder {
 	width: 20px; /* Reducimos el tamaño del icono */
 	height: auto;
@@ -1482,7 +1478,6 @@ body.blurred {
   position: relative; /* Necesario para posicionar elementos hijos */
   /* Ocultar scrollbars */
   -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
 }
 
 .comentario:hover, .sub-coment:hover, .sub-coment2:hover, .sub-coment3:hover, .sub-coment4:hover, .sub-coment5:hover {
