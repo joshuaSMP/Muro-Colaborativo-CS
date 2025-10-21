@@ -310,6 +310,10 @@ function removeReaccion(id_reaccion, id_contribucion) {
 }
 
 function updateReactionCount(id_contribucion) {
+  if (!id_contribucion) {
+    console.log("updateReactionCount: id_contribucion no válido.");
+    return;
+  }
   $.ajax({
     type: 'GET',
     url: '/api/foro/reacciones/' + id_contribucion,
@@ -333,6 +337,10 @@ function updateReactionCount(id_contribucion) {
 }
 
 function getReaccionCount(id_contribucion) {
+  if (!id_contribucion) {
+    console.log("getReaccionCount: id_contribucion no válido.");
+    return;
+  }
   $.ajax({
     type: 'GET',
     url: `/api/foro/reacciones/${id_contribucion}`, 
@@ -376,6 +384,10 @@ function getReaccionCount(id_contribucion) {
 }
 
 async function getReaccionCountAndSetEmoji(id_contribucion) {
+  if (!id_contribucion) {
+    console.log("getReaccionCountAndSetEmoji: id_contribucion no válido.");
+    return;
+  }
   try {
     const response = await $.ajax({
       type: 'GET',
