@@ -261,7 +261,7 @@ border-color:#3f94e4;
 	height: 50px;
 	width: 50px;
 	position: fixed; /* Cambiado a fixed para posicionarlo respecto a la ventana */
-	right: 20px; /* Distancia desde la derecha */
+	right: 40px; /* Distancia desde la derecha */
 	bottom: 20px; /* Distancia desde abajo */
 	margin-top: 0;
 	padding: 0px 0px 0px 0px;
