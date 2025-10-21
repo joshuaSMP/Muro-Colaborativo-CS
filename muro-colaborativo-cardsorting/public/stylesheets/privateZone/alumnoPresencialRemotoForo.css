@@ -1480,6 +1480,9 @@ body.blurred {
   height: 250px; /* Alto fijo para el post-it */
   overflow-y: auto; /* Scroll si el contenido es muy largo */
   position: relative; /* Necesario para posicionar elementos hijos */
+  /* Ocultar scrollbars */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 .comentario:hover, .sub-coment:hover, .sub-coment2:hover, .sub-coment3:hover, .sub-coment4:hover, .sub-coment5:hover {
@@ -1488,6 +1491,17 @@ body.blurred {
   z-index: 10;
   position: relative;
 }
+
+/* Ocultar scrollbar para Chrome, Safari y Opera */
+.comentario::-webkit-scrollbar,
+.sub-coment::-webkit-scrollbar,
+.sub-coment2::-webkit-scrollbar,
+.sub-coment3::-webkit-scrollbar,
+.sub-coment4::-webkit-scrollbar,
+.sub-coment5::-webkit-scrollbar {
+  display: none;
+}
+
 
 /*
   Añadimos variedad en la rotación para un look más natural.
@@ -1551,6 +1565,10 @@ li:nth-child(5n) > .sub-coment5 {
   height: 250px; /* Alto fijo para el post-it */
   overflow-y: auto; /* Scroll si el contenido es muy largo */
   position: relative; /* Necesario para posicionar elementos hijos */
+}
+/* Ocultar scrollbar para Chrome, Safari y Opera */
+.comentario::-webkit-scrollbar {
+  display: none;
 }
 
 .comentario:hover, .sub-coment:hover, .sub-coment2:hover, .sub-coment3:hover, .sub-coment4:hover, .sub-coment5:hover {
