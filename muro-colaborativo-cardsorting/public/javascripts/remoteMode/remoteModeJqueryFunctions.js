@@ -35,6 +35,8 @@ $(document).ready(function () {
   // stacking contexts that could limit their z-index. This is a robust
   // way to ensure they always appear on top of other page content.
   $("#selectMosaicSpace, #workspaceMode, #SubirFoto, #linkMode").appendTo("body");
+  $("#maximizeBtn").hide();
+  $("#scrollToTopBtn").hide(); // Ocultamos el botón de scroll
 
   ValidarStatus();
   $('.toggle-icon').click();
@@ -43,10 +45,6 @@ $(document).ready(function () {
   var room = PIN
   $("#pinNumber").html(PIN)
   $('#userName2').text(localStorage.getItem("userName"));
-});
-
-$("#maximizeBtn").click(function () {
-  $(document).toggleFullScreen();
 });
 
 // Manejador de eventos para la subida de archivos.
@@ -360,11 +358,6 @@ function logOut() {
   localStorage.removeItem('authToken');
   window.location.href = '/auth/user/';
 }
-
-
-$("#maximizeBtn").click(function () {
-  $(document).toggleFullScreen();
-})
 
 function initializeReactionHandlers() {
   $('#contributions_list').on('click', '.emoji', function () {
