@@ -694,7 +694,7 @@ async function getContributionslist() {
               </div>
               <div class="sub-comentario" id="comment${contribucion.id_contribucion}Subcomments" style="display: none"></div>
           </li>`;
-        $('#contributions_list').prepend(element);
+        $('#contributions_list').append(element);
         makeContributionDraggable(contribucion.id_contribucion);
 
         $(`#emojiIcon${contribucion.id_contribucion}`).click(function () {
@@ -2050,7 +2050,7 @@ async function generarrama1(response) {
       `;
 
       // Añadir la nueva contribución al principio de contributions_list
-      contributionsList.insertAdjacentHTML('afterbegin', contenidoHtml);
+      contributionsList.insertAdjacentHTML('beforeend', contenidoHtml);
 
       // Hacer la nueva contribución arrastrable
       makeContributionDraggable(response.id_contribucion);
