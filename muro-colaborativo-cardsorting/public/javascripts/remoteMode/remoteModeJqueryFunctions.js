@@ -2019,7 +2019,7 @@ async function generarrama1(response) {
           <div class="comentario" id="comentario${response.id_contribucion}">
             <div class="UsuarioComen" ${styleBackground ? `style="${styleBackground}"` : ''}>
               ${nombrePropietario}  
-              <div class="fecha-creacion" id="alumnoid${response.id_alumno}">${fechaFormateada}</div>
+              <div class="fecha-creacion" id="alumnoid${nombresResponse[0].idAlumno}">${fechaFormateada}</div>
               <img src="https://cdn-icons-png.flaticon.com/512/61/61140.png" alt="Botón" class="acciones" id="acciones${response.id_contribucion}">
             </div>
             ${referenciaAutor ? `<div class="copiado">${referenciaAutor}</div>` : ''}
@@ -2058,24 +2058,6 @@ async function generarrama1(response) {
       // Event listener para mostrar/ocultar emojis
       $(`#emojiIcon${response.id_contribucion}`).click(function () {
         $(`#tablaEmojis${response.id_contribucion}`).toggle();
-      });
-
-      // Event listener para acciones (editar, eliminar, copiar)
-      $(document).on("click", `.acciones${response.id_contribucion}`, function () {
-        const tablaAccionesEdicionId = `#TablaAccionesEdicion${response.id_contribucion}`;
-        if ($(tablaAccionesEdicionId).length === 0) {
-          let accionesHtml = `<div class="TablaAccionesEdicion" id="TablaAccionesEdicion${response.id_contribucion}">`;
-          accionesHtml += `
-            <img class="iconoeditar" src="/images/editar.png">
-            <img class="iconoeliminar" src="/images/eliminar.png">
-            <img class="iconocopiar" src="/images/copiar.png">
-          `;
-          accionesHtml += `</div>`; // Agrega el cierre de la div de acciones
-          $(`#comentario${response.id_contribucion}`).append(accionesHtml);
-          $(tablaAccionesEdicionId).hide();
-        } else {
-          $(tablaAccionesEdicionId).toggle();
-        }
       });
 
       // Actualizar contador de reacciones
@@ -2170,8 +2152,8 @@ async function generarrama2(response) {
           <p id= ${id_contribucion_compartida} class=respondioa ><span style= font-size:18px; >↶</span> Respondió a ${nombreautor}</p>
           <div class="UsuarioComen" ${styleBackground ? `style="${styleBackground}"` : ''}>
             ${nombrePropietario}  
-              <div class="fecha-creacion" id="alumnoid${response.idAlumno}">${fechaFormateada}</div>
-            <img src="https://cdn-icons-png.flaticon.com/512/61/61140.png" alt="Botón" class="acciones2" id="alumnoid${response.id_alumno}">
+              <div class="fecha-creacion" id="alumnoid${nombresResponse[0].idAlumno}">${fechaFormateada}</div>
+            <img src="https://cdn-icons-png.flaticon.com/512/61/61140.png" alt="Botón" class="acciones2" id="alumnoid${nombresResponse[0].idAlumno}">
           </div>
           ${referenciaAutor ? `<div class="copiado">${referenciaAutor}</div>` : ''}
           <div class="coment-cuerpo" id="rama1tipo${response.tipo}">
@@ -2232,26 +2214,6 @@ async function generarrama2(response) {
       // Event listener para mostrar/ocultar emojis
       $(`#emojiIcon${response.id_contribucion}`).click(function () {
         $(`#tablaEmojis${response.id_contribucion}`).toggle();
-      });
-
-      // Event listener para acciones (editar, eliminar, copiar)
-      $(document).on("click", `.acciones2${response.id_contribucion}`, function () {
-        const tablaAccionesEdicionId = `#TablaAccionesEdicion${response.id_contribucion}`;
-        if ($(tablaAccionesEdicionId).length === 0) {
-          let accionesHtml = `<div class="TablaAccionesEdicion" id="TablaAccionesEdicion${response.id_contribucion}">`;
-          accionesHtml += `
-            <img class="iconoeditar2" src="/images/editar.png">
-            <img class="iconoeliminar2" src="/images/eliminar.png">
-            <img class="iconocopiar2" src="/images/copiar.png">
-
-            
-          `;
-          accionesHtml += `</div>`; // Cierre de la div de acciones
-          $(`#comment${response.id_contribucion}`).append(accionesHtml);
-          $(tablaAccionesEdicionId).hide();
-        } else {
-          $(tablaAccionesEdicionId).toggle();
-        }
       });
 
       // Actualizar contador de reacciones
@@ -2342,8 +2304,8 @@ async function generarrama3(response) {
           <p id= ${id_contribucion_compartida} class=respondioa><span style= font-size:18px; >↶</span> Respondió a ${nombreautor}</p>
           <div class="UsuarioComen" ${styleBackground ? `style="${styleBackground}"` : ''}>
             ${nombrePropietario}  
-              <div class="fecha-creacion" id="alumnoid${response.idAlumno}">${fechaFormateada}</div>
-            <img src="https://cdn-icons-png.flaticon.com/512/61/61140.png" alt="Botón" class="acciones3" id="alumnoid${response.id_alumno}">
+              <div class="fecha-creacion" id="alumnoid${nombresResponse[0].idAlumno}">${fechaFormateada}</div>
+            <img src="https://cdn-icons-png.flaticon.com/512/61/61140.png" alt="Botón" class="acciones3" id="alumnoid${nombresResponse[0].idAlumno}">
           </div>
           ${referenciaAutor ? `<div class="copiado">${referenciaAutor}</div>` : ''}
           <div class="coment-cuerpo" id="rama1tipo${response.tipo}">
@@ -2403,24 +2365,6 @@ async function generarrama3(response) {
       // Event listener para mostrar/ocultar emojis
       $(`#emojiIcon${response.id_contribucion}`).click(function () {
         $(`#tablaEmojis${response.id_contribucion}`).toggle();
-      });
-
-      // Event listener para acciones (editar, eliminar, copiar)
-      $(document).on("click", `.acciones3${response.id_contribucion}`, function () {
-        const tablaAccionesEdicionId = `#TablaAccionesEdicion${response.id_contribucion}`;
-        if ($(tablaAccionesEdicionId).length === 0) {
-          let accionesHtml = `<div class="TablaAccionesEdicion" id="TablaAccionesEdicion${response.id_contribucion}">`;
-          accionesHtml += `
-            <img class="iconoeditar3" src="/images/editar.png">
-            <img class="iconoeliminar3" src="/images/eliminar.png">
-            <img class="iconocopiar3" src="/images/copiar.png">
-          `;
-          accionesHtml += `</div>`; // Cierre de la div de acciones
-          $(`#comment${response.id_contribucion}`).append(accionesHtml);
-          $(tablaAccionesEdicionId).hide();
-        } else {
-          $(tablaAccionesEdicionId).toggle();
-        }
       });
 
       // Actualizar contador de reacciones
@@ -2511,8 +2455,8 @@ async function generarrama4(response) {
           <p id= ${id_contribucion_compartida} class=respondioa><span style= font-size:18px; >↶</span> Respondió a ${nombreautor}</p>
           <div class="UsuarioComen" ${styleBackground ? `style="${styleBackground}"` : ''}>
             ${nombrePropietario}  
-              <div class="fecha-creacion" id="alumnoid${response.idAlumno}">${fechaFormateada}</div>
-            <img src="https://cdn-icons-png.flaticon.com/512/61/61140.png" alt="Botón" class="acciones4" id="alumnoid${response.id_alumno}">
+              <div class="fecha-creacion" id="alumnoid${nombresResponse[0].idAlumno}">${fechaFormateada}</div>
+            <img src="https://cdn-icons-png.flaticon.com/512/61/61140.png" alt="Botón" class="acciones4" id="alumnoid${nombresResponse[0].idAlumno}">
           </div>
           ${referenciaAutor ? `<div class="copiado">${referenciaAutor}</div>` : ''}
           <div class="coment-cuerpo" id="rama1tipo${response.tipo}">
@@ -2573,24 +2517,6 @@ async function generarrama4(response) {
       // Event listener para mostrar/ocultar emojis
       $(`#emojiIcon${response.id_contribucion}`).click(function () {
         $(`#tablaEmojis${response.id_contribucion}`).toggle();
-      });
-
-      // Event listener para acciones (editar, eliminar, copiar)
-      $(document).on("click", `.acciones4${response.id_contribucion}`, function () {
-        const tablaAccionesEdicionId = `#TablaAccionesEdicion${response.id_contribucion}`;
-        if ($(tablaAccionesEdicionId).length === 0) {
-          let accionesHtml = `<div class="TablaAccionesEdicion" id="TablaAccionesEdicion${response.id_contribucion}">`;
-          accionesHtml += `
-            <img class="iconoeditar4" src="/images/editar.png">
-            <img class="iconoeliminar4" src="/images/eliminar.png">
-            <img class="iconocopiar4" src="/images/copiar.png">
-          `;
-          accionesHtml += `</div>`; // Cierre de la div de acciones
-          $(`#comment${response.id_contribucion}`).append(accionesHtml);
-          $(tablaAccionesEdicionId).hide();
-        } else {
-          $(tablaAccionesEdicionId).toggle();
-        }
       });
 
       // Actualizar contador de reacciones
@@ -2681,8 +2607,8 @@ async function generarrama5(response) {
           <p id= ${id_contribucion_compartida} class=respondioa><span style= font-size:18px; >↶</span> Respondió a ${nombreautor}</p>
           <div class="UsuarioComen" ${styleBackground ? `style="${styleBackground}"` : ''}>
             ${nombrePropietario}  
-              <div class="fecha-creacion" id="alumnoid${response.idAlumno}">${fechaFormateada}</div>
-            <img src="https://cdn-icons-png.flaticon.com/512/61/61140.png" alt="Botón" class="acciones5" id="alumnoid${response.id_alumno}">
+              <div class="fecha-creacion" id="alumnoid${nombresResponse[0].idAlumno}">${fechaFormateada}</div>
+            <img src="https://cdn-icons-png.flaticon.com/512/61/61140.png" alt="Botón" class="acciones5" id="alumnoid${nombresResponse[0].idAlumno}">
           </div>
           ${referenciaAutor ? `<div class="copiado">${referenciaAutor}</div>` : ''}
           <div class="coment-cuerpo" id="rama1tipo${response.tipo}">
@@ -2734,23 +2660,6 @@ async function generarrama5(response) {
 
       $(`#emojiIcon${response.id_contribucion}`).click(function () {
         $(`#tablaEmojis${response.id_contribucion}`).toggle();
-      });
-
-      $(document).on("click", `.acciones5${response.id_contribucion}`, function () {
-        const tablaAccionesEdicionId = `#TablaAccionesEdicion${response.id_contribucion}`;
-        if ($(tablaAccionesEdicionId).length === 0) {
-          let accionesHtml = `<div class="TablaAccionesEdicion" id="TablaAccionesEdicion${response.id_contribucion}">`;
-          accionesHtml += `
-            <img class="iconoeditar5" src="/images/editar.png">
-            <img class="iconoeliminar5" src="/images/eliminar.png">
-            <img class="iconocopiar5" src="/images/copiar.png">
-          `;
-          accionesHtml += `</div>`; // Cierre de la div de acciones
-          $(`#comment${response.id_contribucion}`).append(accionesHtml);
-          $(tablaAccionesEdicionId).hide();
-        } else {
-          $(tablaAccionesEdicionId).toggle();
-        }
       });
 
       // Actualizar contador de reacciones
