@@ -1189,8 +1189,8 @@ function makeContributionDraggable(contributionId) {
     cursor: "move",
     stack: "#contributions_list > li",
     scroll: true,
-    scrollSensitivity: 50,
-    scrollSpeed: 15,
+    scrollSensitivity: 80,
+    scrollSpeed: 5,
     stop: function(event, ui) {
       // Cuando el usuario suelta el elemento, emitimos su nueva posición
       const contributionId = $(this).attr('id').replace('listElement', '');

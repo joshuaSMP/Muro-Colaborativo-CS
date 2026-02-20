@@ -730,10 +730,10 @@ border-color:#3f94e4;
 
 #Discusion {
 	height: 105%;
-	width: 72%;
+	width: 100%;
 	background: white;
 	position: absolute;
-	margin-left: 400px;	
+	margin-left: 60px;	
 	overflow-y: auto; 
 	overflow-x: auto;
 	border-radius: 5px;
